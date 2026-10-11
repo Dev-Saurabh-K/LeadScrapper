@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🚀 B2B Lead Scraper & International Registry Intelligence
 
-## Getting Started
+An automated multi-country B2B lead scraping engine and sales dashboard built with **Next.js 16 (App Router)**, **Tailwind CSS**, and **Supabase (PostgreSQL)**.
 
-First, run the development server:
+Extracts company data from international corporate registries, de-duplicates leads, enriches contact details (emails & phones) via polite website crawling, updates a styled `Master_B2B_Leads.xlsx` workbook, and sends post-job SMTP email summaries.
 
+---
+
+## ⚡ Quick Start
+
+### 1. Run Interactive Dashboard (UI)
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser to launch scrapes, search leads, and export to Excel.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Run Automated Headless Scraper (CLI)
+```bash
+npm run scrape
+```
+Runs in the background, updates Supabase, updates [`exports/Master_B2B_Leads.xlsx`](exports/Master_B2B_Leads.xlsx), and sends an email summary with the Excel sheet attached.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📚 Documentation
+* **Complete User Guide & Instructions**: [INSTRUCTIONS.md](INSTRUCTIONS.md)
+* **Live Scraper Audit & Registry Status**: [SCRAPER_STATUS.md](SCRAPER_STATUS.md)
+* **PostgreSQL Database Schema**: [supabase/schema.sql](supabase/schema.sql)
+* **API Documentation**: Available at `/docs` or [http://localhost:3000/docs](http://localhost:3000/docs)
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🌍 Supported Registries
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Country | Source Registry | Status | Free Key Needed? |
+| :--- | :--- | :---: | :---: |
+| 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | 🟢 Live | ❌ None |
+| 🇫🇷 **France** | Recherche d'entreprises (`api.gouv.fr`) | 🟢 Live | ❌ None |
+| 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | 🟢 Live | ❌ None |
+| 🇺🇸 **USA** | Colorado Socrata Open Data | 🟢 Live | ❌ None |
+| 🇨🇦 **Canada** | Corporations Canada Open Data | 🟢 Live | ❌ None |
+| 🇬🇧 **UK** | Companies House API | 🟡 Ready | 🔑 Free Key |
+| 🇦🇺 **Australia** | ABN Lookup | 🟡 Ready | 🔑 Free GUID |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🛠️ Testing & Verification
+```bash
+# Run connector test suite
+npm test
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Run scrapers audit diagnostic
+node scripts/diagnose-scrapers.mjs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Build production application
+npm run build
+```
