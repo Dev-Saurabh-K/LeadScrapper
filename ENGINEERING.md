@@ -286,7 +286,9 @@ export const germanyConnector = new GermanyConnector();
 
 ### 5.4 Email Notifier (`lib/services/notifier.js`)
 * Uses `nodemailer` configured with SMTP credentials.
-* Constructs both plain text and styled HTML summaries matching the project brief.
+* **Dual Operation**:
+  1. `sendJobSummary(jobStats, countries, excelAttachment)`: Automated post-scrape summary with KPI counters and attachment.
+  2. `sendCustomEmail({ recipient, subject, customNote, totalLeads, countries, excelAttachment })`: Custom dispatch called from the Web UI Email Dispatch Center with customized executive notes and country-filtered Excel attachments.
 * Attaches `exports/Master_B2B_Leads.xlsx` directly to outgoing emails as a streamable Buffer or resolved filesystem path.
 
 ---
@@ -335,6 +337,33 @@ Generates and streams the binary Excel file.
 * **Response Headers**:
   * `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
   * `Content-Disposition: attachment; filename="Master_B2B_Leads.xlsx"`
+
+### `POST /api/notify`
+Dispatches customized executive lead summaries and attaches `Master_B2B_Leads.xlsx` via SMTP.
+* **Request Payload**:
+  ```json
+  {
+    "recipient": "saurabhkumar.sakr@gmail.com",
+    "subject": "B2B Leads Report — 24 Companies",
+    "customNote": "Please find attached the latest verified registry leads.",
+    "country": "Norway",
+    "attachExcel": true
+  }
+  ```
+* **Response**:
+  ```json
+  {
+    "success": true,
+    "configured": true,
+    "result": {
+      "sent": true,
+      "messageId": "<...>",
+      "recipient": "saurabhkumar.sakr@gmail.com",
+      "timestamp": "2026-10-11T09:48:15.131Z"
+    },
+    "leadsCount": 24
+  }
+  ```
 
 ### `GET /api/health`
 System diagnostics and connector readiness.

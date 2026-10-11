@@ -87,11 +87,19 @@ Navigate to:
    - **Enrich Company Websites**: Check to crawl company Contact/About pages for emails and phones.
    - **Polite Delay**: Choose delay between requests (default 1000ms).
    - Click **Start Lead Scraping Job**.
-4. **Live Activity Console**:
+4. **Email Dispatch Tab**:
+   - **Recipient Input**: Specify any target recipient email (with 1-click quick-fill pills for `saurabhkumar.sakr@gmail.com` and `saurabh7739278614@gmail.com`).
+   - **Subject Line**: Custom subject or auto-generated default e.g. `B2B Leads Report — 24 Companies (Master_B2B_Leads.xlsx)`.
+   - **Geographic Scope**: Filter report to specific country (e.g. Norway, Singapore) or send all globally scraped leads.
+   - **Cover Note**: Include personal executive commentary, notes, or instructions.
+   - **Attachment Toggle**: Checkbox to attach the styled multi-sheet `Master_B2B_Leads.xlsx` workbook directly to the email.
+   - **Live Recipient Inbox Preview**: Real-time rendering card showing exactly how the email appears in the recipient's inbox before sending.
+   - **Sent History**: Audit log of all emails dispatched during the session with timestamps and SMTP message IDs.
+5. **Live Activity Console**:
    - Watch the terminal stream live events as each country registry is queried.
-5. **Download Master Excel**:
+6. **Download Master Excel**:
    - Click **Export Master Excel** in the navbar or at the end of a job to download [`exports/Master_B2B_Leads.xlsx`](file:///d:/internship/the-corent/leadscrape/exports/Master_B2B_Leads.xlsx).
-6. **API Docs**:
+7. **API Docs**:
    - Click **API Docs & Integration** in the navbar or visit [http://localhost:3000/docs](http://localhost:3000/docs).
 
 ---

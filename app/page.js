@@ -25,7 +25,8 @@ import {
   Send,
   Eye,
   Check,
-  Copy
+  Copy,
+  Paperclip
 } from 'lucide-react';
 
 const COUNTRIES = [
@@ -67,7 +68,15 @@ export default function Dashboard() {
   const [jobSummary, setJobSummary] = useState(null);
   const logsEndRef = useRef(null);
 
-  // Notification state
+  // Dedicated Email Dispatch UI states
+  const [emailRecipient, setEmailRecipient] = useState('saurabhkumar.sakr@gmail.com');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailCustomNote, setEmailCustomNote] = useState('Hi Team, please find attached the latest verified B2B leads extracted from international corporate registries.');
+  const [emailCountryFilter, setEmailCountryFilter] = useState('');
+  const [emailAttachExcel, setEmailAttachExcel] = useState(true);
+  const [isSendingCustomEmail, setIsSendingCustomEmail] = useState(false);
+  const [customEmailResult, setCustomEmailResult] = useState(null);
+  const [sentEmailHistory, setSentEmailHistory] = useState([]);
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [emailStatusMsg, setEmailStatusMsg] = useState(null);
 
@@ -271,6 +280,58 @@ export default function Dashboard() {
     }
   };
 
+  // Custom Leads Report Email Dispatch
+  const handleSendCustomEmail = async (e) => {
+    if (e) e.preventDefault();
+    if (!emailRecipient || !emailRecipient.includes('@')) {
+      alert('Please enter a valid recipient email address.');
+      return;
+    }
+
+    setIsSendingCustomEmail(true);
+    setCustomEmailResult(null);
+
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: emailRecipient,
+          subject: emailSubject || undefined,
+          customNote: emailCustomNote,
+          country: emailCountryFilter || undefined,
+          attachExcel: emailAttachExcel
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        const entry = {
+          recipient: emailRecipient,
+          subject: emailSubject || `B2B Leads Report — ${data.leadsCount || totalLeads} Companies`,
+          timestamp: new Date().toLocaleTimeString(),
+          messageId: data.result?.messageId,
+          leadsCount: data.leadsCount || totalLeads
+        };
+        setCustomEmailResult({
+          type: 'success',
+          text: `Leads report successfully dispatched to ${emailRecipient}!`,
+          messageId: data.result?.messageId
+        });
+        setSentEmailHistory((prev) => [entry, ...prev]);
+      } else {
+        setCustomEmailResult({
+          type: 'error',
+          text: data.result?.error || data.error || 'Failed to send email report.'
+        });
+      }
+    } catch (err) {
+      setCustomEmailResult({ type: 'error', text: err.message });
+    } finally {
+      setIsSendingCustomEmail(false);
+    }
+  };
+
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -282,6 +343,9 @@ export default function Dashboard() {
   const enrichedLeads = leads.filter((l) => l.email || l.phone).length;
   const enrichedPct = totalLeads > 0 ? Math.round((enrichedLeads / totalLeads) * 100) : 0;
   const activeCountries = new Set(leads.map((l) => l.country).filter(Boolean)).size;
+  const previewLeadsCount = emailCountryFilter
+    ? leads.filter((l) => l.country === emailCountryFilter).length
+    : totalLeads;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
@@ -326,6 +390,15 @@ export default function Dashboard() {
               <span>Export Master Excel</span>
             </a>
 
+            {/* Email Dispatch CTA */}
+            <button
+              onClick={() => setActiveTab('email')}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs font-semibold text-slate-200 shadow-sm transition hover:bg-slate-700 hover:text-white focus:outline-none"
+            >
+              <Send className="h-4 w-4 text-blue-400" />
+              <span>Send Email</span>
+            </button>
+
             {/* Launch Scrape CTA */}
             <button
               onClick={() => setActiveTab('scraper')}
@@ -362,6 +435,17 @@ export default function Dashboard() {
               <Sliders className="h-4 w-4" />
               Scraper Control & Live Logs
               {isScraping && <span className="h-2 w-2 rounded-full bg-blue-400 animate-ping" />}
+            </button>
+            <button
+              onClick={() => setActiveTab('email')}
+              className={`flex items-center gap-2 border-b-2 py-3 text-xs transition sm:text-sm ${
+                activeTab === 'email'
+                  ? 'border-blue-500 text-blue-400'
+                  : 'border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-200'
+              }`}
+            >
+              <Mail className="h-4 w-4" />
+              Email Dispatch
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -893,6 +977,401 @@ export default function Dashboard() {
                       <div className="text-slate-400">Errors</div>
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: EMAIL DISPATCH & NOTIFICATION CENTER */}
+        {activeTab === 'email' && (
+          <div className="space-y-6">
+            {/* Header / Overview card */}
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow">
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-white">Email Leads Dispatch & Notification Center</h2>
+                    <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-400 ring-1 ring-blue-500/20">
+                      SMTP Ready
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Dispatch customized executive lead reports with <code className="text-slate-300">Master_B2B_Leads.xlsx</code> attached directly to any email address.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSendTestEmail}
+                    disabled={sendingTestEmail}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700 hover:text-white disabled:opacity-50"
+                  >
+                    {sendingTestEmail ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="h-3.5 w-3.5 text-blue-400" />
+                    )}
+                    <span>{sendingTestEmail ? 'Sending Test...' : 'Send Quick Ping'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {emailStatusMsg && (
+                <div
+                  className={`mt-4 flex items-center justify-between rounded-lg p-3 text-xs ${
+                    emailStatusMsg.type === 'success'
+                      ? 'border border-emerald-500/30 bg-emerald-950/30 text-emerald-300'
+                      : 'border border-red-500/30 bg-red-950/30 text-red-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {emailStatusMsg.type === 'success' ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                    )}
+                    <span>{emailStatusMsg.text}</span>
+                  </div>
+                  <button onClick={() => setEmailStatusMsg(null)} className="text-slate-400 hover:text-white">
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Main Grid: Form Composer (left) + Live Inbox Preview (right) */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+              {/* LEFT: Composer Form (7 cols) */}
+              <div className="space-y-5 lg:col-span-7">
+                <form
+                  onSubmit={handleSendCustomEmail}
+                  className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow"
+                >
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-white">
+                    <Send className="h-4 w-4 text-blue-400" />
+                    Compose Leads Dispatch
+                  </h3>
+
+                  {/* Recipient Field */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Recipient Email Address <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={emailRecipient}
+                      onChange={(e) => setEmailRecipient(e.target.value)}
+                      placeholder="saurabhkumar.sakr@gmail.com"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    {/* Quick-fill Pills */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <span className="text-slate-500">Quick select:</span>
+                      <button
+                        type="button"
+                        onClick={() => setEmailRecipient('saurabhkumar.sakr@gmail.com')}
+                        className={`rounded-md px-2 py-0.5 transition ${
+                          emailRecipient === 'saurabhkumar.sakr@gmail.com'
+                            ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                        }`}
+                      >
+                        saurabhkumar.sakr@gmail.com (Recipient)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEmailRecipient('saurabh7739278614@gmail.com')}
+                        className={`rounded-md px-2 py-0.5 transition ${
+                          emailRecipient === 'saurabh7739278614@gmail.com'
+                            ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                        }`}
+                      >
+                        saurabh7739278614@gmail.com (Sender)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Subject Line */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Subject Line <span className="text-slate-500 font-normal">(optional — default auto-computed)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={emailSubject}
+                      onChange={(e) => setEmailSubject(e.target.value)}
+                      placeholder={`B2B Leads Report — ${previewLeadsCount} Companies (Master_B2B_Leads.xlsx)`}
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Filter Scope & Attach Toggle (Grid) */}
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Geographic Scope Filter
+                      </label>
+                      <select
+                        value={emailCountryFilter}
+                        onChange={(e) => setEmailCountryFilter(e.target.value)}
+                        className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                      >
+                        <option value="">All Scraped Countries ({totalLeads} leads)</option>
+                        {Array.from(new Set(leads.map((l) => l.country).filter(Boolean))).map((c) => {
+                          const count = leads.filter((l) => l.country === c).length;
+                          return (
+                            <option key={c} value={c}>
+                              {c} ({count} leads)
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Attachment Option
+                      </label>
+                      <label className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 cursor-pointer hover:border-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={emailAttachExcel}
+                          onChange={(e) => setEmailAttachExcel(e.target.checked)}
+                          className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs text-slate-200">Attach Master_B2B_Leads.xlsx</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Custom Message / Personal Note */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Personal Message / Cover Note
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={emailCustomNote}
+                      onChange={(e) => setEmailCustomNote(e.target.value)}
+                      placeholder="Add personal notes, instructions or executive commentary..."
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Action Row */}
+                  <div className="flex items-center justify-between border-t border-slate-800/80 pt-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span className="font-semibold text-slate-200">{previewLeadsCount}</span> leads queued
+                      {emailAttachExcel && (
+                        <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-400">
+                          <Paperclip className="h-3 w-3" />
+                          Excel attached
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSendingCustomEmail}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow transition hover:bg-blue-500 disabled:opacity-50"
+                    >
+                      {isSendingCustomEmail ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <span>Dispatching Email...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          <span>Send Leads Report</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Status / Alert feedback */}
+                {customEmailResult && (
+                  <div
+                    className={`rounded-xl border p-4 text-xs ${
+                      customEmailResult.type === 'success'
+                        ? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-300'
+                        : 'border-red-500/30 bg-red-950/20 text-red-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {customEmailResult.type === 'success' ? (
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-400 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="mt-0.5 h-5 w-5 text-red-400 shrink-0" />
+                      )}
+                      <div className="flex-1 space-y-1">
+                        <div className="font-semibold text-sm">
+                          {customEmailResult.type === 'success' ? 'Email Dispatched Successfully' : 'Email Dispatch Failed'}
+                        </div>
+                        <div>{customEmailResult.text}</div>
+                        {customEmailResult.messageId && (
+                          <div className="font-mono text-[11px] text-slate-400">
+                            Message-ID: {customEmailResult.messageId}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setCustomEmailResult(null)}
+                        className="text-slate-400 hover:text-white"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT: Live Inbox Preview (5 cols) */}
+              <div className="space-y-4 lg:col-span-5">
+                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 shadow">
+                  <div className="mb-3 flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                      <Eye className="h-4 w-4 text-blue-400" />
+                      <span>Live Recipient Inbox Preview</span>
+                    </div>
+                    <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">HTML Email</span>
+                  </div>
+
+                  {/* Email Envelope Container */}
+                  <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 text-xs shadow-inner">
+                    {/* Meta Header */}
+                    <div className="space-y-1 border-b border-slate-800/70 pb-3 text-[11px]">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">From:</span>
+                        <span className="font-medium text-slate-300">
+                          B2B Lead Scraper &lt;{health?.email?.from || 'saurabh7739278614@gmail.com'}&gt;
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">To:</span>
+                        <span className="font-medium text-blue-400">{emailRecipient || 'recipient@domain.com'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Subject:</span>
+                        <span className="font-semibold text-slate-200 truncate max-w-[240px]">
+                          {emailSubject || `B2B Leads Report — ${previewLeadsCount} Companies (Master_B2B_Leads.xlsx)`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Email Body Mockup */}
+                    <div className="mt-3.5 space-y-3 rounded-lg border border-slate-800/60 bg-white p-3.5 text-slate-800">
+                      {/* Header inside email */}
+                      <div className="border-b-2 border-blue-600 pb-2">
+                        <div className="text-sm font-bold text-slate-900">📊 B2B Sales Leads Report</div>
+                        <div className="text-[10px] text-slate-500">International Corporate Registry Extraction</div>
+                      </div>
+
+                      {/* Personal Note */}
+                      {emailCustomNote && (
+                        <div className="rounded border-l-4 border-blue-500 bg-blue-50 p-2 text-[11px] text-slate-700">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-blue-900">Message from Sender:</div>
+                          <div className="mt-0.5 whitespace-pre-wrap">{emailCustomNote}</div>
+                        </div>
+                      )}
+
+                      {/* Metrics card inside email */}
+                      <div className="rounded border border-slate-200 bg-slate-50 p-2.5 text-[11px]">
+                        <table className="w-full border-collapse">
+                          <tbody>
+                            <tr className="border-b border-slate-200/60">
+                              <td className="py-1 text-slate-500">📅 Generated:</td>
+                              <td className="py-1 text-right font-medium text-slate-800">Today, Just now</td>
+                            </tr>
+                            <tr className="border-b border-slate-200/60">
+                              <td className="py-1 text-slate-500">📈 Total Companies:</td>
+                              <td className="py-1 text-right font-bold text-emerald-600">{previewLeadsCount} leads</td>
+                            </tr>
+                            <tr className="border-b border-slate-200/60">
+                              <td className="py-1 text-slate-500">🌍 Coverage:</td>
+                              <td className="py-1 text-right font-medium text-slate-800">
+                                {emailCountryFilter || 'All Countries'}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 text-slate-500">📁 Attached Workbook:</td>
+                              <td className="py-1 text-right font-medium text-blue-600">
+                                {emailAttachExcel ? 'Master_B2B_Leads.xlsx' : 'None'}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Excel Attachment Chip */}
+                      {emailAttachExcel && (
+                        <div className="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 p-2 text-[11px] text-emerald-900">
+                          <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <div className="flex-1 truncate">
+                            <div className="font-semibold text-emerald-950">Master_B2B_Leads.xlsx</div>
+                            <div className="text-[10px] text-emerald-700">Excel Spreadsheet • {previewLeadsCount} verified rows</div>
+                          </div>
+                          <span className="rounded bg-emerald-200/60 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 uppercase">
+                            Ready
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dispatch History Card */}
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-white">
+                  <Clock className="h-4 w-4 text-blue-400" />
+                  Recent Email Dispatches
+                </h3>
+                <span className="text-xs text-slate-400">
+                  {sentEmailHistory.length} sent in this session
+                </span>
+              </div>
+
+              {sentEmailHistory.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
+                  No email reports dispatched in this session yet. Compose an email above to send the Master Excel report.
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-slate-800 bg-slate-900/80 text-slate-400">
+                      <tr>
+                        <th className="px-3.5 py-2.5 font-medium">Recipient</th>
+                        <th className="px-3.5 py-2.5 font-medium">Subject</th>
+                        <th className="px-3.5 py-2.5 font-medium">Leads</th>
+                        <th className="px-3.5 py-2.5 font-medium">Time</th>
+                        <th className="px-3.5 py-2.5 font-medium">Status / Message-ID</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                      {sentEmailHistory.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-slate-900/40">
+                          <td className="px-3.5 py-2.5 font-medium text-white">{item.recipient}</td>
+                          <td className="px-3.5 py-2.5 text-slate-400 max-w-xs truncate">{item.subject}</td>
+                          <td className="px-3.5 py-2.5 font-mono text-emerald-400">{item.leadsCount}</td>
+                          <td className="px-3.5 py-2.5 text-slate-400">{item.timestamp}</td>
+                          <td className="px-3.5 py-2.5 font-mono text-[11px] text-blue-400">
+                            <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-400 mr-1.5">
+                              <Check className="h-3 w-3" /> Sent
+                            </span>
+                            {item.messageId ? `${item.messageId.slice(0, 18)}...` : 'Delivered'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
