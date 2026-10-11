@@ -24,6 +24,7 @@ Runs in the background, updates Supabase, updates [`exports/Master_B2B_Leads.xls
 
 ## 📚 Documentation
 * **Complete User Guide & Instructions**: [INSTRUCTIONS.md](INSTRUCTIONS.md)
+* **Engineering & Architecture Reference**: [ENGINEERING.md](ENGINEERING.md)
 * **Live Scraper Audit & Registry Status**: [SCRAPER_STATUS.md](SCRAPER_STATUS.md)
 * **PostgreSQL Database Schema**: [supabase/schema.sql](supabase/schema.sql)
 * **API Documentation**: Available at `/docs` or [http://localhost:3000/docs](http://localhost:3000/docs)
