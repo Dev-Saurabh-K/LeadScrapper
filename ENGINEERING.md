@@ -10,7 +10,7 @@ The system is built as a unified fullstack application powered by **Next.js 16 (
 
 ```mermaid
 flowchart TD
-    subgraph Client ["Frontend Layer (Next.js 16 + React 19 + Tailwind CSS)"]
+    subgraph Client ["Frontend Layer (Next.js 16 + React 19 + Dark Acrylic Glassmorphism)"]
         Dashboard["Dashboard & Metrics UI (app/page.js)"]
         Console["Live Terminal (SSE Event Stream)"]
         LeadsTable["Interactive Leads Table & Modals"]
