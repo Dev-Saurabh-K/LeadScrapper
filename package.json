@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/test-connectors.mjs"
+    "test": "node scripts/test-connectors.mjs",
+    "scrape": "node scripts/run-scraper.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
