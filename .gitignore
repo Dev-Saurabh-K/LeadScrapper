@@ -45,3 +45,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated export files
+/exports/*
+!/exports/.gitkeep
+*.xlsx
+*.xls
+*.csv
+
