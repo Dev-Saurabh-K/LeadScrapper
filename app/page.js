@@ -442,39 +442,39 @@ export default function Dashboard() {
     : totalLeads;
 
   return (
-    <div className="relative min-h-screen bg-[#030712] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
-      {/* Ambient Acrylic Glow Effect */}
+    <div className="relative min-h-screen bg-[#f8fafc] text-slate-900 antialiased selection:bg-blue-600 selection:text-white">
+      {/* Ambient Glow Effect */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[1000px] bg-gradient-to-b from-blue-600/10 via-indigo-600/5 to-transparent blur-3xl" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[1000px] bg-gradient-to-b from-blue-200/30 via-slate-200/20 to-transparent blur-3xl" />
       </div>
 
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-slate-950/75 backdrop-blur-xl shadow-xl shadow-black/20">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-xs">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-indigo-600 to-cyan-400 shadow-lg shadow-blue-500/25 ring-1 ring-white/20">
-              <Building2 className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-md shadow-blue-500/20 text-white">
+              <Building2 className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold tracking-tight text-white">B2B Lead Scraper</h1>
-                <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-400 ring-1 ring-blue-500/25">
+                <h1 className="text-lg font-bold tracking-tight text-black">B2B Lead Scraper</h1>
+                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200">
                   Global Registries
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Automated multi-country lead intelligence & export</p>
+              <p className="text-xs text-slate-600">Automated multi-country lead intelligence & export</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* System Health Indicators */}
-            <div className="hidden items-center gap-2.5 rounded-full border border-white/5 bg-slate-900/60 px-3.5 py-1.5 md:flex backdrop-blur-md">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-medium text-slate-300">
+            <div className="hidden items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 md:flex shadow-2xs">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-medium text-slate-700">
                 DB: {health?.database?.mode === 'supabase' ? 'Supabase Cloud' : 'Local Storage'}
               </span>
-              <span className="text-slate-600">|</span>
-              <span className="text-xs font-medium text-slate-300">
+              <span className="text-slate-300">|</span>
+              <span className="text-xs font-medium text-slate-700">
                 SMTP: {health?.email?.isConfigured ? 'Ready' : 'Off'}
               </span>
             </div>
@@ -482,7 +482,7 @@ export default function Dashboard() {
             {/* Launch Scrape CTA */}
             <button
               onClick={() => setActiveTab('scraper')}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 border border-blue-400/20 transition-all active:scale-[0.98] focus:outline-none"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-all active:scale-[0.98] focus:outline-none"
             >
               <Play className="h-4 w-4 fill-current" />
               <span>Run Scraper</span>
@@ -491,19 +491,19 @@ export default function Dashboard() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="mx-auto flex max-w-7xl border-t border-white/5 px-4 sm:px-6">
+        <div className="mx-auto flex max-w-7xl border-t border-slate-200 px-4 sm:px-6">
           <nav className="flex space-x-2 py-2 overflow-x-auto">
             <button
               onClick={() => setActiveTab('explorer')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'explorer'
-                  ? 'border border-blue-500/30 bg-blue-500/15 text-blue-400 shadow-xs shadow-blue-500/20'
-                  : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
+                  ? 'border border-blue-200 bg-blue-50 text-blue-700 shadow-xs font-semibold'
+                  : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
               <Search className="h-4 w-4" />
               <span>Leads Explorer</span>
-              <span className="rounded-full bg-slate-800/90 px-1.5 py-0.2 font-mono text-[10px] text-slate-300">
+              <span className="rounded-full bg-slate-100 px-1.5 py-0.2 font-mono text-[10px] text-slate-700 border border-slate-200">
                 {totalLeads}
               </span>
             </button>
@@ -511,13 +511,13 @@ export default function Dashboard() {
               onClick={() => setActiveTab('exporter')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'exporter'
-                  ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-400 shadow-xs shadow-emerald-500/20'
-                  : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
+                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-xs font-semibold'
+                  : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
-              <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
               <span>Export Leads</span>
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] text-emerald-300 border border-emerald-500/20">
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[10px] text-emerald-800 border border-emerald-200">
                 Select Columns
               </span>
             </button>
@@ -525,20 +525,20 @@ export default function Dashboard() {
               onClick={() => setActiveTab('scraper')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'scraper'
-                  ? 'border border-blue-500/30 bg-blue-500/15 text-blue-400 shadow-xs shadow-blue-500/20'
-                  : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
+                  ? 'border border-blue-200 bg-blue-50 text-blue-700 shadow-xs font-semibold'
+                  : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
               <Sliders className="h-4 w-4" />
               <span>Scraper Control & Live Logs</span>
-              {isScraping && <span className="h-2 w-2 rounded-full bg-blue-400 animate-ping" />}
+              {isScraping && <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />}
             </button>
             <button
               onClick={() => setActiveTab('email')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'email'
-                  ? 'border border-blue-500/30 bg-blue-500/15 text-blue-400 shadow-xs shadow-blue-500/20'
-                  : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
+                  ? 'border border-blue-200 bg-blue-50 text-blue-700 shadow-xs font-semibold'
+                  : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
               <Mail className="h-4 w-4" />
@@ -548,13 +548,13 @@ export default function Dashboard() {
               onClick={() => setActiveTab('history')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'history'
-                  ? 'border border-blue-500/30 bg-blue-500/15 text-blue-400 shadow-xs shadow-blue-500/20'
-                  : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
+                  ? 'border border-slate-300 bg-white text-black shadow-xs font-semibold'
+                  : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
               <Clock className="h-4 w-4" />
               <span>Job History</span>
-              <span className="rounded-full bg-slate-800/90 px-1.5 py-0.2 font-mono text-[10px] text-slate-300">
+              <span className="rounded-full bg-slate-100 px-1.5 py-0.2 font-mono text-[10px] text-slate-700 border border-slate-200">
                 {jobs.length}
               </span>
             </button>
@@ -562,8 +562,8 @@ export default function Dashboard() {
               onClick={() => setActiveTab('api')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'api'
-                  ? 'border border-blue-500/30 bg-blue-500/15 text-blue-400 shadow-xs shadow-blue-500/20'
-                  : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
+                  ? 'border border-slate-300 bg-white text-black shadow-xs font-semibold'
+                  : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
               <Terminal className="h-4 w-4" />
@@ -583,62 +583,63 @@ export default function Dashboard() {
         {/* TAB 1: LEADS EXPLORER */}
         {activeTab === 'explorer' && (
           <div className="space-y-4">
-            {/* Metric Cards Banner (Bento Acrylic) */}
+            {/* Metric Cards Banner (Off-White & Red/Blue/Green/Black Accents) */}
             <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Leads</span>
-                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-2 text-blue-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Leads</span>
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-2 text-blue-600">
                     <Building2 className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tracking-tight text-white">{totalLeads}</span>
-                  <span className="text-xs text-slate-400">stored leads</span>
+                  <span className="text-2xl font-bold tracking-tight text-black">{totalLeads}</span>
+                  <span className="text-xs text-slate-500">stored leads</span>
                 </div>
               </div>
 
-              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Enriched Contacts</span>
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Enriched Contacts</span>
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-2 text-emerald-600">
                     <Mail className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tracking-tight text-white">{enrichedLeads}</span>
-                  <span className="text-xs font-semibold text-emerald-400">{enrichedPct}% with contact</span>
+                  <span className="text-2xl font-bold tracking-tight text-black">{enrichedLeads}</span>
+                  <span className="text-xs font-semibold text-emerald-700">{enrichedPct}% with contact</span>
                 </div>
               </div>
 
-              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Countries Covered</span>
-                  <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-2 text-indigo-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Countries Covered</span>
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-2 text-blue-600">
                     <Globe className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tracking-tight text-white">{activeCountries}</span>
-                  <span className="text-xs text-slate-400">of 7 supported</span>
+                  <span className="text-2xl font-bold tracking-tight text-black">{activeCountries}</span>
+                  <span className="text-xs text-slate-500">of 7 supported</span>
                 </div>
               </div>
 
-              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Scrape Jobs Run</span>
-                  <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-2 text-cyan-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Scrape Jobs Run</span>
+                  <div className="rounded-xl border border-rose-100 bg-rose-50 p-2 text-rose-600">
                     <RefreshCw className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tracking-tight text-white">{jobs.length}</span>
-                  <span className="text-xs text-cyan-400">automated tasks</span>
+                  <span className="text-2xl font-bold tracking-tight text-black">{jobs.length}</span>
+                  <span className="text-xs text-rose-700 font-semibold">automated tasks</span>
                 </div>
               </div>
             </section>
+
             {/* Search & Filter Bar */}
-            <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-xl backdrop-blur-xl md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
                 <input
@@ -646,7 +647,7 @@ export default function Dashboard() {
                   placeholder="Search company, director, or registration number..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-slate-950/80 py-2 pl-10 pr-4 text-xs text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 backdrop-blur-sm"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2 pl-10 pr-4 text-xs text-black placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                 />
               </div>
 
@@ -654,7 +655,7 @@ export default function Dashboard() {
                 <select
                   value={selectedCountryFilter}
                   onChange={(e) => setSelectedCountryFilter(e.target.value)}
-                  className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-slate-200 focus:border-blue-500 focus:outline-none"
+                  className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800 focus:border-blue-600 focus:bg-white focus:outline-none"
                 >
                   <option value="">All Countries</option>
                   {COUNTRIES.map((c) => (
@@ -666,10 +667,10 @@ export default function Dashboard() {
 
                 <button
                   onClick={() => setHasEmailFilter(!hasEmailFilter)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                     hasEmailFilter
-                      ? 'border-blue-500/50 bg-blue-500/15 text-blue-400'
-                      : 'border-white/10 bg-slate-950/80 text-slate-400 hover:text-slate-200'
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-xs'
+                      : 'border-slate-300 bg-slate-50 text-slate-600 hover:text-black hover:bg-slate-100'
                   }`}
                 >
                   <Mail className="h-3.5 w-3.5" />
@@ -678,10 +679,10 @@ export default function Dashboard() {
 
                 <button
                   onClick={() => setHasPhoneFilter(!hasPhoneFilter)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                     hasPhoneFilter
-                      ? 'border-blue-500/50 bg-blue-500/15 text-blue-400'
-                      : 'border-white/10 bg-slate-950/80 text-slate-400 hover:text-slate-200'
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-xs'
+                      : 'border-slate-300 bg-slate-50 text-slate-600 hover:text-black hover:bg-slate-100'
                   }`}
                 >
                   <Phone className="h-3.5 w-3.5" />
@@ -693,7 +694,7 @@ export default function Dashboard() {
                     fetchLeads();
                     fetchHealth();
                   }}
-                  className="rounded-xl border border-white/10 bg-slate-950/80 p-2 text-slate-400 hover:text-slate-200 transition"
+                  className="rounded-xl border border-slate-300 bg-slate-50 p-2 text-slate-600 hover:text-black hover:bg-slate-100 transition"
                   title="Refresh Leads"
                 >
                   <RefreshCw className={`h-4 w-4 ${loadingLeads ? 'animate-spin' : ''}`} />
@@ -702,50 +703,50 @@ export default function Dashboard() {
             </div>
 
             {/* Leads Table */}
-            <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 shadow-2xl backdrop-blur-xl">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b border-white/5 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
+                <table className="w-full text-left text-xs text-slate-800">
+                  <thead className="border-b border-slate-200 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-700 font-semibold">
                     <tr>
-                      <th className="py-3.5 pl-4 pr-3 font-semibold">Company Name</th>
-                      <th className="px-3 py-3.5 font-semibold text-emerald-400">
+                      <th className="py-3.5 pl-4 pr-3 text-black font-bold">Company Name</th>
+                      <th className="px-3 py-3.5 font-bold text-emerald-700">
                         <span className="flex items-center gap-1.5">
-                          <Star className="h-3 w-3 fill-emerald-400 text-emerald-400" />
+                          <Star className="h-3 w-3 fill-emerald-600 text-emerald-600" />
                           <span>Phone & Email (P1)</span>
                         </span>
                       </th>
-                      <th className="px-3 py-3.5 font-semibold text-cyan-400">
+                      <th className="px-3 py-3.5 font-bold text-blue-700">
                         <span className="flex items-center gap-1.5">
-                          <Globe className="h-3 w-3 text-cyan-400" />
+                          <Globe className="h-3 w-3 text-blue-600" />
                           <span>Website (P2)</span>
                         </span>
                       </th>
-                      <th className="px-3 py-3.5 font-semibold">Country</th>
-                      <th className="px-3 py-3.5 font-semibold">Reg. Number</th>
-                      <th className="px-3 py-3.5 font-semibold">Director / Officers</th>
-                      <th className="px-3 py-3.5 font-semibold">Industry / Type</th>
-                      <th className="py-3.5 pl-3 pr-4 text-right font-semibold">Actions</th>
+                      <th className="px-3 py-3.5">Country</th>
+                      <th className="px-3 py-3.5">Reg. Number</th>
+                      <th className="px-3 py-3.5">Director / Officers</th>
+                      <th className="px-3 py-3.5">Industry / Type</th>
+                      <th className="py-3.5 pl-3 pr-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/[0.04] font-normal">
+                  <tbody className="divide-y divide-slate-100 font-normal">
                     {leads.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="py-12 text-center text-slate-400">
+                        <td colSpan="8" className="py-12 text-center text-slate-500">
                           {loadingLeads ? (
                             <div className="flex flex-col items-center justify-center gap-2">
-                              <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
-                              <span>Loading leads from database...</span>
+                              <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+                              <span className="font-medium text-slate-700">Loading leads from database...</span>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center gap-2">
-                              <Building2 className="h-8 w-8 text-slate-600" />
-                              <span className="font-medium text-slate-300">No leads found</span>
+                              <Building2 className="h-8 w-8 text-slate-400" />
+                              <span className="font-bold text-black">No leads found</span>
                               <p className="text-xs text-slate-500">
                                 Launch a scrape job using the button above to populate your database!
                               </p>
                               <button
                                 onClick={() => setActiveTab('scraper')}
-                                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:from-blue-500 hover:to-indigo-500"
+                                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs"
                               >
                                 <Play className="h-3.5 w-3.5 fill-current" />
                                 Start Scraping Now
@@ -756,30 +757,30 @@ export default function Dashboard() {
                       </tr>
                     ) : (
                       leads.map((lead) => (
-                        <tr key={lead.id} className="transition hover:bg-slate-800/30">
+                        <tr key={lead.id} className="transition-colors hover:bg-slate-50">
                           <td className="py-3.5 pl-4 pr-3">
-                            <div className="font-semibold text-white">{lead.company_name}</div>
+                            <div className="font-bold text-black">{lead.company_name}</div>
                           </td>
                           {/* Priority 1: Phone & Email */}
                           <td className="px-3 py-3.5">
                             <div className="flex flex-col gap-1">
                               {lead.phone ? (
-                                <span className="inline-flex items-center gap-1.5 text-emerald-300 font-medium font-mono text-[11px]">
-                                  <Phone className="h-3 w-3 text-emerald-400 shrink-0" />
+                                <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold font-mono text-[11px]">
+                                  <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
                                   <span>{lead.phone}</span>
                                 </span>
                               ) : null}
                               {lead.email ? (
                                 <a
                                   href={`mailto:${lead.email}`}
-                                  className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-emerald-200 hover:underline font-mono text-[11px]"
+                                  className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-900 hover:underline font-semibold font-mono text-[11px]"
                                 >
-                                  <Mail className="h-3 w-3 text-emerald-400 shrink-0" />
+                                  <Mail className="h-3 w-3 text-emerald-600 shrink-0" />
                                   <span>{lead.email}</span>
                                 </a>
                               ) : null}
                               {!lead.email && !lead.phone && (
-                                <span className="text-[11px] text-slate-600 font-mono">None discovered</span>
+                                <span className="text-[11px] text-slate-400 font-mono">None discovered</span>
                               )}
                             </div>
                           </td>
@@ -790,36 +791,36 @@ export default function Dashboard() {
                                 href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 hover:underline"
+                                className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline font-medium"
                               >
-                                <Globe className="h-3 w-3 text-cyan-400 shrink-0" />
+                                <Globe className="h-3 w-3 text-blue-600 shrink-0" />
                                 <span className="truncate max-w-[150px]">{lead.website.replace(/^https?:\/\//, '')}</span>
                                 <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-70" />
                               </a>
                             ) : (
-                              <span className="text-slate-600">—</span>
+                              <span className="text-slate-400">—</span>
                             )}
                           </td>
                           <td className="whitespace-nowrap px-3 py-3.5">
-                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/5 bg-slate-900/60 px-2 py-1 text-xs text-slate-200">
+                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-800">
                               <CountryFlag code={lead.country} className="h-3 w-4.5" />
                               <span className="font-medium">{lead.country}</span>
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-3.5 font-mono text-slate-300">
-                            {lead.registration_number || <span className="text-slate-600">—</span>}
+                          <td className="whitespace-nowrap px-3 py-3.5 font-mono text-slate-800">
+                            {lead.registration_number || <span className="text-slate-400">—</span>}
                           </td>
-                          <td className="max-w-[200px] truncate px-3 py-3.5 text-slate-300">
-                            {lead.director || <span className="text-slate-600">—</span>}
+                          <td className="max-w-[200px] truncate px-3 py-3.5 text-slate-700">
+                            {lead.director || <span className="text-slate-400">—</span>}
                           </td>
-                          <td className="max-w-[180px] truncate px-3 py-3.5 text-slate-400">
-                            {lead.industry || lead.company_type || <span className="text-slate-600">—</span>}
+                          <td className="max-w-[180px] truncate px-3 py-3.5 text-slate-600">
+                            {lead.industry || lead.company_type || <span className="text-slate-400">—</span>}
                           </td>
                           <td className="whitespace-nowrap py-3.5 pl-3 pr-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => setSelectedLead(lead)}
-                                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                                className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-black transition"
                                 title="View Lead Details"
                               >
                                 <Eye className="h-4 w-4" />
@@ -827,7 +828,7 @@ export default function Dashboard() {
                               {lead.website && (
                                 <button
                                   onClick={() => handleEnrichLead(lead.id)}
-                                  className="rounded p-1 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300"
+                                  className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
                                   title="Crawl Website for Contact Info"
                                 >
                                   <Sparkles className="h-4 w-4" />
@@ -843,9 +844,9 @@ export default function Dashboard() {
               </div>
 
               {/* Table Footer */}
-              <div className="flex items-center justify-between border-t border-slate-800 bg-slate-900/80 px-4 py-3 text-xs text-slate-400">
-                <span>Showing {leads.length} leads</span>
-                <span className="font-mono">Export: exports/Master_B2B_Leads.xlsx</span>
+              <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                <span>Showing <strong className="text-black">{leads.length}</strong> leads</span>
+                <span className="font-mono text-slate-500">Master Dataset: exports/Master_B2B_Leads.xlsx</span>
               </div>
             </div>
           </div>
@@ -855,13 +856,13 @@ export default function Dashboard() {
         {activeTab === 'scraper' && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Left: Configuration Form */}
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl backdrop-blur-xl lg:col-span-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-white">Scraper Settings</h2>
-                  <p className="text-xs text-slate-400">Target free public corporate registries</p>
+                  <h2 className="text-base font-bold text-slate-900">Scraper Settings</h2>
+                  <p className="text-xs text-slate-500">Target free public corporate registries</p>
                 </div>
-                <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-400 ring-1 ring-blue-500/20">
+                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-200">
                   Polite Rate Limiting
                 </span>
               </div>
@@ -869,7 +870,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {/* Country Checkboxes */}
                 <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-700">
                     Select Target Registries
                   </label>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -882,18 +883,18 @@ export default function Dashboard() {
                           onClick={() => toggleCountry(c.code)}
                           className={`flex items-center justify-between rounded-xl border p-2.5 text-left text-xs transition ${
                             isSelected
-                              ? 'border-blue-500/50 bg-blue-500/15 text-white shadow-xs shadow-blue-500/20'
-                              : 'border-white/5 bg-slate-950/60 text-slate-400 hover:border-white/10 hover:text-slate-200'
+                              ? 'border-blue-600 bg-blue-50 text-blue-900 shadow-xs'
+                              : 'border-slate-200 bg-slate-50/70 text-slate-600 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900'
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
                             <CountryFlag code={c.code} className="h-4 w-5" />
                             <div>
-                              <div className="font-medium text-slate-200">{c.name}</div>
+                              <div className="font-medium text-slate-900">{c.name}</div>
                               <div className="text-[10px] text-slate-500">{c.source}</div>
                             </div>
                           </div>
-                          {isSelected && <CheckCircle2 className="h-4 w-4 text-blue-400 shrink-0" />}
+                          {isSelected && <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />}
                         </button>
                       );
                     })}
@@ -902,7 +903,7 @@ export default function Dashboard() {
 
                 {/* Search Query / Industry */}
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-300">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Industry / Keyword Search Query
                   </label>
                   <input
@@ -910,20 +911,20 @@ export default function Dashboard() {
                     value={scraperQuery}
                     onChange={(e) => setScraperQuery(e.target.value)}
                     placeholder="e.g. software, logistics, finance (leave blank for latest)"
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                   />
                 </div>
 
                 {/* Limit and Delay */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-300">
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
                       Limit per Country
                     </label>
                     <select
                       value={scraperLimit}
                       onChange={(e) => setScraperLimit(Number(e.target.value))}
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-slate-100 focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none"
                     >
                       <option value="5">5 records</option>
                       <option value="10">10 records</option>
@@ -933,13 +934,13 @@ export default function Dashboard() {
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-300">
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
                       Polite Delay (ms)
                     </label>
                     <select
                       value={delayMs}
                       onChange={(e) => setDelayMs(Number(e.target.value))}
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-slate-100 focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none"
                     >
                       <option value="500">500 ms</option>
                       <option value="1000">1000 ms (Recommended)</option>
@@ -949,10 +950,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* Enrichment Toggle */}
-                <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-950/60 p-3">
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-3">
                   <div>
-                    <div className="text-xs font-semibold text-slate-200">Enrich Company Websites</div>
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-xs font-semibold text-slate-900">Enrich Company Websites</div>
+                    <div className="text-[11px] text-slate-500">
                       Politely crawl Contact/About page for publicly visible emails & phones
                     </div>
                   </div>
@@ -960,7 +961,7 @@ export default function Dashboard() {
                     type="checkbox"
                     checked={enrichWebsite}
                     onChange={(e) => setEnrichWebsite(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500"
                   />
                 </div>
 
@@ -969,10 +970,10 @@ export default function Dashboard() {
                   type="button"
                   disabled={isScraping}
                   onClick={handleStartScrape}
-                  className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white shadow-lg transition active:scale-[0.98] ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition active:scale-[0.98] ${
                     isScraping
-                      ? 'cursor-not-allowed bg-blue-800/80 opacity-60'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-blue-600/25'
+                      ? 'cursor-not-allowed bg-blue-800 opacity-60'
+                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
                   }`}
                 >
                   {isScraping ? (
@@ -990,10 +991,10 @@ export default function Dashboard() {
               </div>
 
               {/* Email summary test trigger */}
-              <div className="mt-6 border-t border-white/5 pt-4">
+              <div className="mt-6 border-t border-slate-200 pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-medium text-slate-300">SMTP Notification Test</div>
+                    <div className="text-xs font-semibold text-slate-800">SMTP Notification Test</div>
                     <div className="text-[11px] text-slate-500">
                       Recipient: {health?.email?.recipient || 'Not set'}
                     </div>
@@ -1001,7 +1002,7 @@ export default function Dashboard() {
                   <button
                     onClick={handleSendTestEmail}
                     disabled={sendingTestEmail}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950/80 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-850 hover:text-white transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition"
                   >
                     <Send className="h-3 w-3" />
                     <span>{sendingTestEmail ? 'Sending...' : 'Test Email'}</span>
@@ -1010,7 +1011,7 @@ export default function Dashboard() {
                 {emailStatusMsg && (
                   <div
                     className={`mt-2 rounded-lg p-2 text-xs ${
-                      emailStatusMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      emailStatusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
                     }`}
                   >
                     {emailStatusMsg.text}
@@ -1020,45 +1021,45 @@ export default function Dashboard() {
             </div>
 
             {/* Right: Live Activity Stream Terminal */}
-            <div className="flex flex-col rounded-2xl border border-white/5 bg-slate-950/80 p-4 shadow-xl backdrop-blur-xl lg:col-span-7">
-              {/* Terminal Window Header (Mac Glass Style) */}
-              <div className="mb-3 flex items-center justify-between border-b border-white/5 pb-3">
+            <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-xs lg:col-span-7">
+              {/* Terminal Window Header */}
+              <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80 inline-block" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80 inline-block" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80 inline-block" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500 inline-block" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 inline-block" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Terminal className="h-3.5 w-3.5 text-blue-400" />
-                    <span className="font-mono text-xs font-semibold text-slate-200">
+                    <Terminal className="h-3.5 w-3.5 text-blue-600" />
+                    <span className="font-mono text-xs font-semibold text-slate-900">
                       Live Scraping Console (SSE Stream)
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {isScraping && (
-                    <span className="flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 ring-1 ring-blue-500/20">
-                      <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />
+                    <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-200">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
                       Streaming
                     </span>
                   )}
                   <button
                     onClick={() => setLiveLogs([])}
-                    className="text-[11px] text-slate-500 hover:text-slate-300 transition"
+                    className="text-[11px] text-slate-500 hover:text-slate-800 transition"
                   >
                     Clear Console
                   </button>
                 </div>
               </div>
 
-              {/* Terminal Logs Window */}
-              <div className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed max-h-[460px] min-h-[360px] rounded-xl bg-black/60 p-3 space-y-1 border border-white/5 shadow-inner">
+              {/* Terminal Logs Window (High-contrast Developer Dark Screen) */}
+              <div className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed max-h-[460px] min-h-[360px] rounded-xl bg-slate-950 p-3 space-y-1 border border-slate-900 shadow-inner">
                 {liveLogs.length === 0 ? (
-                  <div className="flex h-full flex-col items-center justify-center py-16 text-slate-600">
+                  <div className="flex h-full flex-col items-center justify-center py-16 text-slate-500">
                     <Terminal className="h-8 w-8 mb-2 opacity-40 text-slate-500" />
                     <span>Terminal idle. Ready to receive scrape stream.</span>
-                    <span className="text-[10px] text-slate-700">Live SSE events stream here in real-time.</span>
+                    <span className="text-[10px] text-slate-600">Live SSE events stream here in real-time.</span>
                   </div>
                 ) : (
                   liveLogs.map((log, idx) => {
@@ -1082,16 +1083,16 @@ export default function Dashboard() {
 
               {/* Job Completed Summary Banner */}
               {jobSummary && (
-                <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+                <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-semibold">
                     <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                       <span>Scrape Job Complete (All Data Saved in Supabase)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setActiveTab('exporter')}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-600/30 transition active:scale-[0.98]"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition active:scale-[0.98]"
                       >
                         <Sliders className="h-3 w-3" />
                         <span>Select Columns & Export / Email Table →</span>
@@ -1099,7 +1100,7 @@ export default function Dashboard() {
                       <a
                         href="/api/export"
                         download="Master_B2B_Leads.xlsx"
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-800 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-700 shadow-sm"
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 hover:bg-slate-50 shadow-xs"
                       >
                         <Download className="h-3 w-3" />
                         <span>All Columns (.xlsx)</span>
@@ -1107,17 +1108,17 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">
-                    <div className="rounded-lg bg-black/40 p-1.5 border border-white/5">
-                      <div className="font-bold text-white">{jobSummary.leadsCollected}</div>
-                      <div className="text-slate-400">New Leads</div>
+                    <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
+                      <div className="font-bold text-slate-900">{jobSummary.leadsCollected}</div>
+                      <div className="text-slate-500">New Leads</div>
                     </div>
-                    <div className="rounded-lg bg-black/40 p-1.5 border border-white/5">
-                      <div className="font-bold text-amber-300">{jobSummary.duplicatesSkipped}</div>
-                      <div className="text-slate-400">Duplicates Skipped</div>
+                    <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
+                      <div className="font-bold text-amber-600">{jobSummary.duplicatesSkipped}</div>
+                      <div className="text-slate-500">Duplicates Skipped</div>
                     </div>
-                    <div className="rounded-lg bg-black/40 p-1.5 border border-white/5">
-                      <div className="font-bold text-slate-300">{jobSummary.errorsCount}</div>
-                      <div className="text-slate-400">Errors</div>
+                    <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
+                      <div className="font-bold text-rose-600">{jobSummary.errorsCount}</div>
+                      <div className="text-slate-500">Errors</div>
                     </div>
                   </div>
                 </div>
@@ -1130,17 +1131,17 @@ export default function Dashboard() {
         {activeTab === 'email' && (
           <div className="space-y-6">
             {/* Header / Overview card */}
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl backdrop-blur-xl">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-white">Email Leads Dispatch & Notification Center</h2>
-                    <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-400 ring-1 ring-blue-500/20">
+                    <h2 className="text-base font-bold text-slate-900">Email Leads Dispatch & Notification Center</h2>
+                    <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-200">
                       SMTP Ready
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Dispatch customized executive lead reports with <code className="text-slate-300">Master_B2B_Leads.xlsx</code> attached directly to any email address.
+                  <p className="mt-1 text-xs text-slate-500">
+                    Dispatch customized executive lead reports with <code className="text-slate-700 font-semibold">Master_B2B_Leads.xlsx</code> attached directly to any email address.
                   </p>
                 </div>
 
@@ -1149,12 +1150,12 @@ export default function Dashboard() {
                     type="button"
                     onClick={handleSendTestEmail}
                     disabled={sendingTestEmail}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
                   >
                     {sendingTestEmail ? (
                       <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <Mail className="h-3.5 w-3.5 text-blue-400" />
+                      <Mail className="h-3.5 w-3.5 text-blue-600" />
                     )}
                     <span>{sendingTestEmail ? 'Sending Test...' : 'Send Quick Ping'}</span>
                   </button>
@@ -1165,19 +1166,19 @@ export default function Dashboard() {
                 <div
                   className={`mt-4 flex items-center justify-between rounded-xl p-3 text-xs ${
                     emailStatusMsg.type === 'success'
-                      ? 'border border-emerald-500/30 bg-emerald-950/30 text-emerald-300'
-                      : 'border border-rose-500/30 bg-rose-950/30 text-rose-300'
+                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                      : 'border border-rose-200 bg-rose-50 text-rose-800'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     {emailStatusMsg.type === 'success' ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     ) : (
-                      <AlertTriangle className="h-4 w-4 text-rose-400" />
+                      <AlertTriangle className="h-4 w-4 text-rose-600" />
                     )}
                     <span>{emailStatusMsg.text}</span>
                   </div>
-                  <button onClick={() => setEmailStatusMsg(null)} className="text-slate-400 hover:text-white">
+                  <button onClick={() => setEmailStatusMsg(null)} className="text-slate-400 hover:text-slate-600">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -1190,17 +1191,17 @@ export default function Dashboard() {
               <div className="space-y-5 lg:col-span-7">
                 <form
                   onSubmit={handleSendCustomEmail}
-                  className="space-y-4 rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl backdrop-blur-xl"
+                  className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs"
                 >
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-white">
-                    <Send className="h-4 w-4 text-blue-400" />
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <Send className="h-4 w-4 text-blue-600" />
                     Compose Leads Dispatch
                   </h3>
 
                   {/* Recipient Field */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                      Recipient Email Address <span className="text-rose-400">*</span>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Recipient Email Address <span className="text-rose-600">*</span>
                     </label>
                     <input
                       type="email"
@@ -1208,7 +1209,7 @@ export default function Dashboard() {
                       value={emailRecipient}
                       onChange={(e) => setEmailRecipient(e.target.value)}
                       placeholder="saurabhkumar.sakr@gmail.com"
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                     />
                     {/* Quick-fill Pills */}
                     <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
@@ -1218,8 +1219,8 @@ export default function Dashboard() {
                         onClick={() => setEmailRecipient('saurabhkumar.sakr@gmail.com')}
                         className={`rounded-lg px-2.5 py-0.5 transition ${
                           emailRecipient === 'saurabhkumar.sakr@gmail.com'
-                            ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                            : 'bg-slate-950/60 text-slate-400 border border-white/5 hover:border-white/10 hover:text-slate-200'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-300 font-medium'
+                            : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900'
                         }`}
                       >
                         saurabhkumar.sakr@gmail.com (Recipient)
@@ -1229,8 +1230,8 @@ export default function Dashboard() {
                         onClick={() => setEmailRecipient('saurabh7739278614@gmail.com')}
                         className={`rounded-lg px-2.5 py-0.5 transition ${
                           emailRecipient === 'saurabh7739278614@gmail.com'
-                            ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                            : 'bg-slate-950/60 text-slate-400 border border-white/5 hover:border-white/10 hover:text-slate-200'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-300 font-medium'
+                            : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900'
                         }`}
                       >
                         saurabh7739278614@gmail.com (Sender)
@@ -1240,7 +1241,7 @@ export default function Dashboard() {
 
                   {/* Subject Line */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Subject Line <span className="text-slate-500 font-normal">(optional — default auto-computed)</span>
                     </label>
                     <input
@@ -1248,20 +1249,20 @@ export default function Dashboard() {
                       value={emailSubject}
                       onChange={(e) => setEmailSubject(e.target.value)}
                       placeholder={`B2B Leads Report — ${previewLeadsCount} Companies (Master_B2B_Leads.xlsx)`}
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                     />
                   </div>
 
                   {/* Filter Scope & Attach Toggle (Grid) */}
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                         Geographic Scope Filter
                       </label>
                       <select
                         value={emailCountryFilter}
                         onChange={(e) => setEmailCountryFilter(e.target.value)}
-                        className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none"
                       >
                         <option value="">All Scraped Countries ({totalLeads} leads)</option>
                         {Array.from(new Set(leads.map((l) => l.country).filter(Boolean))).map((c) => {
@@ -1276,24 +1277,24 @@ export default function Dashboard() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                         Attachment Option
                       </label>
-                      <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 cursor-pointer hover:border-white/20 transition">
+                      <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 cursor-pointer hover:border-slate-300 transition">
                         <input
                           type="checkbox"
                           checked={emailAttachExcel}
                           onChange={(e) => setEmailAttachExcel(e.target.checked)}
-                          className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-xs text-slate-200">Attach Master_B2B_Leads.xlsx</span>
+                        <span className="text-xs text-slate-800">Attach Master_B2B_Leads.xlsx</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Custom Message / Personal Note */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Personal Message / Cover Note
                     </label>
                     <textarea
@@ -1301,16 +1302,16 @@ export default function Dashboard() {
                       value={emailCustomNote}
                       onChange={(e) => setEmailCustomNote(e.target.value)}
                       placeholder="Add personal notes, instructions or executive commentary..."
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/80 p-2.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                     />
                   </div>
 
                   {/* Action Row */}
-                  <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <span className="font-semibold text-slate-200">{previewLeadsCount}</span> leads queued
+                  <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="font-semibold text-slate-900">{previewLeadsCount}</span> leads queued
                       {emailAttachExcel && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-400 ring-1 ring-emerald-500/20">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
                           <Paperclip className="h-3 w-3" />
                           Excel attached
                         </span>
@@ -1320,7 +1321,7 @@ export default function Dashboard() {
                     <button
                       type="submit"
                       disabled={isSendingCustomEmail}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 border border-blue-400/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-600/20 transition-all active:scale-[0.98] disabled:opacity-50"
                     >
                       {isSendingCustomEmail ? (
                         <>
@@ -1342,15 +1343,15 @@ export default function Dashboard() {
                   <div
                     className={`rounded-2xl border p-4 text-xs ${
                       customEmailResult.type === 'success'
-                        ? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-300'
-                        : 'border-rose-500/30 bg-rose-950/20 text-rose-300'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                        : 'border-rose-200 bg-rose-50 text-rose-900'
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       {customEmailResult.type === 'success' ? (
-                        <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-600 shrink-0" />
                       ) : (
-                        <AlertTriangle className="mt-0.5 h-5 w-5 text-rose-400 shrink-0" />
+                        <AlertTriangle className="mt-0.5 h-5 w-5 text-rose-600 shrink-0" />
                       )}
                       <div className="flex-1 space-y-1">
                         <div className="font-semibold text-sm">
@@ -1358,14 +1359,14 @@ export default function Dashboard() {
                         </div>
                         <div>{customEmailResult.text}</div>
                         {customEmailResult.messageId && (
-                          <div className="font-mono text-[11px] text-slate-400">
+                          <div className="font-mono text-[11px] text-slate-600">
                             Message-ID: {customEmailResult.messageId}
                           </div>
                         )}
                       </div>
                       <button
                         onClick={() => setCustomEmailResult(null)}
-                        className="text-slate-400 hover:text-white"
+                        className="text-slate-400 hover:text-slate-700"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -1376,39 +1377,39 @@ export default function Dashboard() {
 
               {/* RIGHT: Live Inbox Preview (5 cols) */}
               <div className="space-y-4 lg:col-span-5">
-                <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-xl backdrop-blur-xl">
-                  <div className="mb-3 flex items-center justify-between border-b border-white/5 pb-2.5">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                      <Eye className="h-4 w-4 text-blue-400" />
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+                  <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2.5">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                      <Eye className="h-4 w-4 text-blue-600" />
                       <span>Live Recipient Inbox Preview</span>
                     </div>
-                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-400">HTML Format</span>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">HTML Format</span>
                   </div>
 
                   {/* Email Envelope Container */}
-                  <div className="rounded-xl border border-white/5 bg-slate-950/90 p-4 text-xs shadow-inner">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs shadow-inner">
                     {/* Meta Header */}
-                    <div className="space-y-1 border-b border-white/5 pb-3 text-[11px]">
+                    <div className="space-y-1 border-b border-slate-200 pb-3 text-[11px]">
                       <div className="flex justify-between">
                         <span className="text-slate-500">From:</span>
-                        <span className="font-medium text-slate-300">
+                        <span className="font-medium text-slate-800">
                           B2B Lead Scraper &lt;{health?.email?.from || 'saurabh7739278614@gmail.com'}&gt;
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">To:</span>
-                        <span className="font-medium text-blue-400">{emailRecipient || 'recipient@domain.com'}</span>
+                        <span className="font-medium text-blue-600">{emailRecipient || 'recipient@domain.com'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Subject:</span>
-                        <span className="font-semibold text-slate-200 truncate max-w-[240px]">
+                        <span className="font-semibold text-slate-900 truncate max-w-[240px]">
                           {emailSubject || `B2B Leads Report — ${previewLeadsCount} Companies (Master_B2B_Leads.xlsx)`}
                         </span>
                       </div>
                     </div>
 
                     {/* Email Body Mockup */}
-                    <div className="mt-3.5 space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-slate-800 shadow-sm">
+                    <div className="mt-3.5 space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-slate-800 shadow-xs">
                       {/* Header inside email */}
                       <div className="border-b-2 border-blue-600 pb-2 flex items-center gap-2">
                         <BarChart3 className="h-4 w-4 text-blue-600" />
@@ -1430,21 +1431,21 @@ export default function Dashboard() {
                       <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[11px]">
                         <table className="w-full border-collapse">
                           <tbody>
-                            <tr className="border-b border-slate-200/60">
+                            <tr className="border-b border-slate-200">
                               <td className="py-1 text-slate-500 flex items-center gap-1">
                                 <Calendar className="h-3 w-3 text-slate-400" />
                                 <span>Generated:</span>
                               </td>
                               <td className="py-1 text-right font-medium text-slate-800">Today, Just now</td>
                             </tr>
-                            <tr className="border-b border-slate-200/60">
+                            <tr className="border-b border-slate-200">
                               <td className="py-1 text-slate-500 flex items-center gap-1">
                                 <TrendingUp className="h-3 w-3 text-emerald-600" />
                                 <span>Total Companies:</span>
                               </td>
                               <td className="py-1 text-right font-bold text-emerald-600">{previewLeadsCount} leads</td>
                             </tr>
-                            <tr className="border-b border-slate-200/60">
+                            <tr className="border-b border-slate-200">
                               <td className="py-1 text-slate-500 flex items-center gap-1">
                                 <Globe2 className="h-3 w-3 text-slate-400" />
                                 <span>Coverage:</span>
@@ -1486,42 +1487,42 @@ export default function Dashboard() {
             </div>
 
             {/* Dispatch History Card */}
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl backdrop-blur-xl">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-sm font-bold text-white">
-                  <Clock className="h-4 w-4 text-blue-400" />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <Clock className="h-4 w-4 text-blue-600" />
                   Recent Email Dispatches
                 </h3>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   {sentEmailHistory.length} sent in this session
                 </span>
               </div>
 
               {sentEmailHistory.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-500">
+                <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-xs text-slate-500">
                   No email reports dispatched in this session yet. Compose an email above to send the Master Excel report.
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-white/5 bg-slate-950">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
                   <table className="w-full text-left text-xs">
-                    <thead className="border-b border-white/5 bg-slate-900/80 text-slate-400">
+                    <thead className="border-b border-slate-200 bg-slate-50 text-slate-700 font-semibold">
                       <tr>
-                        <th className="px-3.5 py-2.5 font-medium">Recipient</th>
-                        <th className="px-3.5 py-2.5 font-medium">Subject</th>
-                        <th className="px-3.5 py-2.5 font-medium">Leads</th>
-                        <th className="px-3.5 py-2.5 font-medium">Time</th>
-                        <th className="px-3.5 py-2.5 font-medium">Status / Message-ID</th>
+                        <th className="px-3.5 py-2.5">Recipient</th>
+                        <th className="px-3.5 py-2.5">Subject</th>
+                        <th className="px-3.5 py-2.5">Leads</th>
+                        <th className="px-3.5 py-2.5">Time</th>
+                        <th className="px-3.5 py-2.5">Status / Message-ID</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04] text-slate-300">
+                    <tbody className="divide-y divide-slate-200 text-slate-700">
                       {sentEmailHistory.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-slate-900/40 transition">
-                          <td className="px-3.5 py-2.5 font-medium text-white">{item.recipient}</td>
-                          <td className="px-3.5 py-2.5 text-slate-400 max-w-xs truncate">{item.subject}</td>
-                          <td className="px-3.5 py-2.5 font-mono text-emerald-400">{item.leadsCount}</td>
-                          <td className="px-3.5 py-2.5 text-slate-400">{item.timestamp}</td>
-                          <td className="px-3.5 py-2.5 font-mono text-[11px] text-blue-400">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-400 mr-1.5 ring-1 ring-emerald-500/20">
+                        <tr key={idx} className="hover:bg-slate-50/80 transition">
+                          <td className="px-3.5 py-2.5 font-medium text-slate-900">{item.recipient}</td>
+                          <td className="px-3.5 py-2.5 text-slate-600 max-w-xs truncate">{item.subject}</td>
+                          <td className="px-3.5 py-2.5 font-mono font-semibold text-emerald-600">{item.leadsCount}</td>
+                          <td className="px-3.5 py-2.5 text-slate-500">{item.timestamp}</td>
+                          <td className="px-3.5 py-2.5 font-mono text-[11px] text-blue-600">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 mr-1.5 ring-1 ring-emerald-200">
                               <Check className="h-3 w-3" /> Sent
                             </span>
                             {item.messageId ? `${item.messageId.slice(0, 18)}...` : 'Delivered'}
@@ -1538,45 +1539,45 @@ export default function Dashboard() {
 
         {/* TAB 3: JOB HISTORY */}
         {activeTab === 'history' && (
-          <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl backdrop-blur-xl">
-            <h2 className="mb-4 text-base font-bold text-white">Scrape Job History</h2>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+            <h2 className="mb-4 text-base font-bold text-slate-900">Scrape Job History</h2>
             {jobs.length === 0 ? (
-              <p className="py-8 text-center text-xs text-slate-400">No jobs run yet.</p>
+              <p className="py-8 text-center text-xs text-slate-500">No jobs run yet.</p>
             ) : (
-              <div className="divide-y divide-white/[0.04]">
+              <div className="divide-y divide-slate-200">
                 {jobs.map((job) => (
                   <div key={job.id} className="flex flex-col justify-between gap-3 py-3.5 sm:flex-row sm:items-center">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-white">
+                        <span className="font-mono text-xs font-semibold text-slate-900">
                           Job #{job.id.slice(0, 8)}
                         </span>
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
                             job.status === 'completed'
-                              ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
-                              : 'bg-blue-500/10 text-blue-400 ring-blue-500/20'
+                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                              : 'bg-blue-50 text-blue-700 ring-blue-200'
                           }`}
                         >
                           {job.status}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-500">
                           Started: {new Date(job.started_at).toLocaleString()}
                         </span>
                       </div>
-                      <div className="mt-1 text-xs text-slate-400">
+                      <div className="mt-1 text-xs text-slate-500">
                         Countries: {Array.isArray(job.countries) ? job.countries.join(', ') : 'All'}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-4 text-xs font-mono">
-                      <div className="text-emerald-400 font-semibold">
+                      <div className="text-emerald-600 font-semibold">
                         +{job.leads_collected} leads
                       </div>
-                      <div className="text-amber-400">
+                      <div className="text-amber-600">
                         {job.duplicates_skipped} duplicates
                       </div>
-                      <div className="text-slate-400">
+                      <div className="text-slate-500">
                         {job.errors_count} errors
                       </div>
                     </div>
@@ -1590,76 +1591,76 @@ export default function Dashboard() {
         {/* TAB 4: API DOCUMENTATION & INTEGRATION */}
         {activeTab === 'api' && (
           <div className="space-y-6">
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl backdrop-blur-xl">
-              <h2 className="text-base font-bold text-white">REST API Endpoints</h2>
-              <p className="text-xs text-slate-400 mb-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+              <h2 className="text-base font-bold text-slate-900">REST API Endpoints</h2>
+              <p className="text-xs text-slate-500 mb-4">
                 Full programmatic access to run scrapers, query leads, and stream Excel files.
               </p>
 
               <div className="space-y-4">
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-3.5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
                   <div className="flex items-center gap-2 font-mono text-xs">
-                    <span className="rounded-md bg-blue-500/20 px-2 py-0.5 font-bold text-blue-400 border border-blue-500/30">POST</span>
-                    <span className="text-slate-200">/api/scrape</span>
+                    <span className="rounded-md bg-blue-100 px-2 py-0.5 font-bold text-blue-700 border border-blue-200">POST</span>
+                    <span className="text-slate-900 font-semibold">/api/scrape</span>
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1.5 text-xs text-slate-600">
                     Triggers a multi-country scrape job. Supports Server-Sent Events with <code>Accept: text/event-stream</code>.
                   </p>
-                  <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
+                  <pre className="mt-2 rounded-lg bg-slate-950 p-2.5 font-mono text-[11px] text-slate-200 border border-slate-900 shadow-inner">
 {`curl -X POST http://localhost:3000/api/scrape \\
   -H "Content-Type: application/json" \\
   -d '{"countries": ["NO", "FR", "SG", "US"], "query": "technology", "limit": 20, "enrich": true}'`}
                   </pre>
                 </div>
 
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-3.5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
                   <div className="flex items-center gap-2 font-mono text-xs">
-                    <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 font-bold text-emerald-400 border border-emerald-500/30">GET</span>
-                    <span className="text-slate-200">/api/leads</span>
+                    <span className="rounded-md bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700 border border-emerald-200">GET</span>
+                    <span className="text-slate-900 font-semibold">/api/leads</span>
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1.5 text-xs text-slate-600">
                     Query stored leads with search, country, hasEmail, and hasPhone filters.
                   </p>
-                  <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
+                  <pre className="mt-2 rounded-lg bg-slate-950 p-2.5 font-mono text-[11px] text-slate-200 border border-slate-900 shadow-inner">
 {`curl "http://localhost:3000/api/leads?country=Norway&hasEmail=true&limit=50"`}
                   </pre>
                 </div>
 
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-3.5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
                   <div className="flex items-center gap-2 font-mono text-xs">
-                    <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 font-bold text-emerald-400 border border-emerald-500/30">GET</span>
-                    <span className="text-slate-200">/api/export</span>
+                    <span className="rounded-md bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700 border border-emerald-200">GET</span>
+                    <span className="text-slate-900 font-semibold">/api/export</span>
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1.5 text-xs text-slate-600">
                     Streams the generated <code>Master_B2B_Leads.xlsx</code> Excel workbook for download.
                   </p>
-                  <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
+                  <pre className="mt-2 rounded-lg bg-slate-950 p-2.5 font-mono text-[11px] text-slate-200 border border-slate-900 shadow-inner">
 {`curl -O http://localhost:3000/api/export`}
                   </pre>
                 </div>
 
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-3.5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
                   <div className="flex items-center gap-2 font-mono text-xs">
-                    <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 font-bold text-emerald-400 border border-emerald-500/30">GET</span>
-                    <span className="text-slate-200">/api/custom-export/master</span>
+                    <span className="rounded-md bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700 border border-emerald-200">GET</span>
+                    <span className="text-slate-900 font-semibold">/api/custom-export/master</span>
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1.5 text-xs text-slate-600">
                     Returns structured records, available columns, and metrics parsed from <code>exports/Master_B2B_Leads.xlsx</code>.
                   </p>
-                  <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
+                  <pre className="mt-2 rounded-lg bg-slate-950 p-2.5 font-mono text-[11px] text-slate-200 border border-slate-900 shadow-inner">
 {`curl "http://localhost:3000/api/custom-export/master"`}
                   </pre>
                 </div>
 
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-3.5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
                   <div className="flex items-center gap-2 font-mono text-xs">
-                    <span className="rounded-md bg-blue-500/20 px-2 py-0.5 font-bold text-blue-400 border border-blue-500/30">POST</span>
-                    <span className="text-slate-200">/api/custom-export/download</span>
+                    <span className="rounded-md bg-blue-100 px-2 py-0.5 font-bold text-blue-700 border border-blue-200">POST</span>
+                    <span className="text-slate-900 font-semibold">/api/custom-export/download</span>
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1.5 text-xs text-slate-600">
                     Generates and streams a custom-filtered Excel file with only the user-selected columns and filtered rows.
                   </p>
-                  <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
+                  <pre className="mt-2 rounded-lg bg-slate-950 p-2.5 font-mono text-[11px] text-slate-200 border border-slate-900 shadow-inner">
 {`curl -X POST http://localhost:3000/api/custom-export/download \\
   -H "Content-Type: application/json" \\
   -d '{"rows": [...], "selectedColumns": ["Company Name", "Phone", "Email"], "fileName": "Invoices.xlsx"}' \\
@@ -1674,21 +1675,21 @@ export default function Dashboard() {
 
       {/* LEAD DETAILS MODAL */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900/95 p-6 shadow-2xl backdrop-blur-2xl">
-            <div className="flex items-start justify-between border-b border-white/5 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between border-b border-slate-200 pb-3">
               <div>
-                <h3 className="text-base font-bold text-white">{selectedLead.company_name}</h3>
-                <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                <h3 className="text-base font-bold text-slate-900">{selectedLead.company_name}</h3>
+                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                   <CountryFlag code={selectedLead.country} className="h-3 w-4.5" />
                   <span>{selectedLead.country}</span>
                   <span>•</span>
-                  <span className="text-emerald-400">{selectedLead.status || 'Active'}</span>
+                  <span className="text-emerald-600 font-semibold">{selectedLead.status || 'Active'}</span>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedLead(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1696,49 +1697,49 @@ export default function Dashboard() {
 
             <div className="mt-4 space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-2.5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <div className="text-slate-500">Registration Number</div>
-                  <div className="font-mono font-medium text-slate-200">
+                  <div className="font-mono font-medium text-slate-900">
                     {selectedLead.registration_number || 'N/A'}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-2.5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <div className="text-slate-500">Company Type</div>
-                  <div className="font-medium text-slate-200">{selectedLead.company_type || 'N/A'}</div>
+                  <div className="font-medium text-slate-900">{selectedLead.company_type || 'N/A'}</div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/5 bg-slate-950/80 p-2.5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                 <div className="text-slate-500">Director / Officers</div>
-                <div className="font-medium text-slate-200">{selectedLead.director || 'None recorded'}</div>
+                <div className="font-medium text-slate-900">{selectedLead.director || 'None recorded'}</div>
               </div>
 
-              <div className="rounded-xl border border-white/5 bg-slate-950/80 p-2.5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                 <div className="text-slate-500">Registered Address</div>
-                <div className="text-slate-200">{selectedLead.address || 'N/A'}</div>
+                <div className="text-slate-900">{selectedLead.address || 'N/A'}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-2.5">
-                  <div className="text-slate-500">Email Contact</div>
-                  <div className="font-mono text-emerald-400">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Email Contact (Priority 1)</div>
+                  <div className="font-mono text-emerald-600 font-semibold">
                     {selectedLead.email || 'None discovered'}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-2.5">
-                  <div className="text-slate-500">Phone Contact</div>
-                  <div className="font-mono text-cyan-400">{selectedLead.phone || 'None recorded'}</div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Phone Contact (Priority 1)</div>
+                  <div className="font-mono text-emerald-600 font-semibold">{selectedLead.phone || 'None recorded'}</div>
                 </div>
               </div>
 
               {selectedLead.website && (
-                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-2.5">
-                  <div className="text-slate-500">Website</div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Website (Priority 2)</div>
                   <a
                     href={selectedLead.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-blue-400 hover:underline mt-0.5"
+                    className="flex items-center gap-1.5 text-blue-600 hover:underline mt-0.5 font-medium"
                   >
                     <span>{selectedLead.website}</span>
                     <ExternalLink className="h-3 w-3" />
@@ -1747,11 +1748,11 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="mt-5 flex justify-end gap-2 border-t border-white/5 pt-3">
+            <div className="mt-5 flex justify-end gap-2 border-t border-slate-200 pt-3">
               {selectedLead.website && (
                 <button
                   onClick={() => handleEnrichLead(selectedLead.id)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition shadow-sm"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Enrich Contacts</span>
@@ -1759,7 +1760,7 @@ export default function Dashboard() {
               )}
               <button
                 onClick={() => setSelectedLead(null)}
-                className="rounded-xl border border-white/10 bg-slate-800 px-3.5 py-1.5 text-xs text-slate-300 hover:text-white transition"
+                className="rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition shadow-xs"
               >
                 Close
               </button>

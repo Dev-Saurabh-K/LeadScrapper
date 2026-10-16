@@ -367,18 +367,18 @@ export default function LeadDataExporter() {
   const isFiltered = statusFilter !== 'active' || contactPriorityFilter !== 'all' || selectedIndustry || selectedCity || searchQuery;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-slate-900">
       {/* Sleek Minimal Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-white">Export Leads</h2>
+            <h2 className="text-base font-bold text-black">Export Leads</h2>
             <span className="text-xs text-slate-500 font-mono">
               ({dataset.totalRecords} leads in database)
             </span>
             {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5">
             Select columns to export. Leads are sorted with Phone & Email first.
           </p>
         </div>
@@ -390,14 +390,14 @@ export default function LeadDataExporter() {
             value={exportFileName}
             onChange={(e) => setExportFileName(e.target.value)}
             placeholder="Export_File.xlsx"
-            className="w-44 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-44 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono text-black placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 shadow-xs"
           />
 
           {/* Export to Excel (Download) */}
           <button
             onClick={handleExportExcel}
             disabled={isExporting || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition active:scale-[0.98] disabled:opacity-40"
             title="Download Excel spreadsheet locally"
           >
             {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
@@ -413,14 +413,14 @@ export default function LeadDataExporter() {
               }
             }}
             disabled={filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition active:scale-[0.98] disabled:opacity-40 ${
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition active:scale-[0.98] disabled:opacity-40 shadow-xs ${
               showEmailPanel
-                ? 'border-blue-500/50 bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                : 'border-white/10 bg-slate-900/80 hover:bg-slate-800 text-slate-200'
+                ? 'border-blue-600 bg-blue-600 text-white ring-2 ring-blue-300'
+                : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-800'
             }`}
             title="Send this table via email to recipient"
           >
-            <Send className="h-3.5 w-3.5 text-blue-400" />
+            <Send className="h-3.5 w-3.5 text-blue-600" />
             <span>Email Table</span>
           </button>
         </div>
@@ -428,22 +428,22 @@ export default function LeadDataExporter() {
 
       {/* Dispatch Custom Table via Email Panel */}
       {showEmailPanel && (
-        <div className="rounded-2xl border border-blue-500/30 bg-slate-950/90 p-4 shadow-2xl backdrop-blur-xl space-y-3">
-          <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+        <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-md space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-blue-500/10 p-1.5 border border-blue-500/20 text-blue-400">
+              <div className="rounded-lg bg-blue-50 p-1.5 border border-blue-100 text-blue-600">
                 <Mail className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-white">Send Table via Email</h3>
-                <p className="text-[11px] text-slate-400">
+                <h3 className="text-xs font-bold text-black">Send Table via Email</h3>
+                <p className="text-[11px] text-slate-500">
                   Sends an email containing this exact table ({filteredRecords.length} rows, {orderedSelectedColumns.length} selected columns) with the customized Excel workbook attached.
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowEmailPanel(false)}
-              className="rounded-lg p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="rounded-lg p-1 text-slate-400 hover:text-black hover:bg-slate-100 transition"
             >
               <X className="h-4 w-4" />
             </button>
@@ -452,8 +452,8 @@ export default function LeadDataExporter() {
           <form onSubmit={handleSendCustomTableEmail} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">
-                  Recipient Email Address <span className="text-rose-400">*</span>
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                  Recipient Email Address <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="email"
@@ -461,12 +461,12 @@ export default function LeadDataExporter() {
                   value={emailRecipient}
                   onChange={(e) => setEmailRecipient(e.target.value)}
                   placeholder="recipient@example.com"
-                  className="w-full rounded-xl border border-white/10 bg-slate-900/90 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-black placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                   Subject Line
                 </label>
                 <input
@@ -474,13 +474,13 @@ export default function LeadDataExporter() {
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder={`B2B Leads Table — ${filteredRecords.length} Companies`}
-                  className="w-full rounded-xl border border-white/10 bg-slate-900/90 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-black placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-300 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                 Custom Message / Notes (Optional)
               </label>
               <textarea
@@ -488,17 +488,17 @@ export default function LeadDataExporter() {
                 value={emailCustomNote}
                 onChange={(e) => setEmailCustomNote(e.target.value)}
                 placeholder="Hi Team, please find attached the filtered sales leads table with direct phone & email contacts..."
-                className="w-full rounded-xl border border-white/10 bg-slate-900/90 p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs text-black placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-white/5">
-              <label className="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100">
+              <label className="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={alsoDownloadExcel}
                   onChange={(e) => setAlsoDownloadExcel(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+                  className="rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
                 />
                 <span>Also download customized Excel file locally</span>
               </label>
@@ -507,14 +507,14 @@ export default function LeadDataExporter() {
                 <button
                   type="button"
                   onClick={() => setShowEmailPanel(false)}
-                  className="rounded-xl border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+                  className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSendingEmail || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 transition active:scale-[0.98] disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-40"
                 >
                   {isSendingEmail ? (
                     <>
@@ -536,14 +536,14 @@ export default function LeadDataExporter() {
             <div
               className={`rounded-xl border p-2.5 text-xs flex items-center gap-2 ${
                 emailResultMsg.type === 'success'
-                  ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
-                  : 'border-rose-500/20 bg-rose-500/10 text-rose-300'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border-rose-200 bg-rose-50 text-rose-800'
               }`}
             >
               {emailResultMsg.type === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+                <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
               )}
               <span>{emailResultMsg.text}</span>
             </div>
@@ -553,29 +553,29 @@ export default function LeadDataExporter() {
 
       {/* Alerts */}
       {exportSuccess && (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-2 text-xs text-emerald-300">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs text-emerald-800 font-medium">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <span>{exportSuccess}</span>
         </div>
       )}
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3.5 py-2 text-xs text-rose-300">
-          <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+        <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs text-rose-800 font-medium">
+          <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Clean Filters Row (Unified Single Bar) */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/5 bg-slate-900/40 p-2.5 text-xs">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 text-xs shadow-xs">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+          <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search company, phone, email, director..."
-            className="w-full rounded-lg border border-white/10 bg-slate-950/70 pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-8 pr-3 py-1.5 text-xs text-black placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
           />
         </div>
 
@@ -583,7 +583,7 @@ export default function LeadDataExporter() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+          className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none"
         >
           <option value="active">Active Only</option>
           <option value="inactive">Inactive Only</option>
@@ -594,7 +594,7 @@ export default function LeadDataExporter() {
         <select
           value={contactPriorityFilter}
           onChange={(e) => setContactPriorityFilter(e.target.value)}
-          className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+          className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none"
         >
           <option value="all">All Contacts</option>
           <option value="p1_both">Has Phone & Email</option>
@@ -607,7 +607,7 @@ export default function LeadDataExporter() {
           <select
             value={selectedIndustry}
             onChange={(e) => setSelectedIndustry(e.target.value)}
-            className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none max-w-[160px] truncate"
+            className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[160px] truncate"
           >
             <option value="">All Industries</option>
             {dataset.industries.map(ind => (
@@ -621,7 +621,7 @@ export default function LeadDataExporter() {
           <select
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
-            className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none max-w-[130px] truncate"
+            className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[130px] truncate"
           >
             <option value="">All Cities</option>
             {dataset.cities.map(city => (
@@ -634,7 +634,7 @@ export default function LeadDataExporter() {
         {isFiltered && (
           <button
             onClick={handleClearFilters}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-800 px-2 py-1.5 text-xs text-slate-400 hover:text-white transition"
+            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
             title="Reset filters"
           >
             <RotateCcw className="h-3 w-3" />
@@ -644,7 +644,7 @@ export default function LeadDataExporter() {
 
         <button
           onClick={loadScrapedLeads}
-          className="rounded-lg border border-white/5 bg-slate-950/70 p-1.5 text-slate-400 hover:text-slate-200 transition"
+          className="rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-slate-600 hover:text-black hover:bg-slate-100 transition"
           title="Refresh leads dataset"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -652,10 +652,10 @@ export default function LeadDataExporter() {
       </div>
 
       {/* Clean Column Selector (Minimal Pill Grid) */}
-      <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3 space-y-2 text-xs">
+      <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2 text-xs shadow-xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-300">Columns to Export:</span>
+            <span className="font-bold text-black">Columns to Export:</span>
             <span className="text-[11px] text-slate-500 font-mono">
               ({selectedColumns.length} of {validColumns.length} selected)
             </span>
@@ -663,14 +663,14 @@ export default function LeadDataExporter() {
           <div className="flex items-center gap-2 text-[11px]">
             <button
               onClick={handleSelectAllColumns}
-              className="text-slate-400 hover:text-slate-200 transition"
+              className="text-blue-600 hover:text-blue-800 font-medium transition"
             >
               Select All
             </button>
-            <span className="text-slate-600">•</span>
+            <span className="text-slate-300">•</span>
             <button
               onClick={handleDeselectAllColumns}
-              className="text-slate-400 hover:text-slate-200 transition"
+              className="text-slate-500 hover:text-black font-medium transition"
             >
               Deselect All
             </button>
@@ -690,17 +690,17 @@ export default function LeadDataExporter() {
                 className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
                   isSelected
                     ? meta.priority === 1
-                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      ? 'bg-emerald-600 text-white border border-emerald-700 shadow-xs'
                       : meta.priority === 2
-                      ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                      : 'bg-slate-800 text-slate-200 border border-white/10'
-                    : 'bg-slate-950/40 text-slate-500 border border-white/5 hover:border-white/10 hover:text-slate-400'
+                      ? 'bg-blue-600 text-white border border-blue-700 shadow-xs'
+                      : 'bg-slate-900 text-white border border-black shadow-xs'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-black hover:bg-slate-200/60'
                 }`}
               >
                 {isSelected ? (
                   <Check className="h-3 w-3 shrink-0" />
                 ) : (
-                  <span className="h-3 w-3 shrink-0 rounded-xs border border-slate-700 inline-block" />
+                  <span className="h-3 w-3 shrink-0 rounded-xs border border-slate-300 inline-block bg-white" />
                 )}
                 <span>{col}</span>
               </button>
@@ -710,35 +710,35 @@ export default function LeadDataExporter() {
       </div>
 
       {/* Clean Live Preview Table */}
-      <div className="overflow-hidden rounded-xl border border-white/5 bg-slate-900/40 shadow-xl">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
         <div className="overflow-x-auto max-h-[460px]">
           {filteredRecords.length === 0 ? (
-            <div className="py-12 text-center text-slate-400">
+            <div className="py-12 text-center text-slate-500">
               <p className="text-xs font-medium">No company records match your current filters.</p>
               {isFiltered && (
                 <button
                   onClick={handleClearFilters}
-                  className="mt-2 text-xs text-blue-400 hover:underline"
+                  className="mt-2 text-xs text-blue-600 hover:underline font-semibold"
                 >
                   Clear filters
                 </button>
               )}
             </div>
           ) : orderedSelectedColumns.length === 0 ? (
-            <div className="py-12 text-center text-slate-400">
+            <div className="py-12 text-center text-slate-500">
               <p className="text-xs font-medium">No columns selected for export.</p>
               <button
                 onClick={handleSelectAllColumns}
-                className="mt-2 text-xs text-blue-400 hover:underline"
+                className="mt-2 text-xs text-blue-600 hover:underline font-semibold"
               >
                 Select all columns
               </button>
             </div>
           ) : (
-            <table className="w-full text-left text-xs text-slate-300 border-collapse">
-              <thead className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-md border-b border-white/5 text-[11px] font-semibold text-slate-400">
+            <table className="w-full text-left text-xs text-slate-800 border-collapse">
+              <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 text-[11px] font-semibold text-slate-700 uppercase">
                 <tr>
-                  <th className="px-3 py-2.5 w-10 text-center text-slate-500 font-normal">#</th>
+                  <th className="px-3 py-2.5 w-10 text-center text-slate-400 font-normal">#</th>
                   {orderedSelectedColumns.map((col) => {
                     const meta = getColumnPriorityMeta(col);
                     return (
@@ -746,10 +746,10 @@ export default function LeadDataExporter() {
                         key={col}
                         className={`px-3.5 py-2.5 whitespace-nowrap ${
                           meta.priority === 1
-                            ? 'text-emerald-400 font-semibold'
+                            ? 'text-emerald-700 font-bold'
                             : meta.priority === 2
-                            ? 'text-cyan-400 font-semibold'
-                            : ''
+                            ? 'text-blue-700 font-bold'
+                            : 'text-black font-semibold'
                         }`}
                       >
                         {col}
@@ -758,15 +758,15 @@ export default function LeadDataExporter() {
                   })}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.03]">
+              <tbody className="divide-y divide-slate-100">
                 {paginatedRecords.map((row, idx) => {
                   const rowNumber = (currentPage - 1) * pageSize + idx + 1;
                   return (
                     <tr
                       key={row.__rowId || idx}
-                      className="hover:bg-slate-800/25 transition-colors"
+                      className="hover:bg-slate-50 transition-colors"
                     >
-                      <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-500">
+                      <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-400">
                         {rowNumber}
                       </td>
                       {orderedSelectedColumns.map((col) => {
@@ -778,9 +778,9 @@ export default function LeadDataExporter() {
                           return (
                             <td key={col} className="px-3.5 py-2 whitespace-nowrap font-mono text-[11px]">
                               {val ? (
-                                <span className="text-emerald-300 font-medium">{val}</span>
+                                <span className="text-emerald-700 font-semibold">{val}</span>
                               ) : (
-                                <span className="text-slate-600">—</span>
+                                <span className="text-slate-300">—</span>
                               )}
                             </td>
                           );
@@ -793,12 +793,12 @@ export default function LeadDataExporter() {
                               {val ? (
                                 <a
                                   href={`mailto:${val}`}
-                                  className="text-emerald-300 hover:underline"
+                                  className="text-emerald-700 hover:underline font-semibold"
                                 >
                                   {val}
                                 </a>
                               ) : (
-                                <span className="text-slate-600">—</span>
+                                <span className="text-slate-300">—</span>
                               )}
                             </td>
                           );
@@ -812,7 +812,7 @@ export default function LeadDataExporter() {
                                 href={val.startsWith('http') ? val : `https://${val}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-cyan-400 hover:underline"
+                                className="inline-flex items-center gap-1 text-blue-600 hover:underline hover:text-blue-800"
                               >
                                 <span className="truncate max-w-[150px]">{val.replace(/^https?:\/\//, '')}</span>
                                 <ExternalLink className="h-2.5 w-2.5 opacity-60" />
@@ -829,8 +829,10 @@ export default function LeadDataExporter() {
                           return (
                             <td key={col} className="px-3.5 py-2 whitespace-nowrap">
                               <span
-                                className={`text-[11px] font-medium ${
-                                  isInactive ? 'text-rose-400' : 'text-emerald-400'
+                                className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
+                                  isInactive
+                                    ? 'text-rose-700 bg-rose-50 border-rose-200'
+                                    : 'text-emerald-700 bg-emerald-50 border-emerald-200'
                                 }`}
                               >
                                 {val || (isInactive ? 'Inactive' : 'Active')}
@@ -841,11 +843,11 @@ export default function LeadDataExporter() {
 
                         // Default
                         return (
-                          <td key={col} className="px-3.5 py-2 whitespace-nowrap text-slate-300">
+                          <td key={col} className="px-3.5 py-2 whitespace-nowrap text-slate-800">
                             {val !== undefined && val !== null && String(val).trim() !== '' ? (
                               String(val)
                             ) : (
-                              <span className="text-slate-600">—</span>
+                              <span className="text-slate-300">—</span>
                             )}
                           </td>
                         );
@@ -860,7 +862,7 @@ export default function LeadDataExporter() {
 
         {/* Clean Table Pagination Footer */}
         {filteredRecords.length > 0 && orderedSelectedColumns.length > 0 && (
-          <div className="flex items-center justify-between border-t border-white/5 bg-slate-950/60 px-4 py-2 text-xs text-slate-400">
+          <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <span>Rows:</span>
               <select
@@ -869,7 +871,7 @@ export default function LeadDataExporter() {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="rounded border border-white/10 bg-slate-900 px-1.5 py-0.5 text-xs text-slate-200 focus:outline-none"
+                className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs text-slate-800 focus:outline-none"
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -884,17 +886,17 @@ export default function LeadDataExporter() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                className="p-1 rounded text-slate-500 hover:text-black hover:bg-slate-200/60 disabled:opacity-30"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="font-mono text-[11px] text-slate-400 px-1">
+              <span className="font-mono text-[11px] text-slate-700 px-1 font-semibold">
                 {currentPage} / {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                className="p-1 rounded text-slate-500 hover:text-black hover:bg-slate-200/60 disabled:opacity-30"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
