@@ -280,6 +280,10 @@ export const germanyConnector = new GermanyConnector();
 ### 5.3 Excel Exporter (`lib/services/exporter.js`)
 * Built with `exceljs`.
 * Outputs to `exports/Master_B2B_Leads.xlsx`.
+* **Lead Priority Hierarchy**:
+  * **Priority 1 (Primary Contact)**: Phone number & Email address are promoted to the first actionable columns directly after Company Name (`Phone` = col 2, `Email` = col 3). All records with both Phone & Email are sorted to the very top rows.
+  * **Priority 2 (Web Presence)**: `Website` is positioned in column 4. Leads with verified websites rank immediately after direct contacts.
+  * **Priority 3 (Corporate Identification & Legal)**: `Director / Officers`, `Registration Number`, `Status`, `Address`, `City`, `Postal Code`, `Industry`, `Country`, etc. follow in logical order.
 * **Design Specifications**:
   * Frozen header row (`ySplit: 1`).
   * Header fill: Dark Navy `#1E293B`, White bold font, 28pt row height.

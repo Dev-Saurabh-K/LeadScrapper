@@ -39,7 +39,8 @@ import {
   Shield,
   Zap,
   ChevronRight,
-  Info
+  Info,
+  Star
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 
@@ -727,10 +728,21 @@ export default function Dashboard() {
                   <thead className="border-b border-white/5 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
                     <tr>
                       <th className="py-3.5 pl-4 pr-3 font-semibold">Company Name</th>
+                      <th className="px-3 py-3.5 font-semibold text-emerald-400 bg-emerald-500/10">
+                        <span className="flex items-center gap-1.5">
+                          <Star className="h-3 w-3 fill-emerald-400 text-emerald-400" />
+                          <span>Phone & Email (P1)</span>
+                        </span>
+                      </th>
+                      <th className="px-3 py-3.5 font-semibold text-cyan-400 bg-cyan-500/10">
+                        <span className="flex items-center gap-1.5">
+                          <Globe className="h-3 w-3 text-cyan-400" />
+                          <span>Website (P2)</span>
+                        </span>
+                      </th>
                       <th className="px-3 py-3.5 font-semibold">Country</th>
                       <th className="px-3 py-3.5 font-semibold">Reg. Number</th>
                       <th className="px-3 py-3.5 font-semibold">Director / Officers</th>
-                      <th className="px-3 py-3.5 font-semibold">Contact Info</th>
                       <th className="px-3 py-3.5 font-semibold">Industry / Type</th>
                       <th className="py-3.5 pl-3 pr-4 text-right font-semibold">Actions</th>
                     </tr>
@@ -738,7 +750,7 @@ export default function Dashboard() {
                   <tbody className="divide-y divide-white/[0.04] font-normal">
                     {leads.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="py-12 text-center text-slate-400">
+                        <td colSpan="8" className="py-12 text-center text-slate-400">
                           {loadingLeads ? (
                             <div className="flex flex-col items-center justify-center gap-2">
                               <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
@@ -767,16 +779,45 @@ export default function Dashboard() {
                         <tr key={lead.id} className="transition hover:bg-slate-800/30">
                           <td className="py-3.5 pl-4 pr-3">
                             <div className="font-semibold text-white">{lead.company_name}</div>
-                            {lead.website && (
+                          </td>
+                          {/* Priority 1: Phone & Email */}
+                          <td className="px-3 py-3.5 bg-emerald-950/10">
+                            <div className="flex flex-col gap-1">
+                              {lead.phone ? (
+                                <span className="inline-flex items-center gap-1.5 text-emerald-300 font-medium font-mono text-[11px]">
+                                  <Phone className="h-3 w-3 text-emerald-400 shrink-0" />
+                                  <span>{lead.phone}</span>
+                                </span>
+                              ) : null}
+                              {lead.email ? (
+                                <a
+                                  href={`mailto:${lead.email}`}
+                                  className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-emerald-200 hover:underline font-mono text-[11px]"
+                                >
+                                  <Mail className="h-3 w-3 text-emerald-400 shrink-0" />
+                                  <span>{lead.email}</span>
+                                </a>
+                              ) : null}
+                              {!lead.email && !lead.phone && (
+                                <span className="text-[11px] text-slate-600 font-mono">None discovered</span>
+                              )}
+                            </div>
+                          </td>
+                          {/* Priority 2: Website */}
+                          <td className="px-3 py-3.5 bg-cyan-950/10">
+                            {lead.website ? (
                               <a
-                                href={lead.website}
+                                href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:underline"
+                                className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 hover:underline"
                               >
-                                <span>{lead.website.replace(/^https?:\/\//, '')}</span>
-                                <ExternalLink className="h-2.5 w-2.5" />
+                                <Globe className="h-3 w-3 text-cyan-400 shrink-0" />
+                                <span className="truncate max-w-[150px]">{lead.website.replace(/^https?:\/\//, '')}</span>
+                                <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-70" />
                               </a>
+                            ) : (
+                              <span className="text-slate-600">—</span>
                             )}
                           </td>
                           <td className="whitespace-nowrap px-3 py-3.5">
@@ -790,25 +831,6 @@ export default function Dashboard() {
                           </td>
                           <td className="max-w-[200px] truncate px-3 py-3.5 text-slate-300">
                             {lead.director || <span className="text-slate-600">—</span>}
-                          </td>
-                          <td className="px-3 py-3.5">
-                            <div className="flex flex-col gap-1">
-                              {lead.email ? (
-                                <span className="inline-flex items-center gap-1 text-emerald-400">
-                                  <Mail className="h-3 w-3" />
-                                  <span className="font-mono text-[11px]">{lead.email}</span>
-                                </span>
-                              ) : null}
-                              {lead.phone ? (
-                                <span className="inline-flex items-center gap-1 text-cyan-400">
-                                  <Phone className="h-3 w-3" />
-                                  <span className="font-mono text-[11px]">{lead.phone}</span>
-                                </span>
-                              ) : null}
-                              {!lead.email && !lead.phone && (
-                                <span className="text-[11px] text-slate-500">Not enriched</span>
-                              )}
-                            </div>
                           </td>
                           <td className="max-w-[180px] truncate px-3 py-3.5 text-slate-400">
                             {lead.industry || lead.company_type || <span className="text-slate-600">—</span>}
