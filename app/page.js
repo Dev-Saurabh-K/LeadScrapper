@@ -468,7 +468,7 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-3">
             {/* System Health Indicators */}
-            <div className="hidden items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 md:flex shadow-2xs">
+            <div className="flex items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 shadow-2xs">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-medium text-slate-700">
                 DB: {health?.database?.mode === 'supabase' ? 'Supabase Cloud' : 'Local Storage'}
@@ -478,15 +478,6 @@ export default function Dashboard() {
                 SMTP: {health?.email?.isConfigured ? 'Ready' : 'Off'}
               </span>
             </div>
-
-            {/* Launch Scrape CTA */}
-            <button
-              onClick={() => setActiveTab('scraper')}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-all active:scale-[0.98] focus:outline-none"
-            >
-              <Play className="h-4 w-4 fill-current" />
-              <span>Run Scraper</span>
-            </button>
           </div>
         </div>
 
@@ -989,53 +980,17 @@ export default function Dashboard() {
                   )}
                 </button>
               </div>
-
-              {/* Email summary test trigger */}
-              <div className="mt-6 border-t border-slate-200 pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-semibold text-slate-800">SMTP Notification Test</div>
-                    <div className="text-[11px] text-slate-500">
-                      Recipient: {health?.email?.recipient || 'Not set'}
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleSendTestEmail}
-                    disabled={sendingTestEmail}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition"
-                  >
-                    <Send className="h-3 w-3" />
-                    <span>{sendingTestEmail ? 'Sending...' : 'Test Email'}</span>
-                  </button>
-                </div>
-                {emailStatusMsg && (
-                  <div
-                    className={`mt-2 rounded-lg p-2 text-xs ${
-                      emailStatusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
-                    }`}
-                  >
-                    {emailStatusMsg.text}
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Right: Live Activity Stream Terminal */}
             <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-xs lg:col-span-7">
               {/* Terminal Window Header */}
               <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500 inline-block" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 inline-block" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Terminal className="h-3.5 w-3.5 text-blue-600" />
-                    <span className="font-mono text-xs font-semibold text-slate-900">
-                      Live Scraping Console (SSE Stream)
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-3.5 w-3.5 text-blue-600" />
+                  <span className="font-mono text-xs font-semibold text-slate-900">
+                    Live Scraping Console (SSE Stream)
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {isScraping && (
@@ -1092,19 +1047,11 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setActiveTab('exporter')}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition active:scale-[0.98]"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition active:scale-[0.98]"
                       >
-                        <Sliders className="h-3 w-3" />
+                        <Sliders className="h-3.5 w-3.5" />
                         <span>Select Columns & Export / Email Table →</span>
                       </button>
-                      <a
-                        href="/api/export"
-                        download="Master_B2B_Leads.xlsx"
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 hover:bg-slate-50 shadow-xs"
-                      >
-                        <Download className="h-3 w-3" />
-                        <span>All Columns (.xlsx)</span>
-                      </a>
                     </div>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">

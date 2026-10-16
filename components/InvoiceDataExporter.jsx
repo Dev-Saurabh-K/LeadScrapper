@@ -420,7 +420,7 @@ export default function LeadDataExporter() {
             }`}
             title="Send this table via email to recipient"
           >
-            <Send className="h-3.5 w-3.5 text-blue-600" />
+            <Send className={`h-3.5 w-3.5 ${showEmailPanel ? 'text-white' : 'text-blue-600'}`} />
             <span>Email Table</span>
           </button>
         </div>
