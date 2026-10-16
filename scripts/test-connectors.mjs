@@ -6,6 +6,8 @@ import { franceConnector } from '../lib/connectors/france_insee.js';
 import { singaporeConnector } from '../lib/connectors/singapore_acra.js';
 import { usaConnector } from '../lib/connectors/usa_socrata.js';
 import { ukConnector } from '../lib/connectors/companies_house.js';
+import { euConnector } from '../lib/connectors/eu_ted.js';
+import { gleifConnector } from '../lib/connectors/global_gleif.js';
 import { normalizer } from '../lib/services/normalizer.js';
 import { exporter } from '../lib/services/exporter.js';
 import { db } from '../lib/database.js';
@@ -57,13 +59,19 @@ async function runTests() {
   // 3. Test Singapore ACRA (20 real live records)
   const sgLeads = await testConnector('Singapore ACRA', singaporeConnector, 'tech', 20);
 
-  // 4. Test USA Socrata (20 real live records)
-  const usaLeads = await testConnector('USA Socrata', usaConnector, '', 20);
+  // 4. Test USA Socrata (20 real live records - CO, NY, CHI)
+  const usaLeads = await testConnector('USA Socrata (CO/NY/CHI)', usaConnector, '', 20);
 
-  // 5. Test UK Companies House (20 records)
+  // 5. Test UK Companies House / Contracts Finder (20 records)
   const ukLeads = await testConnector('UK Companies House', ukConnector, 'tech', 20);
 
-  // 6. Test De-duplication Logic
+  // 6. Test EU TED Public Procurement (20 records)
+  const euLeads = await testConnector('EU TED Public Procurement', euConnector, 'software', 20);
+
+  // 7. Test Global GLEIF Legal Entity Identifier (20 records)
+  const gleifLeads = await testConnector('Global GLEIF Registry', gleifConnector, 'tech', 20);
+
+  // 8. Test De-duplication Logic
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing De-duplication Logic...`);
   try {
@@ -91,11 +99,11 @@ async function runTests() {
     console.error(`  ❌ De-duplication failed:`, err.message, '\n');
   }
 
-  // 7. Test Excel Generation
+  // 9. Test Excel Generation
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing Master_B2B_Leads.xlsx Generation...`);
   try {
-    const sampleBatch = [...norwayLeads.slice(0, 5), ...franceLeads.slice(0, 5), ...sgLeads.slice(0, 5)];
+    const sampleBatch = [...norwayLeads.slice(0, 3), ...franceLeads.slice(0, 3), ...euLeads.slice(0, 3), ...gleifLeads.slice(0, 3)];
     const excelResult = await exporter.generateMasterExcel(sampleBatch);
 
     if (!fs.existsSync(excelResult.filePath)) {
@@ -110,7 +118,7 @@ async function runTests() {
     console.error(`  ❌ Excel Export failed:`, err.message, '\n');
   }
 
-  // 8. Test Email & Phone Number Validation Engine
+  // 10. Test Email & Phone Number Validation Engine
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing Email & Phone Number Validation Engine...`);
   try {

@@ -29,6 +29,9 @@ async function test(description, fn) {
 // -----------------------------------------------------------------------------
 const getColumnPriorityMeta = (colName) => {
   const lower = colName.trim().toLowerCase();
+  if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
+    return { priority: 3, rank: 0 };
+  }
   if (lower.includes('phone') || lower.includes('mobile')) {
     return { priority: 1, rank: 1 };
   }
@@ -38,16 +41,31 @@ const getColumnPriorityMeta = (colName) => {
   if (lower.includes('website') || lower.includes('url') || lower.includes('web')) {
     return { priority: 2, rank: 3 };
   }
-  if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
-    return { priority: 3, rank: 0 };
-  }
-  if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
+  if (lower.includes('country') || lower.includes('jurisdiction')) {
     return { priority: 3, rank: 4 };
   }
-  if (lower.includes('registration') || lower.includes('gst')) {
+  if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
     return { priority: 3, rank: 5 };
   }
-  return { priority: 3, rank: 6 };
+  if (lower.includes('registration') || lower.includes('gst')) {
+    return { priority: 3, rank: 6 };
+  }
+  if (lower.includes('status')) {
+    return { priority: 3, rank: 7 };
+  }
+  if (lower.includes('industry') || lower.includes('type')) {
+    return { priority: 3, rank: 8 };
+  }
+  if (lower.includes('address') || lower.includes('city') || lower.includes('postal')) {
+    return { priority: 3, rank: 9 };
+  }
+  if (lower.includes('date') || lower.includes('incorporation')) {
+    return { priority: 3, rank: 10 };
+  }
+  if (lower.includes('source') || lower.includes('registry')) {
+    return { priority: 3, rank: 11 };
+  }
+  return { priority: 3, rank: 12 };
 };
 
 const sortColumnsByPriority = (columns) => {
@@ -239,7 +257,7 @@ async function runTestSuite() {
   await test('Sort columns preserves tie-break alphabetical sorting for non-priority fields', () => {
     const columns = ['Postal Code', 'City', 'Address Line 1', 'Country'];
     const sorted = sortColumnsByPriority(columns);
-    assert.deepStrictEqual(sorted, ['Address Line 1', 'City', 'Country', 'Postal Code']);
+    assert.deepStrictEqual(sorted, ['Country', 'Address Line 1', 'City', 'Postal Code']);
   });
 
   // =============================================================================

@@ -67,6 +67,9 @@ export default function LeadDataExporter() {
   // Priority metadata helper: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
   const getColumnPriorityMeta = (colName) => {
     const lower = colName.trim().toLowerCase();
+    if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
+      return { priority: 3, rank: 0 };
+    }
     if (lower.includes('phone') || lower.includes('mobile')) {
       return { priority: 1, rank: 1 };
     }
@@ -76,16 +79,31 @@ export default function LeadDataExporter() {
     if (lower.includes('website') || lower.includes('url') || lower.includes('web')) {
       return { priority: 2, rank: 3 };
     }
-    if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
-      return { priority: 3, rank: 0 };
-    }
-    if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
+    if (lower.includes('country') || lower.includes('jurisdiction')) {
       return { priority: 3, rank: 4 };
     }
-    if (lower.includes('registration') || lower.includes('gst')) {
+    if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
       return { priority: 3, rank: 5 };
     }
-    return { priority: 3, rank: 6 };
+    if (lower.includes('registration') || lower.includes('gst')) {
+      return { priority: 3, rank: 6 };
+    }
+    if (lower.includes('status')) {
+      return { priority: 3, rank: 7 };
+    }
+    if (lower.includes('industry') || lower.includes('type')) {
+      return { priority: 3, rank: 8 };
+    }
+    if (lower.includes('address') || lower.includes('city') || lower.includes('postal')) {
+      return { priority: 3, rank: 9 };
+    }
+    if (lower.includes('date') || lower.includes('incorporation')) {
+      return { priority: 3, rank: 10 };
+    }
+    if (lower.includes('source') || lower.includes('registry')) {
+      return { priority: 3, rank: 11 };
+    }
+    return { priority: 3, rank: 12 };
   };
 
   const sortColumnsByPriority = (columns) => {
@@ -109,18 +127,8 @@ export default function LeadDataExporter() {
     const validCols = (data.columns || []).filter(c => !c.startsWith('__'));
     const sortedCols = sortColumnsByPriority(validCols);
 
-    // Pre-select priority fields
-    const priorityKeywords = [
-      'company', 'name', 'phone', 'email', 'website', 'director', 'officer',
-      'contact', 'registration', 'gst', 'status', 'address', 'city', 'postal', 'industry'
-    ];
-
-    const defaultSelected = sortedCols.filter(col => {
-      const lower = col.toLowerCase();
-      return priorityKeywords.some(k => lower.includes(k));
-    });
-
-    setSelectedColumns(defaultSelected.length > 0 ? defaultSelected : sortedCols);
+    // Show ALL valid columns by default so nothing is hidden from the user
+    setSelectedColumns(sortedCols);
   };
 
   const loadScrapedLeads = async () => {
@@ -167,6 +175,8 @@ export default function LeadDataExporter() {
     setSelectedCity('');
     setSearchQuery('');
     setCurrentPage(1);
+    const validCols = (dataset.columns || []).filter(c => !c.startsWith('__'));
+    setSelectedColumns(sortColumnsByPriority(validCols));
   };
 
   const getRecordField = (record, keyword) => {
@@ -373,14 +383,14 @@ export default function LeadDataExporter() {
         <div>
           <div className="flex items-center gap-2">
             <MicrosoftExcelIcon className="h-4 w-4 shrink-0" />
-            <h2 className="text-base font-bold text-black">Export Leads</h2>
+            <h2 className="text-base font-bold text-black">Leads Explorer</h2>
             <span className="text-xs text-slate-500 font-mono">
               ({dataset.totalRecords} leads in database)
             </span>
             {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
           </div>
           <p className="text-xs text-slate-600 mt-0.5">
-            Select columns to export. Leads are sorted with Phone & Email first.
+            Explore, filter, and export verified leads with all dataset columns visible by default.
           </p>
         </div>
 
@@ -739,7 +749,7 @@ export default function LeadDataExporter() {
               </button>
             </div>
           ) : (
-            <table className="w-full text-left text-xs text-slate-800 border-collapse">
+            <table className="min-w-max w-full text-left text-xs text-slate-800 border-collapse">
               <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 text-[11px] font-semibold text-slate-700 uppercase">
                 <tr>
                   <th className="px-3 py-2.5 w-10 text-center text-slate-400 font-normal">#</th>
@@ -834,12 +844,23 @@ export default function LeadDataExporter() {
                             <td key={col} className="px-3.5 py-2 whitespace-nowrap">
                               <span
                                 className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
-                                  isInactive
+                                   isInactive
                                     ? 'text-rose-700 bg-rose-50 border-rose-200'
                                     : 'text-emerald-700 bg-emerald-50 border-emerald-200'
                                 }`}
                               >
                                 {val || (isInactive ? 'Inactive' : 'Active')}
+                              </span>
+                            </td>
+                          );
+                        }
+
+                        // Country
+                        if (lowerCol === 'country') {
+                          return (
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 border border-slate-200">
+                                {val || <span className="text-slate-300 font-normal">—</span>}
                               </span>
                             </td>
                           );

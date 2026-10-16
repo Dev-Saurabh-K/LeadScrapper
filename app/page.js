@@ -39,12 +39,15 @@ import {
   Zap,
   ChevronRight,
   Info,
-  Star
+  Star,
+  LayoutDashboard
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
 
 const COUNTRIES = [
+  { code: 'GLOBAL', name: 'Global (GLEIF)', source: 'GLEIF 2.6M+ LEIs', free: true },
+  { code: 'EU', name: 'European Union', source: 'EU TED Public Procurement', free: true },
   { code: 'NO', name: 'Norway', source: 'BRREG (data.brreg.no)', free: true },
   { code: 'FR', name: 'France', source: 'api.gouv.fr', free: true },
   { code: 'SG', name: 'Singapore', source: 'ACRA (data.gov.sg)', free: true },
@@ -56,6 +59,24 @@ const COUNTRIES = [
 
 function CountryFlag({ code, className = "h-3.5 w-5" }) {
   const c = code?.toUpperCase();
+  if (c === 'EU' || c === 'EUROPE' || c === 'EUROPEAN UNION') {
+    return (
+      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
+        <rect width="22" height="16" fill="#003399" />
+        <circle cx="11" cy="4" r="0.8" fill="#FFCC00" />
+        <circle cx="14" cy="5.2" r="0.8" fill="#FFCC00" />
+        <circle cx="15.2" cy="8" r="0.8" fill="#FFCC00" />
+        <circle cx="14" cy="10.8" r="0.8" fill="#FFCC00" />
+        <circle cx="11" cy="12" r="0.8" fill="#FFCC00" />
+        <circle cx="8" cy="10.8" r="0.8" fill="#FFCC00" />
+        <circle cx="6.8" cy="8" r="0.8" fill="#FFCC00" />
+        <circle cx="8" cy="5.2" r="0.8" fill="#FFCC00" />
+      </svg>
+    );
+  }
+  if (c === 'GLOBAL' || c === 'GL' || c === 'WORLD') {
+    return <Globe className={`${className} text-emerald-500`} />;
+  }
   if (c === 'NO' || c === 'NORWAY') {
     return (
       <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
@@ -492,8 +513,8 @@ export default function Dashboard() {
                   : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
-              <Search className="h-4 w-4" />
-              <span>Leads Explorer</span>
+              <LayoutDashboard className="h-4 w-4" />
+              <span>Dashboard</span>
               <span className="rounded-full bg-slate-100 px-1.5 py-0.2 font-mono text-[10px] text-slate-700 border border-slate-200">
                 {totalLeads}
               </span>
@@ -507,9 +528,9 @@ export default function Dashboard() {
               }`}
             >
               <MicrosoftExcelIcon className="h-4 w-4" />
-              <span>Export Leads</span>
+              <span>Leads Explorer</span>
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[10px] text-emerald-800 border border-emerald-200">
-                Select Columns
+                All Columns
               </span>
             </button>
             <button
@@ -696,27 +717,27 @@ export default function Dashboard() {
             {/* Leads Table */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-800">
+                <table className="w-full text-left text-xs text-slate-800 table-auto">
                   <thead className="border-b border-slate-200 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-700 font-semibold">
                     <tr>
-                      <th className="py-3.5 pl-4 pr-3 text-black font-bold">Company Name</th>
-                      <th className="px-3 py-3.5 font-bold text-emerald-700">
-                        <span className="flex items-center gap-1.5">
-                          <Star className="h-3 w-3 fill-emerald-600 text-emerald-600" />
+                      <th className="py-2.5 pl-3.5 pr-2 text-black font-bold">Company Name</th>
+                      <th className="px-2.5 py-2.5 font-bold text-emerald-700">
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-emerald-600 text-emerald-600 shrink-0" />
                           <span>Phone & Email (P1)</span>
                         </span>
                       </th>
-                      <th className="px-3 py-3.5 font-bold text-blue-700">
-                        <span className="flex items-center gap-1.5">
-                          <Globe className="h-3 w-3 text-blue-600" />
+                      <th className="px-2.5 py-2.5 font-bold text-blue-700">
+                        <span className="flex items-center gap-1">
+                          <Globe className="h-3 w-3 text-blue-600 shrink-0" />
                           <span>Website (P2)</span>
                         </span>
                       </th>
-                      <th className="px-3 py-3.5">Country</th>
-                      <th className="px-3 py-3.5">Reg. Number</th>
-                      <th className="px-3 py-3.5">Director / Officers</th>
-                      <th className="px-3 py-3.5">Industry / Type</th>
-                      <th className="py-3.5 pl-3 pr-4 text-right">Actions</th>
+                      <th className="px-2.5 py-2.5">Country</th>
+                      <th className="px-2.5 py-2.5">Reg. Number</th>
+                      <th className="px-2.5 py-2.5">Director / Officers</th>
+                      <th className="px-2.5 py-2.5">Industry / Type</th>
+                      <th className="py-2.5 pl-1 pr-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-normal">
@@ -749,25 +770,28 @@ export default function Dashboard() {
                     ) : (
                       leads.map((lead) => (
                         <tr key={lead.id} className="transition-colors hover:bg-slate-50">
-                          <td className="py-3.5 pl-4 pr-3">
-                            <div className="font-bold text-black">{lead.company_name}</div>
+                          <td className="py-2.5 pl-3.5 pr-2">
+                            <div className="font-bold text-black truncate max-w-[170px]" title={lead.company_name}>
+                              {lead.company_name}
+                            </div>
                           </td>
                           {/* Priority 1: Phone & Email */}
-                          <td className="px-3 py-3.5">
-                            <div className="flex flex-col gap-1">
+                          <td className="px-2.5 py-2.5">
+                            <div className="flex flex-col gap-0.5 max-w-[190px]">
                               {lead.phone ? (
-                                <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold font-mono text-[11px]">
+                                <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold font-mono text-[11px] truncate" title={lead.phone}>
                                   <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
-                                  <span>{lead.phone}</span>
+                                  <span className="truncate">{lead.phone}</span>
                                 </span>
                               ) : null}
                               {lead.email ? (
                                 <a
                                   href={`mailto:${lead.email}`}
-                                  className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-900 hover:underline font-semibold font-mono text-[11px]"
+                                  title={lead.email}
+                                  className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-semibold font-mono text-[11px] truncate"
                                 >
                                   <Mail className="h-3 w-3 text-emerald-600 shrink-0" />
-                                  <span>{lead.email}</span>
+                                  <span className="truncate">{lead.email}</span>
                                 </a>
                               ) : null}
                               {!lead.email && !lead.phone && (
@@ -776,39 +800,40 @@ export default function Dashboard() {
                             </div>
                           </td>
                           {/* Priority 2: Website */}
-                          <td className="px-3 py-3.5">
+                          <td className="px-2.5 py-2.5">
                             {lead.website ? (
                               <a
                                 href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                title={lead.website}
+                                className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline font-medium truncate max-w-[130px]"
                               >
                                 <Globe className="h-3 w-3 text-blue-600 shrink-0" />
-                                <span className="truncate max-w-[150px]">{lead.website.replace(/^https?:\/\//, '')}</span>
+                                <span className="truncate">{lead.website.replace(/^https?:\/\//, '')}</span>
                                 <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-70" />
                               </a>
                             ) : (
                               <span className="text-slate-400">—</span>
                             )}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-3.5">
-                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-800">
+                          <td className="whitespace-nowrap px-2.5 py-2.5">
+                            <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-800">
                               <CountryFlag code={lead.country} className="h-3 w-4.5" />
                               <span className="font-medium">{lead.country}</span>
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-3.5 font-mono text-slate-800">
+                          <td className="whitespace-nowrap px-2.5 py-2.5 font-mono text-[11px] text-slate-800">
                             {lead.registration_number || <span className="text-slate-400">—</span>}
                           </td>
-                          <td className="max-w-[200px] truncate px-3 py-3.5 text-slate-700">
+                          <td className="max-w-[140px] truncate px-2.5 py-2.5 text-slate-700 text-[11px]" title={lead.director}>
                             {lead.director || <span className="text-slate-400">—</span>}
                           </td>
-                          <td className="max-w-[180px] truncate px-3 py-3.5 text-slate-600">
+                          <td className="max-w-[130px] truncate px-2.5 py-2.5 text-slate-600 text-[11px]" title={lead.industry || lead.company_type}>
                             {lead.industry || lead.company_type || <span className="text-slate-400">—</span>}
                           </td>
-                          <td className="whitespace-nowrap py-3.5 pl-3 pr-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                          <td className="whitespace-nowrap py-2.5 pl-1 pr-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
                               <button
                                 onClick={() => setSelectedLead(lead)}
                                 className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-black transition"
