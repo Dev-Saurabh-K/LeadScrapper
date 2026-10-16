@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileSpreadsheet,
-  UploadCloud,
-  Filter,
   CheckSquare,
   Square,
   Download,
@@ -14,30 +12,28 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Sliders,
   Building2,
   RotateCcw,
   ExternalLink,
   Mail,
   Phone,
-  MapPin,
   Check,
   FileCheck,
-  Layers,
-  Sparkles,
-  Loader2,
+  Star,
   Globe,
-  Zap,
-  Star
+  Database,
+  ShieldCheck,
+  Loader2,
+  Sliders
 } from 'lucide-react';
 
-export default function InvoiceDataExporter() {
+export default function LeadDataExporter() {
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
   const [exportSuccess, setExportSuccess] = useState(null);
 
-  // Parsed dataset state
+  // Scraped dataset state (loaded directly from scraped leads / Supabase)
   const [dataset, setDataset] = useState({
     fileName: 'Master_B2B_Leads.xlsx',
     totalRecords: 0,
@@ -56,21 +52,17 @@ export default function InvoiceDataExporter() {
   const [selectedCity, setSelectedCity] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Step 3: Selected Columns
+  // Step 3: Selected Columns to Export
   const [selectedColumns, setSelectedColumns] = useState([]);
 
   // Step 4: Preview Pagination & Export Config
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [exportFileName, setExportFileName] = useState('B2B_Newspaper_Invoice_Leads.xlsx');
-
-  // Drag and drop state
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
+  const [exportFileName, setExportFileName] = useState('B2B_Exported_Leads.xlsx');
 
   // Helper to score column priority: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
   const getColumnPriorityMeta = (colName) => {
-    const lower = colName.toLowerCase();
+    const lower = colName.trim().toLowerCase();
     if (lower.includes('phone') || lower.includes('mobile')) {
       return { priority: 1, rank: 1, label: 'P1: Phone', tag: 'Direct Contact', color: 'emerald' };
     }
@@ -80,7 +72,7 @@ export default function InvoiceDataExporter() {
     if (lower.includes('website') || lower.includes('url') || lower.includes('web')) {
       return { priority: 2, rank: 3, label: 'P2: Website', tag: 'Web Presence', color: 'cyan' };
     }
-    if (lower.includes('company') || lower === 'name') {
+    if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
       return { priority: 3, rank: 0, label: 'Company', tag: 'Identifier', color: 'blue' };
     }
     if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
@@ -101,9 +93,9 @@ export default function InvoiceDataExporter() {
     });
   };
 
-  // Load scraped master excel on initial mount
+  // Load scraped leads on initial mount
   useEffect(() => {
-    loadMasterLeads();
+    loadScrapedLeads();
   }, []);
 
   const applyDataset = (data) => {
@@ -115,7 +107,7 @@ export default function InvoiceDataExporter() {
     const validCols = (data.columns || []).filter(c => !c.startsWith('__'));
     const sortedCols = sortColumnsByPriority(validCols);
 
-    // Pre-select priority columns first: Company Name, Phone, Email, Website, Director, Registration, Status, Address, City
+    // Pre-select priority columns by default
     const priorityKeywords = [
       'company', 'name', 'phone', 'email', 'website', 'director', 'officer',
       'contact', 'registration', 'gst', 'status', 'address', 'city', 'postal', 'industry'
@@ -129,65 +121,21 @@ export default function InvoiceDataExporter() {
     setSelectedColumns(defaultSelected.length > 0 ? defaultSelected : sortedCols);
   };
 
-  const loadMasterLeads = async () => {
+  const loadScrapedLeads = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/custom-export/master');
       const result = await res.json();
       if (!result.success) {
-        throw new Error(result.error || 'Failed to load master scraped Excel leads');
+        throw new Error(result.error || 'Failed to load scraped leads dataset');
       }
       applyDataset(result.data);
     } catch (err) {
-      console.error('[InvoiceExporter] Failed to load master leads:', err);
+      console.error('[LeadExporter] Failed to load scraped leads:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleFileUpload = async (file) => {
-    if (!file) return;
-    setIsLoading(true);
-    setError(null);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/custom-export/parse', {
-        method: 'POST',
-        body: formData
-      });
-      const result = await res.json();
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to parse uploaded Excel file');
-      }
-      applyDataset(result.data);
-    } catch (err) {
-      console.error('[InvoiceExporter] File parse error:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const onDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileUpload(e.dataTransfer.files[0]);
     }
   };
 
@@ -330,14 +278,14 @@ export default function InvoiceDataExporter() {
     return { p1Both, p1Either, p2Website };
   }, [dataset.records]);
 
-  // Download filtered Excel
+  // Download filtered Excel with only selected columns
   const handleExportExcel = async () => {
     if (filteredRecords.length === 0) {
-      alert('No matching records found to export with the current filter settings.');
+      alert('No matching records found to export with current filter settings.');
       return;
     }
     if (orderedSelectedColumns.length === 0) {
-      alert('Please select at least one field/column to export.');
+      alert('Please select at least one column to export.');
       return;
     }
 
@@ -351,7 +299,7 @@ export default function InvoiceDataExporter() {
         body: JSON.stringify({
           rows: filteredRecords,
           selectedColumns: orderedSelectedColumns,
-          fileName: exportFileName || 'B2B_Newspaper_Invoice_Leads.xlsx'
+          fileName: exportFileName || 'B2B_Exported_Leads.xlsx'
         })
       });
 
@@ -370,10 +318,10 @@ export default function InvoiceDataExporter() {
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(link);
 
-      setExportSuccess(`Successfully exported ${filteredRecords.length} records prioritizing Phone, Email & Website into ${exportFileName}!`);
+      setExportSuccess(`Successfully exported ${filteredRecords.length} records with ${orderedSelectedColumns.length} selected columns into ${exportFileName}!`);
       setTimeout(() => setExportSuccess(null), 6000);
     } catch (err) {
-      console.error('[InvoiceExporter] Export failed:', err);
+      console.error('[LeadExporter] Export failed:', err);
       alert(`Export failed: ${err.message}`);
     } finally {
       setIsExporting(false);
@@ -397,7 +345,7 @@ export default function InvoiceDataExporter() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl font-bold tracking-tight text-white">
-                  B2B Newspaper Invoice Data Exporter
+                  Export Scraped Leads (Custom Column Selector)
                 </h2>
                 <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/25 flex items-center gap-1">
                   <Star className="h-3 w-3 fill-emerald-400" />
@@ -408,42 +356,40 @@ export default function InvoiceDataExporter() {
                 </span>
               </div>
               <p className="mt-1 text-xs sm:text-sm text-slate-400">
-                Auto-loads your scraped Master Excel leads. Prioritizes <strong>Phone & Email</strong> first, <strong>Website</strong> second, and filters clean invoice records for export.
+                In the background, <strong>100% of scraped data is safely stored in Supabase</strong>. Below, choose only the exact columns you want exported to your Excel workbook.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
-              onClick={loadMasterLeads}
+              onClick={loadScrapedLeads}
               disabled={isLoading}
               className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-slate-800/80 hover:bg-slate-700/80 px-4 py-2 text-xs font-semibold text-slate-200 transition-all active:scale-[0.98] disabled:opacity-50"
-              title="Reload exports/Master_B2B_Leads.xlsx"
+              title="Refresh latest scraped leads from database"
             >
               <RefreshCw className={`h-4 w-4 text-emerald-400 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Reload Scraped Master</span>
+              <span>Refresh Dataset</span>
             </button>
           </div>
         </div>
 
-        {/* Priority Hierarchy Banner Strip */}
-        <div className="mt-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-white/5 bg-slate-950/60 p-3 text-xs">
-          <span className="font-semibold text-slate-300">Hierarchy:</span>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-300 border border-emerald-500/30">
-            <Phone className="h-3.5 w-3.5" />
-            <Mail className="h-3.5 w-3.5" />
-            <span>1st Priority: Phone & Email ID</span>
-          </span>
-          <span className="text-slate-600">→</span>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-cyan-500/15 px-2.5 py-1 text-xs font-medium text-cyan-300 border border-cyan-500/30">
-            <Globe className="h-3.5 w-3.5" />
-            <span>2nd Priority: Website</span>
-          </span>
-          <span className="text-slate-600">→</span>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-400">
-            <Building2 className="h-3.5 w-3.5" />
-            <span>3rd Priority: Rest of Corporate Fields</span>
-          </span>
+        {/* Database & Background Storage Guarantee Strip */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/5 bg-slate-950/60 p-3 text-xs">
+          <div className="flex items-center gap-2 text-slate-300">
+            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong>Supabase Background Storage Active:</strong> All 16 fields, addresses, officers, and timestamps are permanently preserved in PostgreSQL.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="rounded-md bg-blue-500/10 px-2 py-0.5 text-[11px] font-mono text-blue-400 border border-blue-500/20">
+              Scraped Leads: {dataset.totalRecords}
+            </span>
+            <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-400 border border-emerald-500/20">
+              Active: {dataset.activeRecords}
+            </span>
+          </div>
         </div>
 
         {/* Success Alert */}
@@ -463,9 +409,9 @@ export default function InvoiceDataExporter() {
         )}
       </div>
 
-      {/* 2-Column Grid: Step 1 (Upload) & Step 2 (Filter Options) */}
+      {/* Step 1 & Step 2: Scraped Source & Filter Options */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Step 1: Upload / Load Master Excel */}
+        {/* Step 1: Scraped Data Source Card (Clean & Integrated - No Drag/Drop) */}
         <div className="lg:col-span-5 flex flex-col justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-xl shadow-xl">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-white/5">
@@ -473,68 +419,58 @@ export default function InvoiceDataExporter() {
                 <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/20 text-xs font-bold text-blue-400 ring-1 ring-blue-500/30">
                   1
                 </span>
-                <h3 className="text-sm font-semibold text-white">Upload / Load Master Excel</h3>
+                <h3 className="text-sm font-semibold text-white">Scraped Data Source</h3>
               </div>
-              <span className="text-[11px] font-mono text-slate-400">
-                {dataset.fileName}
+              <span className="text-[11px] font-mono text-emerald-400">
+                Default: Scraped Leads
               </span>
             </div>
 
-            <p className="mt-2 text-xs text-slate-400">
-              Auto-synced with <code className="text-blue-400 font-mono">exports/Master_B2B_Leads.xlsx</code> ({dataset.totalRecords} leads). Or drop an external spreadsheet below.
-            </p>
-
-            {/* Drag & Drop Zone */}
-            <div
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all ${
-                isDragging
-                  ? 'border-blue-400 bg-blue-500/10'
-                  : 'border-white/10 bg-slate-950/40 hover:border-blue-500/40 hover:bg-slate-800/40'
-              }`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleFileUpload(e.target.files[0]);
-                  }
-                }}
-              />
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 mb-2">
-                <UploadCloud className="h-6 w-6" />
+            <div className="mt-4 space-y-3">
+              <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Source File:</span>
+                  <span className="font-mono text-slate-200">{dataset.fileName}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Primary Database:</span>
+                  <span className="font-medium text-emerald-400 flex items-center gap-1">
+                    <Database className="h-3 w-3" />
+                    Supabase PostgreSQL
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Total Scraped Companies:</span>
+                  <span className="font-bold text-white font-mono">{dataset.totalRecords}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Active Companies:</span>
+                  <span className="font-bold text-emerald-300 font-mono">{dataset.activeRecords}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Priority 1 (Phone & Email):</span>
+                  <span className="font-bold text-emerald-300 font-mono">{priorityStats.p1Both}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Priority 2 (Website Available):</span>
+                  <span className="font-bold text-cyan-300 font-mono">{priorityStats.p2Website}</span>
+                </div>
               </div>
-              <p className="text-xs font-medium text-slate-200">
-                Drag & drop your Excel (.xlsx, .xls) or .csv
-              </p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                or click to browse from your computer
-              </p>
+
+              <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-3 text-[11px] text-blue-300/90 leading-relaxed">
+                Whenever you run the scraper, all leads are automatically stored in your database. This exporter lets you select only the columns you want for your client or invoice spreadsheet.
+              </div>
             </div>
           </div>
 
-          {/* Dataset Status Summary Pill */}
-          <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950/60 border border-white/5 p-3 text-xs">
-            <div className="flex items-center gap-2">
-              <FileCheck className="h-4 w-4 text-emerald-400" />
-              <span className="text-slate-300 font-medium truncate max-w-[170px]">
-                {dataset.fileName}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
-                {dataset.activeRecords} Active
-              </span>
-              <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400">
-                {dataset.totalRecords} Total
-              </span>
-            </div>
+          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
+            <span>Detected Columns: <strong className="text-white font-mono">{validColumns.length}</strong></span>
+            <button
+              onClick={loadScrapedLeads}
+              className="text-xs text-blue-400 hover:text-blue-300 underline font-medium"
+            >
+              Sync with latest scrape
+            </button>
           </div>
         </div>
 
@@ -603,8 +539,8 @@ export default function InvoiceDataExporter() {
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
                   <span>Priority Outreach Filter</span>
                   <span className="text-[10px] text-emerald-400 font-mono">
-                    {contactPriorityFilter === 'p1_both' && 'Phone + Email Filter Active'}
-                    {contactPriorityFilter === 'p2_website' && 'Website Filter Active'}
+                    {contactPriorityFilter === 'p1_both' && 'Phone + Email Only'}
+                    {contactPriorityFilter === 'p2_website' && 'Website Only'}
                   </span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -710,7 +646,7 @@ export default function InvoiceDataExporter() {
         </div>
       </div>
 
-      {/* Step 3: Select Fields to Export */}
+      {/* Step 3: Which Columns Do You Need to Export? */}
       <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-xl shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
           <div className="flex items-center gap-2">
@@ -718,8 +654,8 @@ export default function InvoiceDataExporter() {
               3
             </span>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-white">Select Fields to Export</h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-white">Which Columns Do You Need to Export?</h3>
                 <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
                   Priority 1: Phone & Email
                 </span>
@@ -728,7 +664,7 @@ export default function InvoiceDataExporter() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Columns will be formatted and exported in the selected priority sequence
+                Only checked columns will be generated in your Excel download. Unchecked columns remain safely in Supabase.
               </p>
             </div>
           </div>
@@ -807,7 +743,7 @@ export default function InvoiceDataExporter() {
         </div>
       </div>
 
-      {/* Step 4: Preview & Export */}
+      {/* Step 4: Live Preview & Export to Excel */}
       <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-xl shadow-xl space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-white/5">
           <div className="flex items-center gap-2">
@@ -815,9 +751,9 @@ export default function InvoiceDataExporter() {
               4
             </span>
             <div>
-              <h3 className="text-sm font-semibold text-white">Preview & Export</h3>
+              <h3 className="text-sm font-semibold text-white">Live Preview & Export to Excel</h3>
               <p className="text-xs text-slate-400">
-                Sorted by priority (Phone & Email first, Website second). Showing only selected columns.
+                Only your selected columns will be exported. Leads are sorted with Phone & Email first.
               </p>
             </div>
           </div>
@@ -842,7 +778,7 @@ export default function InvoiceDataExporter() {
               {isExporting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Generating...</span>
+                  <span>Generating Excel...</span>
                 </>
               ) : (
                 <>
@@ -854,10 +790,10 @@ export default function InvoiceDataExporter() {
           </div>
         </div>
 
-        {/* KPI Metrics Summary Strip with Priority 1 and Priority 2 Badges */}
+        {/* KPI Metrics Summary Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3">
-            <span className="text-[11px] font-medium text-slate-400">Total in File</span>
+            <span className="text-[11px] font-medium text-slate-400">Total Scraped</span>
             <p className="mt-1 text-lg font-bold font-mono text-white">{dataset.totalRecords}</p>
           </div>
           <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3">
@@ -903,14 +839,14 @@ export default function InvoiceDataExporter() {
             ) : orderedSelectedColumns.length === 0 ? (
               <div className="py-16 text-center text-slate-400">
                 <Square className="mx-auto h-8 w-8 text-slate-500 mb-2" />
-                <p className="text-sm font-medium">No fields selected</p>
-                <p className="text-xs text-slate-500 mt-1">Select at least one field from Step 3 above to preview and export</p>
+                <p className="text-sm font-medium">No columns selected</p>
+                <p className="text-xs text-slate-500 mt-1">Select at least one column from Step 3 above to preview and export</p>
                 <button
                   onClick={handleSelectAllColumns}
                   className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500"
                 >
                   <CheckSquare className="h-3.5 w-3.5" />
-                  <span>Select All Fields</span>
+                  <span>Select All Columns</span>
                 </button>
               </div>
             ) : (

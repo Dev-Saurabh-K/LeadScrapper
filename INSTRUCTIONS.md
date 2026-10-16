@@ -80,19 +80,20 @@ Navigate to:
    - Filters: Filter by Country, "Has Email", and "Has Phone".
    - Click the 👁️ (Eye) icon to view full details (address, officers, industry).
    - Click the ✨ (Sparkle) icon on any company to run website contact enrichment on demand.
-3. **B2B Newspaper Invoice Data Exporter Tab**:
-   - **Step 1 (Upload / Load Master Excel)**: Automatically loads scraped leads from `exports/Master_B2B_Leads.xlsx` on open (59+ records). You can also drag-and-drop external `.xlsx` or `.csv` files or click "Reload Scraped Master" anytime.
+3. **Export Leads (Custom Column Selector) Tab**:
+   - **Step 1 (Scraped Dataset Source)**: Automatically loads latest scraped leads from `exports/Master_B2B_Leads.xlsx` and Supabase. In the background, **all 16 fields are permanently saved in Supabase PostgreSQL**. This tool lets you export only the columns you want.
    - **Step 2 (Filter Options)**:
      - **Status**: Defaults to **Active Companies Only** (or choose *Inactive Companies Only*, *All Companies*).
+     - **Priority Outreach Filter**: Quickly filter for **P1: Phone & Email** or **P2: Has Website**.
      - **Industry Sector**: Filter dynamically by any scraped industry sector.
      - **City Location**: Filter by city (e.g. Oslo, Paris, Singapore).
      - **Search Bar**: Instant real-time search across company names, registration numbers, or directors.
      - **Clear Filters**: Resets all filters back to default with 1 click.
-   - **Step 3 (Select Fields to Export)**: Check/uncheck columns to include in your newspaper invoice or CRM export (Company Name, Registration/GST Number, Director/Officers, Phone, Email, Address, City, Postal Code, Industry, Website, Status). Includes **Select All** and **Deselect All** buttons.
-   - **Step 4 (Preview & Export)**:
-     - View live KPI counters (Total in File, Active Companies, Filtered Matches, Selected Fields).
-     - Interactive paginated preview table (10, 25, 50, 100 rows per page) showing *only your selected columns* with color-coded status badges.
-     - Customize the output filename (e.g. `B2B_Newspaper_Invoice_Leads.xlsx`) and click **Export to Excel** to instantly download the customized file.
+   - **Step 3 (Which Columns Do You Need to Export?)**: Check/uncheck the exact columns to include in your Excel file (Phone, Email, Website, Company Name, Director/Officers, Registration Number, Address, City, Postal Code, Industry, Status). Unchecked columns remain safely in Supabase. Includes **Select All** and **Deselect All** buttons.
+   - **Step 4 (Live Preview & Export to Excel)**:
+     - View live KPI counters (Total Scraped, Active Companies, P1: Phone & Email, P2: Has Website, Filtered Matches).
+     - Interactive paginated preview table (10, 25, 50, 100 rows per page) showing *only your selected columns* with Phone & Email prioritized at the top.
+     - Customize the output filename (e.g. `B2B_Exported_Leads.xlsx`) and click **Export to Excel** to instantly download the customized file.
 4. **Scraper Control Panel Tab**:
    - **Target Registries**: Toggle checkboxes for Norway, France, Singapore, USA, UK, Canada, Australia.
    - **Search Query**: Enter keyword or industry (e.g. `technology`, `logistics`, `shipping`, `energy`, or leave blank).

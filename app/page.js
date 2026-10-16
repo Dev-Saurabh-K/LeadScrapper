@@ -479,15 +479,14 @@ export default function Dashboard() {
               </span>
             </div>
 
-            {/* Export Master Excel Button */}
-            <a
-              href="/api/export"
-              download="Master_B2B_Leads.xlsx"
+            {/* Export Leads (Column Selector) Button */}
+            <button
+              onClick={() => setActiveTab('exporter')}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-950/40 border border-emerald-400/20 transition-all active:scale-[0.98] focus:outline-none"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              <span>Export Master Excel</span>
-            </a>
+              <span>Export Leads</span>
+            </button>
 
             {/* Email Dispatch CTA */}
             <button
@@ -535,9 +534,9 @@ export default function Dashboard() {
               }`}
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-              <span>Invoice Exporter</span>
+              <span>Export Leads</span>
               <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] text-emerald-300 border border-emerald-500/20">
-                Mockup Tool
+                Select Columns
               </span>
             </button>
             <button
@@ -1103,19 +1102,28 @@ export default function Dashboard() {
               {/* Job Completed Summary Banner */}
               {jobSummary && (
                 <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-                  <div className="flex items-center justify-between font-semibold">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-semibold">
                     <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <span>Scrape Job Finished Successfully</span>
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span>Scrape Job Complete (All Data Saved in Supabase)</span>
                     </div>
-                    <a
-                      href="/api/export"
-                      download="Master_B2B_Leads.xlsx"
-                      className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs text-white hover:bg-emerald-500 shadow-sm"
-                    >
-                      <Download className="h-3 w-3" />
-                      Download Excel
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setActiveTab('exporter')}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1 text-xs text-white hover:from-blue-500 hover:to-indigo-500 shadow-sm"
+                      >
+                        <Sliders className="h-3 w-3" />
+                        <span>Select Columns to Export</span>
+                      </button>
+                      <a
+                        href="/api/export"
+                        download="Master_B2B_Leads.xlsx"
+                        className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-800 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-700 shadow-sm"
+                      >
+                        <Download className="h-3 w-3" />
+                        <span>All Columns (.xlsx)</span>
+                      </a>
+                    </div>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">
                     <div className="rounded-lg bg-black/40 p-1.5 border border-white/5">

@@ -33,7 +33,7 @@ flowchart TD
         ExportMaster["Download Master Excel (GET /api/export)"]
         EmailDispatch["Dispatch Custom Leads Report from 'Email Dispatch' Tab"]
         EnrichSingle["Click ✨ 'Enrich Contacts' on a single company row"]
-        InvoiceFallback["Invoice Exporter (auto-fallback if Excel is missing from disk)"]
+        ExportColumns["Export Leads: User selects which columns to export from scraped data (100% saved in Supabase)"]
 
         SupabaseDB[("Supabase PostgreSQL Database")]
         
@@ -42,7 +42,7 @@ flowchart TD
         SupabaseDB --> ExportMaster
         SupabaseDB --> EmailDispatch
         SupabaseDB --> EnrichSingle
-        SupabaseDB --> InvoiceFallback
+        SupabaseDB --> ExportColumns
     end
 ```
 
@@ -96,7 +96,7 @@ Supabase is queried whenever users view, search, export, or communicate with alr
 | **Exporting Master Excel** | `GET /api/export` | Calls `db.getAllLeads()` from Supabase and streams the Excel workbook. |
 | **Sending Email Reports** | `POST /api/notify` | Queries Supabase leads matching the recipient's desired country scope. |
 | **Enriching a Single Lead** | `POST /api/enrich` | Reads the company's website from Supabase, crawls it, and updates the row. |
-| **Invoice Exporter Fallback** | `GET /api/custom-export/master` | If `exports/Master_B2B_Leads.xlsx` is not found on disk, it queries Supabase. |
+| **Export Leads (Column Selector)** | `GET /api/custom-export/master` | Loads scraped leads dataset so the user can choose which columns to export. |
 | **Checking System Health** | `GET /api/health` | Executes a ping query against Supabase (`SELECT 1`) to confirm connectivity. |
 
 ---
