@@ -102,6 +102,10 @@ leadscrape/
 │       ├── jobs/route.js                # List job history
 │       ├── jobs/[id]/route.js           # Single job details and logs
 │       ├── export/route.js              # Binary stream of Master_B2B_Leads.xlsx
+│       ├── custom-export/               # B2B Newspaper Invoice Data Exporter endpoints
+│       │   ├── master/route.js          # Loads scraped Master Excel dataset or fallback DB
+│       │   ├── parse/route.js           # Multi-part upload parser for external spreadsheets
+│       │   └── download/route.js        # Dynamic generator streaming filtered custom Excel
 │       ├── enrich/route.js              # Website contact enrichment
 │       ├── notify/route.js              # SMTP test & summary dispatch
 │       ├── health/route.js              # System diagnostic health check
@@ -291,6 +295,17 @@ export const germanyConnector = new GermanyConnector();
   2. `sendCustomEmail({ recipient, subject, customNote, totalLeads, countries, excelAttachment })`: Custom dispatch called from the Web UI Email Dispatch Center with customized executive notes and country-filtered Excel attachments.
 * Attaches `exports/Master_B2B_Leads.xlsx` directly to outgoing emails as a streamable Buffer or resolved filesystem path.
 
+### 5.5 Excel Parser & Column Mapper (`lib/services/excel-parser.js`)
+* Powers the **B2B Newspaper Invoice Data Exporter**.
+* **Auto-Discovery & Disk Caching**: On initial mount, reads `exports/Master_B2B_Leads.xlsx` from disk and extracts dynamic headers, unique industries, and unique cities. Falls back gracefully to querying database leads if the file is absent.
+* **Binary Buffer Parsing**: Parses multipart user-uploaded `.xlsx` or `.csv` files into structured records without requiring disk writes.
+* **Intelligent Metrics Computation**: Evaluates company status across rows to dynamically count active vs. inactive records (`activeRecords`, `inactiveRecords`).
+
+### 5.6 Dynamic Custom Excel Generation (`generateCustomExcel` in `lib/services/exporter.js`)
+* Generates on-demand streaming `.xlsx` workbooks containing **only user-selected columns** and filtered rows.
+* Preserves dark navy freeze-header styling (`#1E293B`), zebra striping (`#F8FAFC`), and dynamic auto-fit column widths.
+* Direct in-memory buffer streaming prevents file-system bloat on export servers.
+
 ---
 
 ## 📡 6. API Route Contracts
@@ -376,6 +391,42 @@ System diagnostics and connector readiness.
     "stats": { "totalLeads": 24, "totalJobs": 4 }
   }
   ```
+
+### `GET /api/custom-export/master`
+Loads and parses `exports/Master_B2B_Leads.xlsx` (or database leads fallback).
+* **Response**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "fileName": "Master_B2B_Leads.xlsx",
+      "totalRecords": 59,
+      "activeRecords": 56,
+      "inactiveRecords": 3,
+      "columns": ["Company Name", "Registration Number", "Status", "..."],
+      "industries": ["Advertising", "Information Technology", "..."],
+      "cities": ["Oslo", "Paris", "Singapore", "..."],
+      "records": [...]
+    }
+  }
+  ```
+
+### `POST /api/custom-export/parse`
+Parses an uploaded `.xlsx` or `.csv` spreadsheet buffer via multipart `FormData`.
+* **Request**: `FormData` with `file` binary.
+* **Response**: Same structured JSON payload as `/api/custom-export/master`.
+
+### `POST /api/custom-export/download`
+Generates and streams a custom-filtered `.xlsx` workbook containing only selected columns.
+* **Request Payload**:
+  ```json
+  {
+    "rows": [ { "Company Name": "Acme Corp", "Phone": "+1234567890", "Email": "contact@acme.com" } ],
+    "selectedColumns": ["Company Name", "Phone", "Email"],
+    "fileName": "Newspaper_Invoices.xlsx"
+  }
+  ```
+* **Response**: Binary `.xlsx` stream (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`).
 
 ---
 

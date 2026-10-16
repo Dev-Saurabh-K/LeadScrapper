@@ -80,14 +80,27 @@ Navigate to:
    - Filters: Filter by Country, "Has Email", and "Has Phone".
    - Click the 👁️ (Eye) icon to view full details (address, officers, industry).
    - Click the ✨ (Sparkle) icon on any company to run website contact enrichment on demand.
-3. **Scraper Control Panel Tab**:
+3. **B2B Newspaper Invoice Data Exporter Tab**:
+   - **Step 1 (Upload / Load Master Excel)**: Automatically loads scraped leads from `exports/Master_B2B_Leads.xlsx` on open (59+ records). You can also drag-and-drop external `.xlsx` or `.csv` files or click "Reload Scraped Master" anytime.
+   - **Step 2 (Filter Options)**:
+     - **Status**: Defaults to **Active Companies Only** (or choose *Inactive Companies Only*, *All Companies*).
+     - **Industry Sector**: Filter dynamically by any scraped industry sector.
+     - **City Location**: Filter by city (e.g. Oslo, Paris, Singapore).
+     - **Search Bar**: Instant real-time search across company names, registration numbers, or directors.
+     - **Clear Filters**: Resets all filters back to default with 1 click.
+   - **Step 3 (Select Fields to Export)**: Check/uncheck columns to include in your newspaper invoice or CRM export (Company Name, Registration/GST Number, Director/Officers, Phone, Email, Address, City, Postal Code, Industry, Website, Status). Includes **Select All** and **Deselect All** buttons.
+   - **Step 4 (Preview & Export)**:
+     - View live KPI counters (Total in File, Active Companies, Filtered Matches, Selected Fields).
+     - Interactive paginated preview table (10, 25, 50, 100 rows per page) showing *only your selected columns* with color-coded status badges.
+     - Customize the output filename (e.g. `B2B_Newspaper_Invoice_Leads.xlsx`) and click **Export to Excel** to instantly download the customized file.
+4. **Scraper Control Panel Tab**:
    - **Target Registries**: Toggle checkboxes for Norway, France, Singapore, USA, UK, Canada, Australia.
    - **Search Query**: Enter keyword or industry (e.g. `technology`, `logistics`, `shipping`, `energy`, or leave blank).
    - **Limit per Country**: Choose 5, 10, 20, or 50 records per registry.
    - **Enrich Company Websites**: Check to crawl company Contact/About pages for emails and phones.
    - **Polite Delay**: Choose delay between requests (default 1000ms).
    - Click **Start Lead Scraping Job**.
-4. **Email Dispatch Tab**:
+5. **Email Dispatch Tab**:
    - **Recipient Input**: Specify any target recipient email (with 1-click quick-fill pills for `saurabhkumar.sakr@gmail.com` and `saurabh7739278614@gmail.com`).
    - **Subject Line**: Custom subject or auto-generated default e.g. `B2B Leads Report — 24 Companies (Master_B2B_Leads.xlsx)`.
    - **Geographic Scope**: Filter report to specific country (e.g. Norway, Singapore) or send all globally scraped leads.
@@ -95,11 +108,11 @@ Navigate to:
    - **Attachment Toggle**: Checkbox to attach the styled multi-sheet `Master_B2B_Leads.xlsx` workbook directly to the email.
    - **Live Recipient Inbox Preview**: Real-time rendering card showing exactly how the email appears in the recipient's inbox before sending.
    - **Sent History**: Audit log of all emails dispatched during the session with timestamps and SMTP message IDs.
-5. **Live Activity Console**:
+6. **Live Activity Console**:
    - Watch the terminal stream live events as each country registry is queried.
-6. **Download Master Excel**:
-   - Click **Export Master Excel** in the navbar or at the end of a job to download [`exports/Master_B2B_Leads.xlsx`](file:///d:/internship/the-corent/leadscrape/exports/Master_B2B_Leads.xlsx).
-7. **API Docs**:
+7. **Download Master Excel**:
+   - Click **Export Master Excel** in the navbar or at the end of a job to download [`exports/Master_B2B_Leads.xlsx`](file:///d:/internship/the-corent\leadscrape\exports\Master_B2B_Leads.xlsx).
+8. **API Docs**:
    - Click **API Docs & Integration** in the navbar or visit [http://localhost:3000/docs](http://localhost:3000/docs).
 
 ---

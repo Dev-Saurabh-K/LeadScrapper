@@ -41,6 +41,7 @@ import {
   ChevronRight,
   Info
 } from 'lucide-react';
+import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 
 const COUNTRIES = [
   { code: 'NO', name: 'Norway', source: 'BRREG (data.brreg.no)', free: true },
@@ -525,6 +526,20 @@ export default function Dashboard() {
               </span>
             </button>
             <button
+              onClick={() => setActiveTab('exporter')}
+              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
+                activeTab === 'exporter'
+                  ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-400 shadow-xs shadow-emerald-500/20'
+                  : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
+              }`}
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+              <span>Invoice Exporter</span>
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] text-emerald-300 border border-emerald-500/20">
+                Mockup Tool
+              </span>
+            </button>
+            <button
               onClick={() => setActiveTab('scraper')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'scraper'
@@ -632,6 +647,11 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {/* TAB 0: B2B NEWSPAPER INVOICE DATA EXPORTER */}
+        {activeTab === 'exporter' && (
+          <InvoiceDataExporter />
+        )}
 
         {/* TAB 1: LEADS EXPLORER */}
         {activeTab === 'explorer' && (
@@ -1604,6 +1624,35 @@ export default function Dashboard() {
                   </p>
                   <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
 {`curl -O http://localhost:3000/api/export`}
+                  </pre>
+                </div>
+
+                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-3.5">
+                  <div className="flex items-center gap-2 font-mono text-xs">
+                    <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 font-bold text-emerald-400 border border-emerald-500/30">GET</span>
+                    <span className="text-slate-200">/api/custom-export/master</span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    Returns structured records, available columns, and metrics parsed from <code>exports/Master_B2B_Leads.xlsx</code>.
+                  </p>
+                  <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
+{`curl "http://localhost:3000/api/custom-export/master"`}
+                  </pre>
+                </div>
+
+                <div className="rounded-xl border border-white/5 bg-slate-950/80 p-3.5">
+                  <div className="flex items-center gap-2 font-mono text-xs">
+                    <span className="rounded-md bg-blue-500/20 px-2 py-0.5 font-bold text-blue-400 border border-blue-500/30">POST</span>
+                    <span className="text-slate-200">/api/custom-export/download</span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    Generates and streams a custom-filtered Excel file with only the user-selected columns and filtered rows.
+                  </p>
+                  <pre className="mt-2 rounded-lg bg-black/60 p-2.5 font-mono text-[11px] text-slate-300 border border-white/5">
+{`curl -X POST http://localhost:3000/api/custom-export/download \\
+  -H "Content-Type: application/json" \\
+  -d '{"rows": [...], "selectedColumns": ["Company Name", "Phone", "Email"], "fileName": "Invoices.xlsx"}' \\
+  --output Invoices.xlsx`}
                   </pre>
                 </div>
               </div>
