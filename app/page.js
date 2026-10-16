@@ -1091,10 +1091,10 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setActiveTab('exporter')}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1 text-xs text-white hover:from-blue-500 hover:to-indigo-500 shadow-sm"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-600/30 transition active:scale-[0.98]"
                       >
                         <Sliders className="h-3 w-3" />
-                        <span>Select Columns to Export</span>
+                        <span>Select Columns & Export / Email Table →</span>
                       </button>
                       <a
                         href="/api/export"

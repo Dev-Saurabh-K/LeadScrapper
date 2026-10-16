@@ -143,3 +143,39 @@ If Supabase is offline, internet connection drops, or a new developer runs the c
 | **Invoice Data Exporter** | ❌ No | ✅ (if Excel not on disk) | ❌ No |
 | **Send Email Dispatch** | ❌ No | ✅ **YES** | ❌ No |
 | **Single Lead Enrichment** | ✅ **YES** (only target site) | ✅ (reads target website) | ✅ **YES** (updates contact info) |
+
+---
+
+## 🎯 7. The End-to-End User Workflow
+
+```mermaid
+flowchart LR
+    Step1["1. Scrape Data<br/>(Global Registries + Phone/Email Discovery)<br/><b>100% Saved in Supabase</b>"]
+    Step2["2. Select Columns<br/>(Phone & Email P1, Website P2, etc.)<br/><b>Live Preview Filtered Table</b>"]
+    Step3A["3A. Export Excel<br/>(Download .xlsx with selected columns)"]
+    Step3B["3B. Send Table via Email<br/>(HTML Table in Body + Custom .xlsx Attached)"]
+
+    Step1 -->|Click 'Select Columns & Export / Email'| Step2
+    Step2 --> Step3A
+    Step2 --> Step3B
+```
+
+### Step 1: Scrape Data
+1. User selects countries and query in **Scraper Control** tab and hits **Start Lead Scraping Job**.
+2. Live logs stream in real time as corporate registries are scraped and company websites are crawled for emails and phones.
+3. 100% of the scraped data and all columns are safely persisted in **Supabase PostgreSQL**.
+4. On job completion, the user is presented with a direct button: **"Select Columns & Export / Email Table →"**.
+
+### Step 2: Select Columns
+1. The user selects exactly which columns are relevant for outreach (e.g. `Company Name`, `Phone`, `Email`, `Website`, `City`).
+2. The UI preview table updates in real-time, showing *only those selected columns* with priority ordering (direct Phone & Email records sorted first).
+3. Quick filters allow narrowing down by Active status, Phone/Email availability, City, or Industry.
+
+### Step 3: Export & Send Email of That Particular Table
+1. **Download Locally**: Clicking **Export** downloads the custom `.xlsx` spreadsheet with *only those selected columns* and *filtered rows*.
+2. **Send Table via Email**:
+   - Clicking **Email Table** opens the inline email dispatch drawer.
+   - User enters recipient email, subject, and optional message.
+   - The system sends an email with **that exact table** rendered directly in the email body (with clickable email mailto links, phone numbers, and website URLs) AND attaches the customized `.xlsx` workbook containing only those selected columns!
+   - Option to both download the file and dispatch the email in a single click.
+

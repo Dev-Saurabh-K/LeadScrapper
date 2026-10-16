@@ -17,7 +17,9 @@ import {
   Check,
   Star,
   Globe,
-  Loader2
+  Loader2,
+  Send,
+  X
 } from 'lucide-react';
 
 export default function LeadDataExporter() {
@@ -25,6 +27,15 @@ export default function LeadDataExporter() {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
   const [exportSuccess, setExportSuccess] = useState(null);
+
+  // Email Dispatch States for this particular table & selected columns
+  const [showEmailPanel, setShowEmailPanel] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('saurabhkumar.sakr@gmail.com');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailCustomNote, setEmailCustomNote] = useState('');
+  const [alsoDownloadExcel, setAlsoDownloadExcel] = useState(true);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailResultMsg, setEmailResultMsg] = useState(null);
 
   // Scraped dataset state
   const [dataset, setDataset] = useState({
@@ -284,6 +295,70 @@ export default function LeadDataExporter() {
     }
   };
 
+  const handleSendCustomTableEmail = async (e) => {
+    if (e) e.preventDefault();
+
+    if (filteredRecords.length === 0) {
+      alert('No matching records found to email with current filter settings.');
+      return;
+    }
+    if (orderedSelectedColumns.length === 0) {
+      alert('Please select at least one column for the table.');
+      return;
+    }
+    if (!emailRecipient || !emailRecipient.includes('@')) {
+      alert('Please enter a valid recipient email address.');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    setEmailResultMsg(null);
+
+    try {
+      const res = await fetch('/api/custom-export/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rows: filteredRecords,
+          selectedColumns: orderedSelectedColumns,
+          fileName: exportFileName || 'B2B_Exported_Leads.xlsx',
+          recipient: emailRecipient,
+          subject: emailSubject.trim() || undefined,
+          customNote: emailCustomNote.trim(),
+          attachExcel: true
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to dispatch email.');
+      }
+
+      setEmailResultMsg({
+        type: 'success',
+        text: `Table with ${orderedSelectedColumns.length} columns (${filteredRecords.length} leads) sent to ${emailRecipient}!`,
+        messageId: data.messageId
+      });
+
+      // If user chose to also download Excel locally, trigger the download
+      if (alsoDownloadExcel) {
+        handleExportExcel();
+      }
+
+      setTimeout(() => {
+        setShowEmailPanel(false);
+      }, 4000);
+    } catch (err) {
+      console.error('[LeadExporter] Email send failed:', err);
+      setEmailResultMsg({
+        type: 'error',
+        text: err.message
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   const validColumns = useMemo(() => {
     const raw = (dataset.columns || []).filter(c => !c.startsWith('__'));
     return sortColumnsByPriority(raw);
@@ -309,24 +384,172 @@ export default function LeadDataExporter() {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             value={exportFileName}
             onChange={(e) => setExportFileName(e.target.value)}
             placeholder="Export_File.xlsx"
-            className="w-48 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-44 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
+
+          {/* Export to Excel (Download) */}
           <button
             onClick={handleExportExcel}
             disabled={isExporting || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
             className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-40"
+            title="Download Excel spreadsheet locally"
           >
             {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
             <span>Export ({filteredRecords.length})</span>
           </button>
+
+          {/* Send Email of Table */}
+          <button
+            onClick={() => {
+              setShowEmailPanel((prev) => !prev);
+              if (!emailSubject) {
+                setEmailSubject(`B2B Leads Table — ${filteredRecords.length} Companies (${orderedSelectedColumns.length} Columns)`);
+              }
+            }}
+            disabled={filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition active:scale-[0.98] disabled:opacity-40 ${
+              showEmailPanel
+                ? 'border-blue-500/50 bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                : 'border-white/10 bg-slate-900/80 hover:bg-slate-800 text-slate-200'
+            }`}
+            title="Send this table via email to recipient"
+          >
+            <Send className="h-3.5 w-3.5 text-blue-400" />
+            <span>Email Table</span>
+          </button>
         </div>
       </div>
+
+      {/* Dispatch Custom Table via Email Panel */}
+      {showEmailPanel && (
+        <div className="rounded-2xl border border-blue-500/30 bg-slate-950/90 p-4 shadow-2xl backdrop-blur-xl space-y-3">
+          <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-blue-500/10 p-1.5 border border-blue-500/20 text-blue-400">
+                <Mail className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-white">Send Table via Email</h3>
+                <p className="text-[11px] text-slate-400">
+                  Sends an email containing this exact table ({filteredRecords.length} rows, {orderedSelectedColumns.length} selected columns) with the customized Excel workbook attached.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowEmailPanel(false)}
+              className="rounded-lg p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSendCustomTableEmail} className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  Recipient Email Address <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={emailRecipient}
+                  onChange={(e) => setEmailRecipient(e.target.value)}
+                  placeholder="recipient@example.com"
+                  className="w-full rounded-xl border border-white/10 bg-slate-900/90 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  Subject Line
+                </label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder={`B2B Leads Table — ${filteredRecords.length} Companies`}
+                  className="w-full rounded-xl border border-white/10 bg-slate-900/90 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                Custom Message / Notes (Optional)
+              </label>
+              <textarea
+                rows={2}
+                value={emailCustomNote}
+                onChange={(e) => setEmailCustomNote(e.target.value)}
+                placeholder="Hi Team, please find attached the filtered sales leads table with direct phone & email contacts..."
+                className="w-full rounded-xl border border-white/10 bg-slate-900/90 p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-white/5">
+              <label className="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={alsoDownloadExcel}
+                  onChange={(e) => setAlsoDownloadExcel(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+                />
+                <span>Also download customized Excel file locally</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailPanel(false)}
+                  className="rounded-xl border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingEmail || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 transition active:scale-[0.98] disabled:opacity-40"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Sending Table...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5 fill-current" />
+                      <span>Send Table via Email</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {emailResultMsg && (
+            <div
+              className={`rounded-xl border p-2.5 text-xs flex items-center gap-2 ${
+                emailResultMsg.type === 'success'
+                  ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                  : 'border-rose-500/20 bg-rose-500/10 text-rose-300'
+              }`}
+            >
+              {emailResultMsg.type === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+              )}
+              <span>{emailResultMsg.text}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Alerts */}
       {exportSuccess && (
