@@ -34,15 +34,15 @@ Runs in the background, updates Supabase, updates [`exports/Master_B2B_Leads.xls
 
 ## 🌍 Supported Registries
 
-| Country | Source Registry | Status | Free Key Needed? |
+| Country | Source Registry & Multi-Source Feeds | Status | Free Key Needed? |
 | :--- | :--- | :---: | :---: |
+| 🇺🇸 **USA** | Colorado Socrata + NYC Open Data (Dual Source) | 🟢 Live | ❌ None |
+| 🇬🇧 **UK** | UK Contracts Finder + Companies House (Dual Source) | 🟢 Live | ❌ None (Key Optional) |
+| 🇫🇷 **France** | Recherche d'entreprises + BODACC (Dual Source) | 🟢 Live | ❌ None |
 | 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | 🟢 Live | ❌ None |
-| 🇫🇷 **France** | Recherche d'entreprises (`api.gouv.fr`) | 🟢 Live | ❌ None |
 | 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | 🟢 Live | ❌ None |
-| 🇺🇸 **USA** | Colorado Socrata Open Data | 🟢 Live | ❌ None |
 | 🇨🇦 **Canada** | Corporations Canada Open Data | 🟢 Live | ❌ None |
-| 🇬🇧 **UK** | Companies House API | 🟡 Ready | 🔑 Free Key |
-| 🇦🇺 **Australia** | ABN Lookup | 🟡 Ready | 🔑 Free GUID |
+| 🇦🇺 **Australia** | Australian Business Register (ABN Lookup) | 🟢 Live / Ready | 🔑 Free GUID (Optional) |
 
 ---
 

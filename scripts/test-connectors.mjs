@@ -110,6 +110,56 @@ async function runTests() {
     console.error(`  ❌ Excel Export failed:`, err.message, '\n');
   }
 
+  // 8. Test Email & Phone Number Validation Engine
+  totalTests++;
+  console.log(`[TEST ${totalTests}] Testing Email & Phone Number Validation Engine...`);
+  try {
+    const { contactValidator } = await import('../lib/services/validator.js');
+
+    // Email test assertions
+    const validEmails = ['contact@stripe.com', 'first.last@service.co.uk', 'sales+deals@startup.io'];
+    for (const em of validEmails) {
+      const res = contactValidator.validateEmail(em);
+      if (!res.isValid) throw new Error(`Valid email "${em}" was incorrectly marked as invalid: ${res.error}`);
+    }
+
+    const invalidEmails = [
+      'logo.png@2x',
+      'user@example.com',
+      'burner@mailinator.com',
+      'consecutive..dots@domain.com',
+      '@nodomain.com',
+      'notanemail'
+    ];
+    for (const em of invalidEmails) {
+      const res = contactValidator.validateEmail(em);
+      if (res.isValid) throw new Error(`Invalid email "${em}" was incorrectly marked as valid!`);
+    }
+
+    // Phone test assertions
+    const validPhones = [
+      { raw: '2127526166', country: 'USA' },
+      { raw: '+44 20 7946 0192', country: 'UK' },
+      { raw: '+47 451 72 987', country: 'Norway' }
+    ];
+    for (const ph of validPhones) {
+      const res = contactValidator.validatePhone(ph.raw, ph.country);
+      if (!res.isValid) throw new Error(`Valid phone "${ph.raw}" was marked as invalid: ${res.error}`);
+    }
+
+    const invalidPhones = ['000000000', '12345678', '1111111111', '123', '+15550199'];
+    for (const ph of invalidPhones) {
+      const res = contactValidator.validatePhone(ph);
+      if (res.isValid) throw new Error(`Invalid phone "${ph}" was incorrectly marked as valid!`);
+    }
+
+    console.log(`  -> Validated RFC emails, dummy/disposable filters, and ITU-T E.164 phone formats.`);
+    console.log(`  ✅ Email & Phone Validation passed!\n`);
+    passedTests++;
+  } catch (err) {
+    console.error(`  ❌ Email & Phone Validation failed:`, err.message, '\n');
+  }
+
   console.log('================================================================');
   console.log(`SUMMARY: ${passedTests}/${totalTests} Tests Passed successfully!`);
   console.log('================================================================');

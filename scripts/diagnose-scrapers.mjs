@@ -15,11 +15,13 @@ console.log('Auditing all 7 country scrapers with live requests...\n');
 const results = [];
 
 async function test(country, connector, query = '', limit = 5) {
+  process.stdout.write(`Testing ${country} (${connector.registryName})... `);
   const start = Date.now();
   try {
     const records = await connector.search(query, limit);
     const duration = Date.now() - start;
     const isMock = records.some(r => r.source && r.source.includes('Sample') || r.source && r.source.includes('Simulated'));
+    console.log(`OK in ${duration}ms (${records.length} records)`);
     
     results.push({
       country,

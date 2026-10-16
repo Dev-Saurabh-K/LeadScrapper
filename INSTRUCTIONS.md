@@ -211,32 +211,20 @@ curl http://localhost:3000/api/health
 
 ## 6. Supported Registries & API Key Activation
 
-### 🟢 100% Free Registries (No API Key Required)
-These 5 registries work out of the box with live data:
-* 🇳🇴 **Norway**: `data.brreg.no` (Brønnøysundregistrene)
-* 🇫🇷 **France**: `recherche-entreprises.api.gouv.fr` (api.gouv.fr)
+### 🟢 100% Free Registries (No API Key Required & Multi-Source Under the Hood)
+These registries work out of the box with live data and automatically query multiple complementary sources per country:
+* 🇺🇸 **USA (Multi-Source)**: Aggregates Colorado Secretary of State Socrata (`data.colorado.gov`) + New York City Open Data (`data.cityofnewyork.us`). Delivers verified company data, street addresses, and **direct contact phone numbers** (`contact_phone`).
+* 🇬🇧 **UK (Multi-Source)**: Aggregates UK Contracts Finder Open Data (Cabinet Office OCDS) + Companies House API. Real-time active commercial suppliers and buyers with **direct emails and registered company numbers** (`GB-COH-xxxx`). Zero API key required for live mode; optional `COMPANIES_HOUSE_API_KEY` activates direct officer queries.
+* 🇫🇷 **France (Multi-Source)**: Aggregates `recherche-entreprises.api.gouv.fr` (INSEE / SIRENE) + BODACC (`data.gouv.fr`) commercial announcements across all French departments.
+* 🇳🇴 **Norway**: `data.brreg.no` (Brønnøysundregistrene Enhetsregisteret)
 * 🇸🇬 **Singapore**: `data.gov.sg` (ACRA Open Data)
-* 🇺🇸 **USA**: `data.colorado.gov` (Socrata Open Data)
 * 🇨🇦 **Canada**: `open.canada.ca` (Corporations Canada)
 
-### 🟡 Registries Requiring Free Registration
-These connectors are fully implemented and currently operate with verified sandbox data. To activate live API queries:
-
-1. **UK Companies House**:
-   - Register for free at [developer.companyinformation.service.gov.uk](https://developer.companyinformation.service.gov.uk) (2 mins).
-   - Create an app and copy your API Key.
-   - Add to `.env`:
-     ```env
-     COMPANIES_HOUSE_API_KEY=your_key_here
-     ```
-
-2. **Australia ABN Lookup**:
-   - Register email at [abr.business.gov.au/Tools/WebServices](https://abr.business.gov.au/Tools/WebServices).
-   - Receive free GUID via email.
-   - Add to `.env`:
-     ```env
-     ABN_LOOKUP_GUID=your_guid_here
-     ```
+### 🟡 Registries With Optional Free Registration
+* **Australia ABN Lookup**: Pre-loaded with verified enterprise datasets (Canva, Atlassian, Cochlear). To activate live XML/JSONP queries, add your free GUID from [abr.business.gov.au/Tools/WebServices](https://abr.business.gov.au/Tools/WebServices) to `.env`:
+  ```env
+  ABN_LOOKUP_GUID=your_guid_here
+  ```
 
 ---
 

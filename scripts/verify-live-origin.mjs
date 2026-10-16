@@ -16,15 +16,21 @@ async function verify() {
   await workbook.xlsx.readFile(filePath);
   const worksheet = workbook.getWorksheet('Master B2B Leads');
 
+  const headerMap = {};
+  const headerRow = worksheet.getRow(1);
+  headerRow.eachCell((cell, colNumber) => {
+    headerMap[String(cell.value || '').trim().toLowerCase()] = colNumber;
+  });
+
   const leads = [];
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return; // skip header
     leads.push({
       rowNumber,
-      companyName: row.getCell(1).value,
-      registrationNumber: String(row.getCell(2).value || ''),
-      country: row.getCell(3).value,
-      source: row.getCell(15).value
+      companyName: row.getCell(headerMap['company name'] || 1).value,
+      registrationNumber: String(row.getCell(headerMap['registration number'] || 6).value || '').trim(),
+      country: row.getCell(headerMap['country'] || 5).value,
+      source: row.getCell(headerMap['source'] || 15).value
     });
   });
 

@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/test-connectors.mjs",
+    "test": "node scripts/test-validations.mjs && node scripts/test-ui-sorting-filtering.mjs && node scripts/test-connectors.mjs",
+    "test:validations": "node scripts/test-validations.mjs",
+    "test:ui": "node scripts/test-ui-sorting-filtering.mjs",
     "scrape": "node scripts/run-scraper.mjs"
   },
   "dependencies": {

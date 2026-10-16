@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  FileSpreadsheet,
   Download,
   Search,
   RefreshCw,
@@ -21,6 +20,7 @@ import {
   Send,
   X
 } from 'lucide-react';
+import MicrosoftExcelIcon from './MicrosoftExcelIcon';
 
 export default function LeadDataExporter() {
   const [isLoading, setIsLoading] = useState(true);
@@ -372,6 +372,7 @@ export default function LeadDataExporter() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
+            <MicrosoftExcelIcon className="h-4 w-4 shrink-0" />
             <h2 className="text-base font-bold text-black">Export Leads</h2>
             <span className="text-xs text-slate-500 font-mono">
               ({dataset.totalRecords} leads in database)
@@ -400,7 +401,7 @@ export default function LeadDataExporter() {
             className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition active:scale-[0.98] disabled:opacity-40"
             title="Download Excel spreadsheet locally"
           >
-            {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MicrosoftExcelIcon className="h-3.5 w-3.5" />}
             <span>Export ({filteredRecords.length})</span>
           </button>
 
@@ -500,7 +501,10 @@ export default function LeadDataExporter() {
                   onChange={(e) => setAlsoDownloadExcel(e.target.checked)}
                   className="rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
                 />
-                <span>Also download customized Excel file locally</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <MicrosoftExcelIcon className="h-3.5 w-3.5 shrink-0" />
+                  Also download customized Excel file locally
+                </span>
               </label>
 
               <div className="flex items-center gap-2">

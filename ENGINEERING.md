@@ -257,19 +257,41 @@ export const germanyConnector = new GermanyConnector();
 2. Register the connector in `lib/connectors/index.js` under `CONNECTORS`.
 3. Add the country code to the UI list in `app/page.js`.
 
+### 4.3 Multi-Source Under-the-Hood Strategy (Zero-UI Clutter)
+To maximize lead density and capture direct phone numbers and emails without cluttering the UI with complex nested checkboxes, connectors aggregate complementary official sources for the same jurisdiction under the hood:
+* **United States (`lib/connectors/usa_socrata.js`)**: Queries both **Colorado Socrata** (`data.colorado.gov`) and **New York City Open Data** (`data.cityofnewyork.us`). NYC supplies direct contact phone numbers (`contact_phone`), active business licenses, and verified street addresses.
+* **France (`lib/connectors/france_insee.js`)**: Queries both **Recherche d'entreprises** (`api.gouv.fr`) and **BODACC Commercial Announcements** (`bodacc-datadila.opendatasoft.com`), capturing newly registered commercial businesses across all French departments.
+* **United Kingdom (`lib/connectors/companies_house.js`)**: Queries both **UK Contracts Finder Open Data (Cabinet Office OCDS)** and **Companies House API**. Yields live UK commercial suppliers and contractors with official Companies House registration numbers and direct contact emails, ensuring 100% live execution without requiring API keys for baseline operation.
+
 ---
 
 ## ⚙️ 5. Core Services Layer
 
 ### 5.1 Normalization & De-Duplication (`lib/services/normalizer.js`)
 * **Company Names**: Strips duplicate whitespaces and outer punctuation.
-* **Phone Numbers**: Normalizes characters to digits, plus signs, and hyphens. Drops invalid strings with fewer than 6 or greater than 16 digits.
-* **Email Validation**: Enforces RFC regex, strips invalid media extensions (`.png`, `.svg`, `.css`), and excludes dummy domains (`example.com`, `test.com`).
+* **Phone Numbers**: Delegates to `ContactValidator` to enforce ITU-T E.164 standards, discard dummy patterns, and format according to jurisdiction (`+1 (XXX) XXX-XXXX`, `+44 XXXX XXXXXX`, `+33 X XX XX XX XX`, etc.).
+* **Email Validation**: Delegates to `ContactValidator` to enforce RFC 5322 syntax, drop media file extensions, and filter out dummy/disposable email services.
 * **2-Stage De-Duplication**:
   1. **Primary Check**: `(country, registration_number)` matching (case-insensitive).
   2. **Secondary Check**: `(country, LOWER(TRIM(company_name)))`.
 
-### 5.2 Website Enrichment Engine (`lib/services/enrichment.js`)
+### 5.2 Contact Information Validation Service (`lib/services/validator.js`)
+The `ContactValidator` module provides enterprise-level validation for B2B contact records:
+* **Email Validation (`validateEmail`)**:
+  * Enforces RFC 5321 / 5322 length and format constraints (max 254 chars total, max 64 for local part).
+  * Rejects crawler false-positives (trailing `.png`, `.svg`, `.css`, `.js`, etc.).
+  * Rejects consecutive dots (`..`), leading dots, and missing/invalid top-level domains.
+  * Filters out placeholder/dummy domains (`example.com`, `test.com`, `sample.org`, `domain.com`, `yourcompany.com`, `sentry.io`, etc.).
+  * Filters out disposable/burner email providers (`mailinator.com`, `tempmail.com`, `10minutemail.com`, `guerrillamail.com`, etc.).
+* **Phone Number Validation (`validatePhone`)**:
+  * Strips non-dialable noise while preserving international prefix `+`.
+  * Enforces ITU-T E.164 digit constraints (7 to 15 digits).
+  * Rejects fake/dummy sequences (all identical digits `0000000`, sequential digits `12345678`, binary strings, and US fictional numbers `555-01XX`).
+  * Automatically applies localized country formatting (US/Canada `+1 (XXX) XXX-XXXX`, UK `+44 XXXX XXXXXX`, France `+33 X XX XX XX XX`, Norway `+47 XX XX XX XX`).
+* **Lead Contact Audit (`validateLeadContacts`)**:
+  * Evaluates entire lead records and returns `{ emailValid, phoneValid, cleanEmail, cleanPhone, issues }`.
+
+### 5.3 Website Enrichment Engine (`lib/services/enrichment.js`)
 * **Strict Outreach Compliance**: **NEVER guesses or extrapolates email patterns**.
 * **Traversal Algorithm**:
   1. Validates company website URL.
@@ -277,7 +299,7 @@ export const germanyConnector = new GermanyConnector();
   3. Uses `cheerio` to scan `a[href^="mailto:"]`, `a[href^="tel:"]`, and text regex.
   4. If contacts are missing, identifies candidate contact links (`/contact`, `/contact-us`, `/about`) and evaluates the first target page after a 1000ms polite pause.
 
-### 5.3 Excel Exporter (`lib/services/exporter.js`)
+### 5.4 Excel Exporter (`lib/services/exporter.js`)
 * Built with `exceljs`.
 * Outputs to `exports/Master_B2B_Leads.xlsx`.
 * **Lead Priority Hierarchy**:
@@ -292,20 +314,20 @@ export const germanyConnector = new GermanyConnector();
   * Auto-calculated column widths with content padding.
   * Missing values strictly left as empty strings (`''`).
 
-### 5.4 Email Notifier (`lib/services/notifier.js`)
+### 5.5 Email Notifier (`lib/services/notifier.js`)
 * Uses `nodemailer` configured with SMTP credentials.
 * **Dual Operation**:
   1. `sendJobSummary(jobStats, countries, excelAttachment)`: Automated post-scrape summary with KPI counters and attachment.
   2. `sendCustomEmail({ recipient, subject, customNote, totalLeads, countries, excelAttachment })`: Custom dispatch called from the Web UI Email Dispatch Center with customized executive notes and country-filtered Excel attachments.
 * Attaches `exports/Master_B2B_Leads.xlsx` directly to outgoing emails as a streamable Buffer or resolved filesystem path.
 
-### 5.5 Excel Parser & Column Mapper (`lib/services/excel-parser.js`)
+### 5.6 Excel Parser & Column Mapper (`lib/services/excel-parser.js`)
 * Powers the **B2B Newspaper Invoice Data Exporter**.
 * **Auto-Discovery & Disk Caching**: On initial mount, reads `exports/Master_B2B_Leads.xlsx` from disk and extracts dynamic headers, unique industries, and unique cities. Falls back gracefully to querying database leads if the file is absent.
 * **Binary Buffer Parsing**: Parses multipart user-uploaded `.xlsx` or `.csv` files into structured records without requiring disk writes.
 * **Intelligent Metrics Computation**: Evaluates company status across rows to dynamically count active vs. inactive records (`activeRecords`, `inactiveRecords`).
 
-### 5.6 Dynamic Custom Excel Generation (`generateCustomExcel` in `lib/services/exporter.js`)
+### 5.7 Dynamic Custom Excel Generation (`generateCustomExcel` in `lib/services/exporter.js`)
 * Generates on-demand streaming `.xlsx` workbooks containing **only user-selected columns** and filtered rows.
 * Preserves dark navy freeze-header styling (`#1E293B`), zebra striping (`#F8FAFC`), and dynamic auto-fit column widths.
 * Direct in-memory buffer streaming prevents file-system bloat on export servers.

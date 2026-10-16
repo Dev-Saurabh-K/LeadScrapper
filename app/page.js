@@ -17,7 +17,6 @@ import {
   Phone,
   ExternalLink,
   RefreshCw,
-  FileSpreadsheet,
   Terminal,
   Sliders,
   ShieldCheck,
@@ -43,6 +42,7 @@ import {
   Star
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
+import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
 
 const COUNTRIES = [
   { code: 'NO', name: 'Norway', source: 'BRREG (data.brreg.no)', free: true },
@@ -506,7 +506,7 @@ export default function Dashboard() {
                   : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
-              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              <MicrosoftExcelIcon className="h-4 w-4" />
               <span>Export Leads</span>
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[10px] text-emerald-800 border border-emerald-200">
                 Select Columns
@@ -1234,7 +1234,10 @@ export default function Dashboard() {
                           onChange={(e) => setEmailAttachExcel(e.target.checked)}
                           className="rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-xs text-slate-800">Attach Master_B2B_Leads.xlsx</span>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-800">
+                          <MicrosoftExcelIcon className="h-3.5 w-3.5 shrink-0" />
+                          Attach Master_B2B_Leads.xlsx
+                        </span>
                       </label>
                     </div>
                   </div>
@@ -1258,8 +1261,8 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       <span className="font-semibold text-slate-900">{previewLeadsCount}</span> leads queued
                       {emailAttachExcel && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                          <Paperclip className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                          <MicrosoftExcelIcon className="h-3 w-3" />
                           Excel attached
                         </span>
                       )}
@@ -1402,8 +1405,8 @@ export default function Dashboard() {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-1 text-slate-500 flex items-center gap-1">
-                                <FolderArchive className="h-3 w-3 text-blue-600" />
+                              <td className="py-1 text-slate-500 flex items-center gap-1.5">
+                                <MicrosoftExcelIcon className="h-3.5 w-3.5 shrink-0" />
                                 <span>Attached Workbook:</span>
                               </td>
                               <td className="py-1 text-right font-medium text-blue-600">
@@ -1416,8 +1419,8 @@ export default function Dashboard() {
 
                       {/* Excel Attachment Chip */}
                       {emailAttachExcel && (
-                        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-[11px] text-emerald-900">
-                          <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <div className="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-[11px] text-emerald-900">
+                          <MicrosoftExcelIcon className="h-4 w-4 shrink-0" />
                           <div className="flex-1 truncate">
                             <div className="font-semibold text-emerald-950">Master_B2B_Leads.xlsx</div>
                             <div className="text-[10px] text-emerald-700">Excel Spreadsheet • {previewLeadsCount} verified rows</div>
