@@ -479,24 +479,6 @@ export default function Dashboard() {
               </span>
             </div>
 
-            {/* Export Leads (Column Selector) Button */}
-            <button
-              onClick={() => setActiveTab('exporter')}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-950/40 border border-emerald-400/20 transition-all active:scale-[0.98] focus:outline-none"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              <span>Export Leads</span>
-            </button>
-
-            {/* Email Dispatch CTA */}
-            <button
-              onClick={() => setActiveTab('email')}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/80 hover:bg-slate-800/80 px-3.5 py-2 text-xs font-semibold text-slate-200 shadow-sm transition-all active:scale-[0.98] focus:outline-none"
-            >
-              <Send className="h-4 w-4 text-blue-400" />
-              <span>Send Email</span>
-            </button>
-
             {/* Launch Scrape CTA */}
             <button
               onClick={() => setActiveTab('scraper')}
@@ -593,62 +575,7 @@ export default function Dashboard() {
 
       {/* Main Content Area */}
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {/* Metric Cards Banner (Bento Acrylic) */}
-        <section className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Leads</span>
-              <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-2 text-blue-400">
-                <Building2 className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold tracking-tight text-white">{totalLeads}</span>
-              <span className="text-xs text-slate-400">stored leads</span>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Enriched Contacts</span>
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-400">
-                <Mail className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold tracking-tight text-white">{enrichedLeads}</span>
-              <span className="text-xs font-semibold text-emerald-400">{enrichedPct}% with contact</span>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Countries Covered</span>
-              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-2 text-indigo-400">
-                <Globe className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold tracking-tight text-white">{activeCountries}</span>
-              <span className="text-xs text-slate-400">of 7 supported</span>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Scrape Jobs Run</span>
-              <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-2 text-cyan-400">
-                <RefreshCw className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold tracking-tight text-white">{jobs.length}</span>
-              <span className="text-xs text-cyan-400">automated tasks</span>
-            </div>
-          </div>
-        </section>
-
-        {/* TAB 0: B2B NEWSPAPER INVOICE DATA EXPORTER */}
+        {/* TAB 0: B2B LEADS DATA EXPORTER */}
         {activeTab === 'exporter' && (
           <InvoiceDataExporter />
         )}
@@ -656,6 +583,60 @@ export default function Dashboard() {
         {/* TAB 1: LEADS EXPLORER */}
         {activeTab === 'explorer' && (
           <div className="space-y-4">
+            {/* Metric Cards Banner (Bento Acrylic) */}
+            <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Leads</span>
+                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-2 text-blue-400">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tracking-tight text-white">{totalLeads}</span>
+                  <span className="text-xs text-slate-400">stored leads</span>
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Enriched Contacts</span>
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-400">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tracking-tight text-white">{enrichedLeads}</span>
+                  <span className="text-xs font-semibold text-emerald-400">{enrichedPct}% with contact</span>
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Countries Covered</span>
+                  <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-2 text-indigo-400">
+                    <Globe className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tracking-tight text-white">{activeCountries}</span>
+                  <span className="text-xs text-slate-400">of 7 supported</span>
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-5 shadow-xl shadow-black/30 backdrop-blur-xl transition hover:border-white/10 hover:bg-slate-900/60">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Scrape Jobs Run</span>
+                  <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-2 text-cyan-400">
+                    <RefreshCw className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tracking-tight text-white">{jobs.length}</span>
+                  <span className="text-xs text-cyan-400">automated tasks</span>
+                </div>
+              </div>
+            </section>
             {/* Search & Filter Bar */}
             <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-xl backdrop-blur-xl md:flex-row md:items-center md:justify-between">
               <div className="relative flex-1">
@@ -727,13 +708,13 @@ export default function Dashboard() {
                   <thead className="border-b border-white/5 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
                     <tr>
                       <th className="py-3.5 pl-4 pr-3 font-semibold">Company Name</th>
-                      <th className="px-3 py-3.5 font-semibold text-emerald-400 bg-emerald-500/10">
+                      <th className="px-3 py-3.5 font-semibold text-emerald-400">
                         <span className="flex items-center gap-1.5">
                           <Star className="h-3 w-3 fill-emerald-400 text-emerald-400" />
                           <span>Phone & Email (P1)</span>
                         </span>
                       </th>
-                      <th className="px-3 py-3.5 font-semibold text-cyan-400 bg-cyan-500/10">
+                      <th className="px-3 py-3.5 font-semibold text-cyan-400">
                         <span className="flex items-center gap-1.5">
                           <Globe className="h-3 w-3 text-cyan-400" />
                           <span>Website (P2)</span>
@@ -780,7 +761,7 @@ export default function Dashboard() {
                             <div className="font-semibold text-white">{lead.company_name}</div>
                           </td>
                           {/* Priority 1: Phone & Email */}
-                          <td className="px-3 py-3.5 bg-emerald-950/10">
+                          <td className="px-3 py-3.5">
                             <div className="flex flex-col gap-1">
                               {lead.phone ? (
                                 <span className="inline-flex items-center gap-1.5 text-emerald-300 font-medium font-mono text-[11px]">
@@ -803,7 +784,7 @@ export default function Dashboard() {
                             </div>
                           </td>
                           {/* Priority 2: Website */}
-                          <td className="px-3 py-3.5 bg-cyan-950/10">
+                          <td className="px-3 py-3.5">
                             {lead.website ? (
                               <a
                                 href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}

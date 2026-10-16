@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileSpreadsheet,
-  CheckSquare,
-  Square,
   Download,
   Search,
   RefreshCw,
@@ -12,19 +10,14 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Building2,
   RotateCcw,
   ExternalLink,
   Mail,
   Phone,
   Check,
-  FileCheck,
   Star,
   Globe,
-  Database,
-  ShieldCheck,
-  Loader2,
-  Sliders
+  Loader2
 } from 'lucide-react';
 
 export default function LeadDataExporter() {
@@ -33,7 +26,7 @@ export default function LeadDataExporter() {
   const [error, setError] = useState(null);
   const [exportSuccess, setExportSuccess] = useState(null);
 
-  // Scraped dataset state (loaded directly from scraped leads / Supabase)
+  // Scraped dataset state
   const [dataset, setDataset] = useState({
     fileName: 'Master_B2B_Leads.xlsx',
     totalRecords: 0,
@@ -45,43 +38,43 @@ export default function LeadDataExporter() {
     records: []
   });
 
-  // Step 2: Filters state
+  // Filters state
   const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'inactive' | 'all'
   const [contactPriorityFilter, setContactPriorityFilter] = useState('all'); // 'all' | 'p1_both' | 'p1_either' | 'p2_website'
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Step 3: Selected Columns to Export
+  // Selected Columns to Export
   const [selectedColumns, setSelectedColumns] = useState([]);
 
-  // Step 4: Preview Pagination & Export Config
+  // Pagination & Export Config
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [exportFileName, setExportFileName] = useState('B2B_Exported_Leads.xlsx');
 
-  // Helper to score column priority: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
+  // Priority metadata helper: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
   const getColumnPriorityMeta = (colName) => {
     const lower = colName.trim().toLowerCase();
     if (lower.includes('phone') || lower.includes('mobile')) {
-      return { priority: 1, rank: 1, label: 'P1: Phone', tag: 'Direct Contact', color: 'emerald' };
+      return { priority: 1, rank: 1 };
     }
     if (lower.includes('email')) {
-      return { priority: 1, rank: 2, label: 'P1: Email', tag: 'Direct Contact', color: 'emerald' };
+      return { priority: 1, rank: 2 };
     }
     if (lower.includes('website') || lower.includes('url') || lower.includes('web')) {
-      return { priority: 2, rank: 3, label: 'P2: Website', tag: 'Web Presence', color: 'cyan' };
+      return { priority: 2, rank: 3 };
     }
     if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
-      return { priority: 3, rank: 0, label: 'Company', tag: 'Identifier', color: 'blue' };
+      return { priority: 3, rank: 0 };
     }
     if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
-      return { priority: 3, rank: 4, label: 'Director', tag: 'Management', color: 'indigo' };
+      return { priority: 3, rank: 4 };
     }
     if (lower.includes('registration') || lower.includes('gst')) {
-      return { priority: 3, rank: 5, label: 'Reg/GST', tag: 'Legal', color: 'slate' };
+      return { priority: 3, rank: 5 };
     }
-    return { priority: 3, rank: 6, label: 'Detail', tag: 'Corporate', color: 'slate' };
+    return { priority: 3, rank: 6 };
   };
 
   const sortColumnsByPriority = (columns) => {
@@ -93,7 +86,6 @@ export default function LeadDataExporter() {
     });
   };
 
-  // Load scraped leads on initial mount
   useEffect(() => {
     loadScrapedLeads();
   }, []);
@@ -103,11 +95,10 @@ export default function LeadDataExporter() {
     setError(null);
     setCurrentPage(1);
 
-    // Filter out internal metadata keys
     const validCols = (data.columns || []).filter(c => !c.startsWith('__'));
     const sortedCols = sortColumnsByPriority(validCols);
 
-    // Pre-select priority columns by default
+    // Pre-select priority fields
     const priorityKeywords = [
       'company', 'name', 'phone', 'email', 'website', 'director', 'officer',
       'contact', 'registration', 'gst', 'status', 'address', 'city', 'postal', 'industry'
@@ -115,7 +106,7 @@ export default function LeadDataExporter() {
 
     const defaultSelected = sortedCols.filter(col => {
       const lower = col.toLowerCase();
-      return priorityKeywords.some(keyword => lower.includes(keyword));
+      return priorityKeywords.some(k => lower.includes(k));
     });
 
     setSelectedColumns(defaultSelected.length > 0 ? defaultSelected : sortedCols);
@@ -132,14 +123,13 @@ export default function LeadDataExporter() {
       }
       applyDataset(result.data);
     } catch (err) {
-      console.error('[LeadExporter] Failed to load scraped leads:', err);
+      console.error('[LeadExporter] Load error:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Toggle single column selection
   const toggleColumn = (colName) => {
     setSelectedColumns((prev) => {
       if (prev.includes(colName)) {
@@ -150,18 +140,15 @@ export default function LeadDataExporter() {
     });
   };
 
-  // Select all valid columns
   const handleSelectAllColumns = () => {
     const validCols = (dataset.columns || []).filter(c => !c.startsWith('__'));
     setSelectedColumns(sortColumnsByPriority(validCols));
   };
 
-  // Deselect all columns
   const handleDeselectAllColumns = () => {
     setSelectedColumns([]);
   };
 
-  // Clear all filters back to defaults
   const handleClearFilters = () => {
     setStatusFilter('active');
     setContactPriorityFilter('all');
@@ -171,19 +158,16 @@ export default function LeadDataExporter() {
     setCurrentPage(1);
   };
 
-  // Helper to extract field value by partial key match
   const getRecordField = (record, keyword) => {
     const key = Object.keys(record).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
     return key && record[key] ? String(record[key]).trim() : '';
   };
 
-  // Reactive filtering & Priority Sorting (Phone & Email 1st -> Website 2nd -> Rest 3rd)
+  // Reactive filtering & Priority Sorting
   const filteredRecords = useMemo(() => {
     if (!dataset.records || dataset.records.length === 0) return [];
 
-    // 1. Filter
     const matched = dataset.records.filter((record) => {
-      // Status Filter (Active, Inactive, All)
       if (statusFilter === 'active') {
         if (record.__status !== 'Active') return false;
       } else if (statusFilter === 'inactive') {
@@ -194,7 +178,6 @@ export default function LeadDataExporter() {
       const phoneVal = getRecordField(record, 'phone');
       const websiteVal = getRecordField(record, 'website');
 
-      // Contact Priority Filter
       if (contactPriorityFilter === 'p1_both') {
         if (!emailVal || !phoneVal) return false;
       } else if (contactPriorityFilter === 'p1_either') {
@@ -203,19 +186,16 @@ export default function LeadDataExporter() {
         if (!websiteVal) return false;
       }
 
-      // Industry Filter
       if (selectedIndustry) {
         const indVal = getRecordField(record, 'industry');
         if (indVal !== selectedIndustry) return false;
       }
 
-      // City Filter
       if (selectedCity) {
         const cityVal = getRecordField(record, 'city');
         if (cityVal !== selectedCity) return false;
       }
 
-      // Search Filter
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase();
         const rowString = Object.values(record).join(' ').toLowerCase();
@@ -225,7 +205,7 @@ export default function LeadDataExporter() {
       return true;
     });
 
-    // 2. Priority Sorting: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
+    // Priority sort: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
     return matched.sort((a, b) => {
       const getScore = (rec) => {
         const hasEmail = Boolean(getRecordField(rec, 'email'));
@@ -241,44 +221,20 @@ export default function LeadDataExporter() {
     });
   }, [dataset.records, statusFilter, contactPriorityFilter, selectedIndustry, selectedCity, searchQuery]);
 
-  // Reset to page 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, contactPriorityFilter, selectedIndustry, selectedCity, searchQuery]);
 
-  // Paginated records for table preview
   const totalPages = Math.ceil(filteredRecords.length / pageSize) || 1;
   const paginatedRecords = useMemo(() => {
     const startIdx = (currentPage - 1) * pageSize;
     return filteredRecords.slice(startIdx, startIdx + pageSize);
   }, [filteredRecords, currentPage, pageSize]);
 
-  // Columns sorted in priority order for display and export
   const orderedSelectedColumns = useMemo(() => {
     return sortColumnsByPriority(selectedColumns);
   }, [selectedColumns]);
 
-  // Metric computations for priority badges
-  const priorityStats = useMemo(() => {
-    if (!dataset.records) return { p1Both: 0, p1Either: 0, p2Website: 0 };
-    let p1Both = 0;
-    let p1Either = 0;
-    let p2Website = 0;
-
-    dataset.records.forEach((r) => {
-      const hasEmail = Boolean(getRecordField(r, 'email'));
-      const hasPhone = Boolean(getRecordField(r, 'phone'));
-      const hasWeb = Boolean(getRecordField(r, 'website'));
-
-      if (hasEmail && hasPhone) p1Both++;
-      if (hasEmail || hasPhone) p1Either++;
-      if (hasWeb) p2Website++;
-    });
-
-    return { p1Both, p1Either, p2Website };
-  }, [dataset.records]);
-
-  // Download filtered Excel with only selected columns
   const handleExportExcel = async () => {
     if (filteredRecords.length === 0) {
       alert('No matching records found to export with current filter settings.');
@@ -318,8 +274,8 @@ export default function LeadDataExporter() {
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(link);
 
-      setExportSuccess(`Successfully exported ${filteredRecords.length} records with ${orderedSelectedColumns.length} selected columns into ${exportFileName}!`);
-      setTimeout(() => setExportSuccess(null), 6000);
+      setExportSuccess(`Exported ${filteredRecords.length} records (${orderedSelectedColumns.length} columns) to ${exportFileName}`);
+      setTimeout(() => setExportSuccess(null), 5000);
     } catch (err) {
       console.error('[LeadExporter] Export failed:', err);
       alert(`Export failed: ${err.message}`);
@@ -333,365 +289,173 @@ export default function LeadDataExporter() {
     return sortColumnsByPriority(raw);
   }, [dataset.columns]);
 
+  const isFiltered = statusFilter !== 'active' || contactPriorityFilter !== 'all' || selectedIndustry || selectedCity || searchQuery;
+
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-500 shadow-lg shadow-emerald-500/20 ring-1 ring-white/20">
-              <FileSpreadsheet className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold tracking-tight text-white">
-                  Export Scraped Leads (Custom Column Selector)
-                </h2>
-                <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/25 flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-emerald-400" />
-                  Priority 1: Phone & Email
-                </span>
-                <span className="rounded-full bg-cyan-500/10 px-2 py-0.5 text-[11px] font-semibold text-cyan-400 ring-1 ring-cyan-500/25">
-                  Priority 2: Website
-                </span>
-              </div>
-              <p className="mt-1 text-xs sm:text-sm text-slate-400">
-                In the background, <strong>100% of scraped data is safely stored in Supabase</strong>. Below, choose only the exact columns you want exported to your Excel workbook.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={loadScrapedLeads}
-              disabled={isLoading}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-slate-800/80 hover:bg-slate-700/80 px-4 py-2 text-xs font-semibold text-slate-200 transition-all active:scale-[0.98] disabled:opacity-50"
-              title="Refresh latest scraped leads from database"
-            >
-              <RefreshCw className={`h-4 w-4 text-emerald-400 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Refresh Dataset</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Database & Background Storage Guarantee Strip */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/5 bg-slate-950/60 p-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-300">
-            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-            <span>
-              <strong>Supabase Background Storage Active:</strong> All 16 fields, addresses, officers, and timestamps are permanently preserved in PostgreSQL.
-            </span>
-          </div>
+    <div className="space-y-4">
+      {/* Sleek Minimal Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div>
           <div className="flex items-center gap-2">
-            <span className="rounded-md bg-blue-500/10 px-2 py-0.5 text-[11px] font-mono text-blue-400 border border-blue-500/20">
-              Scraped Leads: {dataset.totalRecords}
+            <h2 className="text-base font-semibold text-white">Export Leads</h2>
+            <span className="text-xs text-slate-500 font-mono">
+              ({dataset.totalRecords} leads in database)
             </span>
-            <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-400 border border-emerald-500/20">
-              Active: {dataset.activeRecords}
-            </span>
+            {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
           </div>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Select columns to export. Leads are sorted with Phone & Email first.
+          </p>
         </div>
 
-        {/* Success Alert */}
-        {exportSuccess && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs text-emerald-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-            <span>{exportSuccess}</span>
-          </div>
-        )}
-
-        {/* Error Alert */}
-        {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs text-rose-300">
-            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Step 1 & Step 2: Scraped Source & Filter Options */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Step 1: Scraped Data Source Card (Clean & Integrated - No Drag/Drop) */}
-        <div className="lg:col-span-5 flex flex-col justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-xl shadow-xl">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/20 text-xs font-bold text-blue-400 ring-1 ring-blue-500/30">
-                  1
-                </span>
-                <h3 className="text-sm font-semibold text-white">Scraped Data Source</h3>
-              </div>
-              <span className="text-[11px] font-mono text-emerald-400">
-                Default: Scraped Leads
-              </span>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Source File:</span>
-                  <span className="font-mono text-slate-200">{dataset.fileName}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Primary Database:</span>
-                  <span className="font-medium text-emerald-400 flex items-center gap-1">
-                    <Database className="h-3 w-3" />
-                    Supabase PostgreSQL
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Total Scraped Companies:</span>
-                  <span className="font-bold text-white font-mono">{dataset.totalRecords}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Active Companies:</span>
-                  <span className="font-bold text-emerald-300 font-mono">{dataset.activeRecords}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Priority 1 (Phone & Email):</span>
-                  <span className="font-bold text-emerald-300 font-mono">{priorityStats.p1Both}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Priority 2 (Website Available):</span>
-                  <span className="font-bold text-cyan-300 font-mono">{priorityStats.p2Website}</span>
-                </div>
-              </div>
-
-              <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-3 text-[11px] text-blue-300/90 leading-relaxed">
-                Whenever you run the scraper, all leads are automatically stored in your database. This exporter lets you select only the columns you want for your client or invoice spreadsheet.
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
-            <span>Detected Columns: <strong className="text-white font-mono">{validColumns.length}</strong></span>
-            <button
-              onClick={loadScrapedLeads}
-              className="text-xs text-blue-400 hover:text-blue-300 underline font-medium"
-            >
-              Sync with latest scrape
-            </button>
-          </div>
-        </div>
-
-        {/* Step 2: Filter Options */}
-        <div className="lg:col-span-7 flex flex-col justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-xl shadow-xl">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/20 text-xs font-bold text-blue-400 ring-1 ring-blue-500/30">
-                  2
-                </span>
-                <h3 className="text-sm font-semibold text-white">Filter Options</h3>
-              </div>
-              <button
-                onClick={handleClearFilters}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-800/60 hover:bg-slate-700/60 px-2.5 py-1 text-xs font-medium text-slate-300 transition-all"
-                title="Reset all filters to defaults"
-              >
-                <RotateCcw className="h-3 w-3 text-slate-400" />
-                <span>Clear Filters</span>
-              </button>
-            </div>
-
-            {/* Filter Controls Grid */}
-            <div className="mt-4 space-y-4">
-              {/* Status Radio Filter */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Company Status
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'active', label: 'Active Companies Only' },
-                    { id: 'inactive', label: 'Inactive Companies Only' },
-                    { id: 'all', label: 'All Companies' }
-                  ].map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => setStatusFilter(option.id)}
-                      className={`flex items-center justify-center gap-2 rounded-xl p-2.5 text-xs font-medium transition-all border ${
-                        statusFilter === option.id
-                          ? 'border-blue-500/50 bg-blue-500/15 text-white shadow-sm shadow-blue-500/20'
-                          : 'border-white/5 bg-slate-950/40 text-slate-400 hover:text-slate-200 hover:border-white/15'
-                      }`}
-                    >
-                      <span
-                        className={`h-3 w-3 rounded-full border flex items-center justify-center ${
-                          statusFilter === option.id
-                            ? 'border-blue-400 bg-blue-400'
-                            : 'border-slate-600 bg-transparent'
-                        }`}
-                      >
-                        {statusFilter === option.id && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-950" />
-                        )}
-                      </span>
-                      <span className="truncate">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Priority Contact Filter */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-                  <span>Priority Outreach Filter</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">
-                    {contactPriorityFilter === 'p1_both' && 'Phone + Email Only'}
-                    {contactPriorityFilter === 'p2_website' && 'Website Only'}
-                  </span>
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: 'all', label: 'All Leads', icon: Building2, color: 'text-slate-400' },
-                    { id: 'p1_both', label: 'P1: Phone & Email', icon: Star, color: 'text-emerald-400' },
-                    { id: 'p1_either', label: 'Phone or Email', icon: Mail, color: 'text-emerald-400' },
-                    { id: 'p2_website', label: 'P2: Has Website', icon: Globe, color: 'text-cyan-400' }
-                  ].map((btn) => {
-                    const Icon = btn.icon;
-                    const isSelected = contactPriorityFilter === btn.id;
-                    return (
-                      <button
-                        key={btn.id}
-                        type="button"
-                        onClick={() => setContactPriorityFilter(btn.id)}
-                        className={`flex items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-medium transition-all border ${
-                          isSelected
-                            ? 'border-emerald-500/50 bg-emerald-500/15 text-white shadow-xs'
-                            : 'border-white/5 bg-slate-950/40 text-slate-400 hover:text-slate-200 hover:border-white/15'
-                        }`}
-                      >
-                        <Icon className={`h-3.5 w-3.5 ${btn.color}`} />
-                        <span className="truncate">{btn.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Industry & City Dropdowns */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Industry Dropdown */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Industry Sector
-                  </label>
-                  <select
-                    value={selectedIndustry}
-                    onChange={(e) => setSelectedIndustry(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                  >
-                    <option value="">All Industries ({dataset.industries?.length || 0})</option>
-                    {dataset.industries?.map((ind) => (
-                      <option key={ind} value={ind}>
-                        {ind}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* City Dropdown */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    City Location
-                  </label>
-                  <select
-                    value={selectedCity}
-                    onChange={(e) => setSelectedCity(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                  >
-                    <option value="">All Cities ({dataset.cities?.length || 0})</option>
-                    {dataset.cities?.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Search Query */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Search Within Records
-                </label>
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search company name, phone, email, director, registration number..."
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/70 pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
-            <span>Filtered Results: <strong className="text-white font-mono">{filteredRecords.length}</strong> of {dataset.totalRecords}</span>
-            <span className="text-[11px] text-emerald-400 font-mono">Sorted with Phone & Email first</span>
-          </div>
+        {/* Action Controls */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={exportFileName}
+            onChange={(e) => setExportFileName(e.target.value)}
+            placeholder="Export_File.xlsx"
+            className="w-48 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleExportExcel}
+            disabled={isExporting || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-40"
+          >
+            {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            <span>Export ({filteredRecords.length})</span>
+          </button>
         </div>
       </div>
 
-      {/* Step 3: Which Columns Do You Need to Export? */}
-      <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-xl shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/20 text-xs font-bold text-blue-400 ring-1 ring-blue-500/30">
-              3
-            </span>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-semibold text-white">Which Columns Do You Need to Export?</h3>
-                <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
-                  Priority 1: Phone & Email
-                </span>
-                <span className="rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-400 border border-cyan-500/20">
-                  Priority 2: Website
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Only checked columns will be generated in your Excel download. Unchecked columns remain safely in Supabase.
-              </p>
-            </div>
-          </div>
+      {/* Alerts */}
+      {exportSuccess && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-2 text-xs text-emerald-300">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{exportSuccess}</span>
+        </div>
+      )}
+      {error && (
+        <div className="flex items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3.5 py-2 text-xs text-rose-300">
+          <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
+      {/* Clean Filters Row (Unified Single Bar) */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/5 bg-slate-900/40 p-2.5 text-xs">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search company, phone, email, director..."
+            className="w-full rounded-lg border border-white/10 bg-slate-950/70 pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Status Dropdown */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+        >
+          <option value="active">Active Only</option>
+          <option value="inactive">Inactive Only</option>
+          <option value="all">All Statuses</option>
+        </select>
+
+        {/* Priority Filter */}
+        <select
+          value={contactPriorityFilter}
+          onChange={(e) => setContactPriorityFilter(e.target.value)}
+          className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+        >
+          <option value="all">All Contacts</option>
+          <option value="p1_both">Has Phone & Email</option>
+          <option value="p1_either">Has Phone or Email</option>
+          <option value="p2_website">Has Website</option>
+        </select>
+
+        {/* Industry Filter */}
+        {dataset.industries?.length > 0 && (
+          <select
+            value={selectedIndustry}
+            onChange={(e) => setSelectedIndustry(e.target.value)}
+            className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none max-w-[160px] truncate"
+          >
+            <option value="">All Industries</option>
+            {dataset.industries.map(ind => (
+              <option key={ind} value={ind}>{ind}</option>
+            ))}
+          </select>
+        )}
+
+        {/* City Filter */}
+        {dataset.cities?.length > 0 && (
+          <select
+            value={selectedCity}
+            onChange={(e) => setSelectedCity(e.target.value)}
+            className="rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none max-w-[130px] truncate"
+          >
+            <option value="">All Cities</option>
+            {dataset.cities.map(city => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Reset Filter Button */}
+        {isFiltered && (
+          <button
+            onClick={handleClearFilters}
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-800 px-2 py-1.5 text-xs text-slate-400 hover:text-white transition"
+            title="Reset filters"
+          >
+            <RotateCcw className="h-3 w-3" />
+            <span>Reset</span>
+          </button>
+        )}
+
+        <button
+          onClick={loadScrapedLeads}
+          className="rounded-lg border border-white/5 bg-slate-950/70 p-1.5 text-slate-400 hover:text-slate-200 transition"
+          title="Refresh leads dataset"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      {/* Clean Column Selector (Minimal Pill Grid) */}
+      <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3 space-y-2 text-xs">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-mono font-medium text-blue-400 border border-blue-500/20">
-              Selected: {selectedColumns.length} / {validColumns.length}
+            <span className="font-medium text-slate-300">Columns to Export:</span>
+            <span className="text-[11px] text-slate-500 font-mono">
+              ({selectedColumns.length} of {validColumns.length} selected)
             </span>
+          </div>
+          <div className="flex items-center gap-2 text-[11px]">
             <button
               onClick={handleSelectAllColumns}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-800/80 hover:bg-slate-700/80 px-2.5 py-1 text-xs font-medium text-slate-200 transition-all"
+              className="text-slate-400 hover:text-slate-200 transition"
             >
-              <CheckSquare className="h-3.5 w-3.5 text-blue-400" />
-              <span>Select All</span>
+              Select All
             </button>
+            <span className="text-slate-600">•</span>
             <button
               onClick={handleDeselectAllColumns}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-800/80 hover:bg-slate-700/80 px-2.5 py-1 text-xs font-medium text-slate-200 transition-all"
+              className="text-slate-400 hover:text-slate-200 transition"
             >
-              <Square className="h-3.5 w-3.5 text-slate-400" />
-              <span>Deselect All</span>
+              Deselect All
             </button>
           </div>
         </div>
 
-        {/* Column Toggle Grid - Ordered by Priority */}
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+        {/* Clean, quiet column pill toggles */}
+        <div className="flex flex-wrap gap-1.5">
           {validColumns.map((col) => {
             const isSelected = selectedColumns.includes(col);
             const meta = getColumnPriorityMeta(col);
@@ -700,360 +464,220 @@ export default function LeadDataExporter() {
                 key={col}
                 type="button"
                 onClick={() => toggleColumn(col)}
-                className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-left transition-all border ${
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
                   isSelected
                     ? meta.priority === 1
-                      ? 'border-emerald-500/40 bg-emerald-500/15 text-white shadow-xs shadow-emerald-500/10'
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                       : meta.priority === 2
-                      ? 'border-cyan-500/40 bg-cyan-500/15 text-white shadow-xs shadow-cyan-500/10'
-                      : 'border-blue-500/40 bg-blue-500/15 text-white shadow-xs shadow-blue-500/10'
-                    : 'border-white/5 bg-slate-950/40 text-slate-400 hover:text-slate-200 hover:border-white/10'
+                      ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                      : 'bg-slate-800 text-slate-200 border border-white/10'
+                    : 'bg-slate-950/40 text-slate-500 border border-white/5 hover:border-white/10 hover:text-slate-400'
                 }`}
               >
-                <div className="truncate pr-1">
-                  <div className="truncate">{col}</div>
-                  <div className="text-[10px] font-mono mt-0.5">
-                    {meta.priority === 1 && (
-                      <span className="text-emerald-400 font-semibold">Priority 1</span>
-                    )}
-                    {meta.priority === 2 && (
-                      <span className="text-cyan-400 font-semibold">Priority 2</span>
-                    )}
-                    {meta.priority === 3 && (
-                      <span className="text-slate-500">Priority 3</span>
-                    )}
-                  </div>
-                </div>
-                <span
-                  className={`h-4 w-4 shrink-0 rounded flex items-center justify-center border transition-all ${
-                    isSelected
-                      ? meta.priority === 1
-                        ? 'border-emerald-400 bg-emerald-500 text-white'
-                        : meta.priority === 2
-                        ? 'border-cyan-400 bg-cyan-500 text-white'
-                        : 'border-blue-400 bg-blue-500 text-white'
-                      : 'border-slate-700 bg-slate-900/60'
-                  }`}
-                >
-                  {isSelected && <Check className="h-3 w-3" />}
-                </span>
+                {isSelected ? (
+                  <Check className="h-3 w-3 shrink-0" />
+                ) : (
+                  <span className="h-3 w-3 shrink-0 rounded-xs border border-slate-700 inline-block" />
+                )}
+                <span>{col}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Step 4: Live Preview & Export to Excel */}
-      <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-xl shadow-xl space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/20 text-xs font-bold text-blue-400 ring-1 ring-blue-500/30">
-              4
-            </span>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Live Preview & Export to Excel</h3>
-              <p className="text-xs text-slate-400">
-                Only your selected columns will be exported. Leads are sorted with Phone & Email first.
-              </p>
-            </div>
-          </div>
-
-          {/* Action Bar: Filename input + Export button */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <div className="relative">
-              <input
-                type="text"
-                value={exportFileName}
-                onChange={(e) => setExportFileName(e.target.value)}
-                placeholder="Export_File_Name.xlsx"
-                className="w-48 sm:w-60 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-            </div>
-
-            <button
-              onClick={handleExportExcel}
-              disabled={isExporting || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/25 transition-all active:scale-[0.98] disabled:opacity-50"
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Generating Excel...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4" />
-                  <span>Export to Excel</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* KPI Metrics Summary Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3">
-            <span className="text-[11px] font-medium text-slate-400">Total Scraped</span>
-            <p className="mt-1 text-lg font-bold font-mono text-white">{dataset.totalRecords}</p>
-          </div>
-          <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3">
-            <span className="text-[11px] font-medium text-blue-400">Active Companies</span>
-            <p className="mt-1 text-lg font-bold font-mono text-blue-300">{dataset.activeRecords}</p>
-          </div>
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-            <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1">
-              <Star className="h-3 w-3 fill-emerald-400" />
-              P1: Phone & Email
-            </span>
-            <p className="mt-1 text-lg font-bold font-mono text-emerald-300">{priorityStats.p1Both}</p>
-          </div>
-          <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3">
-            <span className="text-[11px] font-medium text-cyan-400 flex items-center gap-1">
-              <Globe className="h-3 w-3" />
-              P2: Has Website
-            </span>
-            <p className="mt-1 text-lg font-bold font-mono text-cyan-300">{priorityStats.p2Website}</p>
-          </div>
-          <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3">
-            <span className="text-[11px] font-medium text-indigo-400">Filtered Matches</span>
-            <p className="mt-1 text-lg font-bold font-mono text-indigo-300">{filteredRecords.length}</p>
-          </div>
-        </div>
-
-        {/* Live Preview Table */}
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-slate-950/60 shadow-inner">
-          <div className="overflow-x-auto max-h-[480px]">
-            {filteredRecords.length === 0 ? (
-              <div className="py-16 text-center text-slate-400">
-                <AlertCircle className="mx-auto h-8 w-8 text-slate-500 mb-2" />
-                <p className="text-sm font-medium">No matching company records found</p>
-                <p className="text-xs text-slate-500 mt-1">Try clearing your filters or choosing "All Companies"</p>
+      {/* Clean Live Preview Table */}
+      <div className="overflow-hidden rounded-xl border border-white/5 bg-slate-900/40 shadow-xl">
+        <div className="overflow-x-auto max-h-[460px]">
+          {filteredRecords.length === 0 ? (
+            <div className="py-12 text-center text-slate-400">
+              <p className="text-xs font-medium">No company records match your current filters.</p>
+              {isFiltered && (
                 <button
                   onClick={handleClearFilters}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+                  className="mt-2 text-xs text-blue-400 hover:underline"
                 >
-                  <RotateCcw className="h-3 w-3" />
-                  <span>Reset Filters</span>
+                  Clear filters
                 </button>
-              </div>
-            ) : orderedSelectedColumns.length === 0 ? (
-              <div className="py-16 text-center text-slate-400">
-                <Square className="mx-auto h-8 w-8 text-slate-500 mb-2" />
-                <p className="text-sm font-medium">No columns selected</p>
-                <p className="text-xs text-slate-500 mt-1">Select at least one column from Step 3 above to preview and export</p>
-                <button
-                  onClick={handleSelectAllColumns}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500"
-                >
-                  <CheckSquare className="h-3.5 w-3.5" />
-                  <span>Select All Columns</span>
-                </button>
-              </div>
-            ) : (
-              <table className="w-full text-left text-xs text-slate-300 border-collapse">
-                <thead className="sticky top-0 z-10 bg-slate-900 border-b border-white/10 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  <tr>
-                    <th className="px-3 py-3 w-12 text-center text-slate-500">#</th>
-                    {orderedSelectedColumns.map((col) => {
-                      const meta = getColumnPriorityMeta(col);
-                      return (
-                        <th
-                          key={col}
-                          className={`px-4 py-3 whitespace-nowrap ${
-                            meta.priority === 1
-                              ? 'bg-emerald-950/40 text-emerald-300 border-b-2 border-emerald-500/50'
-                              : meta.priority === 2
-                              ? 'bg-cyan-950/40 text-cyan-300 border-b-2 border-cyan-500/50'
-                              : ''
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            {meta.priority === 1 && <Star className="h-3 w-3 fill-emerald-400 text-emerald-400 shrink-0" />}
-                            {meta.priority === 2 && <Globe className="h-3 w-3 text-cyan-400 shrink-0" />}
-                            <span>{col}</span>
-                            {meta.priority === 1 && (
-                              <span className="rounded bg-emerald-500/20 px-1 py-0.2 text-[9px] font-mono text-emerald-300">
-                                P1
-                              </span>
-                            )}
-                            {meta.priority === 2 && (
-                              <span className="rounded bg-cyan-500/20 px-1 py-0.2 text-[9px] font-mono text-cyan-300">
-                                P2
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {paginatedRecords.map((row, idx) => {
-                    const rowNumber = (currentPage - 1) * pageSize + idx + 1;
+              )}
+            </div>
+          ) : orderedSelectedColumns.length === 0 ? (
+            <div className="py-12 text-center text-slate-400">
+              <p className="text-xs font-medium">No columns selected for export.</p>
+              <button
+                onClick={handleSelectAllColumns}
+                className="mt-2 text-xs text-blue-400 hover:underline"
+              >
+                Select all columns
+              </button>
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs text-slate-300 border-collapse">
+              <thead className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-md border-b border-white/5 text-[11px] font-semibold text-slate-400">
+                <tr>
+                  <th className="px-3 py-2.5 w-10 text-center text-slate-500 font-normal">#</th>
+                  {orderedSelectedColumns.map((col) => {
+                    const meta = getColumnPriorityMeta(col);
                     return (
-                      <tr
-                        key={row.__rowId || idx}
-                        className="hover:bg-blue-600/5 transition-colors odd:bg-slate-900/20 even:bg-slate-950/40"
+                      <th
+                        key={col}
+                        className={`px-3.5 py-2.5 whitespace-nowrap ${
+                          meta.priority === 1
+                            ? 'text-emerald-400 font-semibold'
+                            : meta.priority === 2
+                            ? 'text-cyan-400 font-semibold'
+                            : ''
+                        }`}
                       >
-                        <td className="px-3 py-2.5 text-center font-mono text-[11px] text-slate-500">
-                          {rowNumber}
-                        </td>
-                        {orderedSelectedColumns.map((col) => {
-                          const val = row[col];
-                          const lowerCol = col.toLowerCase();
+                        {col}
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.03]">
+                {paginatedRecords.map((row, idx) => {
+                  const rowNumber = (currentPage - 1) * pageSize + idx + 1;
+                  return (
+                    <tr
+                      key={row.__rowId || idx}
+                      className="hover:bg-slate-800/25 transition-colors"
+                    >
+                      <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-500">
+                        {rowNumber}
+                      </td>
+                      {orderedSelectedColumns.map((col) => {
+                        const val = row[col];
+                        const lowerCol = col.toLowerCase();
 
-                          // Format Phone Column (Priority 1)
-                          if (lowerCol.includes('phone') || lowerCol.includes('mobile')) {
-                            return (
-                              <td key={col} className="px-4 py-2.5 whitespace-nowrap font-mono text-[11px]">
-                                {val ? (
-                                  <span className="inline-flex items-center gap-1.5 text-emerald-300 font-medium">
-                                    <Phone className="h-3 w-3 text-emerald-400 shrink-0" />
-                                    <span>{val}</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-600">—</span>
-                                )}
-                              </td>
-                            );
-                          }
-
-                          // Format Email Column (Priority 1)
-                          if (lowerCol.includes('email')) {
-                            return (
-                              <td key={col} className="px-4 py-2.5 whitespace-nowrap font-mono text-[11px]">
-                                {val ? (
-                                  <a
-                                    href={`mailto:${val}`}
-                                    className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-emerald-200 hover:underline"
-                                  >
-                                    <Mail className="h-3 w-3 text-emerald-400 shrink-0" />
-                                    <span>{val}</span>
-                                  </a>
-                                ) : (
-                                  <span className="text-slate-600">—</span>
-                                )}
-                              </td>
-                            );
-                          }
-
-                          // Format Website URL (Priority 2)
-                          if ((lowerCol.includes('website') || lowerCol.includes('url')) && val) {
-                            return (
-                              <td key={col} className="px-4 py-2.5 whitespace-nowrap">
-                                <a
-                                  href={val.startsWith('http') ? val : `https://${val}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 hover:underline"
-                                >
-                                  <Globe className="h-3 w-3 text-cyan-400 shrink-0" />
-                                  <span className="truncate max-w-[160px]">{val}</span>
-                                  <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-70" />
-                                </a>
-                              </td>
-                            );
-                          }
-
-                          // Format Status badge
-                          if (lowerCol.includes('status')) {
-                            const isInactive = (val || '').toLowerCase().includes('inactive') ||
-                              (val || '').toLowerCase().includes('dissolved') ||
-                              row.__status === 'Inactive';
-                            return (
-                              <td key={col} className="px-4 py-2.5 whitespace-nowrap">
-                                <span
-                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
-                                    isInactive
-                                      ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
-                                      : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                                  }`}
-                                >
-                                  <span
-                                    className={`h-1.5 w-1.5 rounded-full ${
-                                      isInactive ? 'bg-rose-400' : 'bg-emerald-400'
-                                    }`}
-                                  />
-                                  <span>{val || (isInactive ? 'Inactive' : 'Active')}</span>
-                                </span>
-                              </td>
-                            );
-                          }
-
-                          // Default rendering
+                        // Phone
+                        if (lowerCol.includes('phone') || lowerCol.includes('mobile')) {
                           return (
-                            <td key={col} className="px-4 py-2.5 whitespace-nowrap font-medium text-slate-200">
-                              {val !== undefined && val !== null && String(val).trim() !== '' ? (
-                                String(val)
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap font-mono text-[11px]">
+                              {val ? (
+                                <span className="text-emerald-300 font-medium">{val}</span>
                               ) : (
                                 <span className="text-slate-600">—</span>
                               )}
                             </td>
                           );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
+                        }
 
-          {/* Pagination Controls */}
-          {filteredRecords.length > 0 && orderedSelectedColumns.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/5 bg-slate-900/60 px-4 py-3 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <span>Rows per page:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="rounded-lg border border-white/10 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:outline-none"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span className="ml-2">
-                  Showing{' '}
-                  <strong className="text-white">
-                    {(currentPage - 1) * pageSize + 1}
-                  </strong>{' '}
-                  to{' '}
-                  <strong className="text-white">
-                    {Math.min(currentPage * pageSize, filteredRecords.length)}
-                  </strong>{' '}
-                  of <strong className="text-white">{filteredRecords.length}</strong> entries
-                </span>
-              </div>
+                        // Email
+                        if (lowerCol.includes('email')) {
+                          return (
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap font-mono text-[11px]">
+                              {val ? (
+                                <a
+                                  href={`mailto:${val}`}
+                                  className="text-emerald-300 hover:underline"
+                                >
+                                  {val}
+                                </a>
+                              ) : (
+                                <span className="text-slate-600">—</span>
+                              )}
+                            </td>
+                          );
+                        }
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-200 disabled:opacity-30 hover:bg-slate-700/80"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                  <span>Prev</span>
-                </button>
-                <span className="font-mono text-xs text-slate-300">
-                  {currentPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-200 disabled:opacity-30 hover:bg-slate-700/80"
-                >
-                  <span>Next</span>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
+                        // Website
+                        if ((lowerCol.includes('website') || lowerCol.includes('url')) && val) {
+                          return (
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap">
+                              <a
+                                href={val.startsWith('http') ? val : `https://${val}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-cyan-400 hover:underline"
+                              >
+                                <span className="truncate max-w-[150px]">{val.replace(/^https?:\/\//, '')}</span>
+                                <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                              </a>
+                            </td>
+                          );
+                        }
+
+                        // Status
+                        if (lowerCol.includes('status')) {
+                          const isInactive = (val || '').toLowerCase().includes('inactive') ||
+                            (val || '').toLowerCase().includes('dissolved') ||
+                            row.__status === 'Inactive';
+                          return (
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap">
+                              <span
+                                className={`text-[11px] font-medium ${
+                                  isInactive ? 'text-rose-400' : 'text-emerald-400'
+                                }`}
+                              >
+                                {val || (isInactive ? 'Inactive' : 'Active')}
+                              </span>
+                            </td>
+                          );
+                        }
+
+                        // Default
+                        return (
+                          <td key={col} className="px-3.5 py-2 whitespace-nowrap text-slate-300">
+                            {val !== undefined && val !== null && String(val).trim() !== '' ? (
+                              String(val)
+                            ) : (
+                              <span className="text-slate-600">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
+
+        {/* Clean Table Pagination Footer */}
+        {filteredRecords.length > 0 && orderedSelectedColumns.length > 0 && (
+          <div className="flex items-center justify-between border-t border-white/5 bg-slate-950/60 px-4 py-2 text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <span>Rows:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="rounded border border-white/10 bg-slate-900 px-1.5 py-0.5 text-xs text-slate-200 focus:outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-slate-500 ml-1">
+                Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredRecords.length)} of {filteredRecords.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="font-mono text-[11px] text-slate-400 px-1">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
