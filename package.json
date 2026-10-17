@@ -10,6 +10,7 @@
     "test": "node scripts/test-validations.mjs && node scripts/test-ui-sorting-filtering.mjs && node scripts/test-connectors.mjs",
     "test:validations": "node scripts/test-validations.mjs",
     "test:ui": "node scripts/test-ui-sorting-filtering.mjs",
+    "test:all": "node scripts/test-all-features.mjs",
     "scrape": "node scripts/run-scraper.mjs",
     "scrape:maps": "node scripts/scrape-maps.mjs"
   },
