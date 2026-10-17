@@ -191,10 +191,10 @@ export default function Dashboard() {
   const [autoScrollLogs, setAutoScrollLogs] = useState(false);
 
   // Google Maps Hyper-Local Location Builder states
-  const [mapsCountryCode, setMapsCountryCode] = useState('IN');
-  const [mapsCity, setMapsCity] = useState('Kolkata');
+  const [mapsCountryCode, setMapsCountryCode] = useState('US');
+  const [mapsCity, setMapsCity] = useState('New York');
   const [mapsCustomCity, setMapsCustomCity] = useState('');
-  const [mapsLocality, setMapsLocality] = useState('Nayabad');
+  const [mapsLocality, setMapsLocality] = useState('');
   const [mapsCategory, setMapsCategory] = useState('school');
   const [mapsFreeform, setMapsFreeform] = useState(false);
 
@@ -1030,7 +1030,7 @@ export default function Dashboard() {
                         type="text"
                         value={mapsLocality}
                         onChange={(e) => setMapsLocality(e.target.value)}
-                        placeholder="e.g. Nayabad, Park Street, Salt Lake, Brooklyn, Camden..."
+                        placeholder="e.g. Brooklyn, Manhattan, Camden, Soho, Indiranagar, Beverly Hills..."
                         className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
                       />
                     </div>
@@ -1096,7 +1096,7 @@ export default function Dashboard() {
                       type="text"
                       value={scraperQuery}
                       onChange={(e) => setScraperQuery(e.target.value)}
-                      placeholder={isMapsSelected ? "e.g. schools in Nayabad Kolkata, dentists in Brooklyn NY..." : "e.g. software, logistics, finance (leave blank for latest)"}
+                      placeholder={isMapsSelected ? "e.g. schools in Brooklyn NY, dentists in Camden London, cafes in Shibuya..." : "e.g. software, logistics, finance (leave blank for latest)"}
                       className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                     />
                   </div>

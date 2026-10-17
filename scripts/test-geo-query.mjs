@@ -24,8 +24,8 @@ function assertEqual(actual, expected, testName) {
 
 // 1. Full Hyper-Local (Category + Locality + City + Country)
 assertEqual(
-  buildMapsQuery({ category: 'school', locality: 'Nayabad', city: 'Kolkata', country: 'India' }),
-  'school in Nayabad, Kolkata, India',
+  buildMapsQuery({ category: 'school', locality: 'Manhattan', city: 'New York', country: 'United States' }),
+  'school in Manhattan, New York, United States',
   'Full hyper-local query with neighborhood'
 );
 
