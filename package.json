@@ -10,7 +10,8 @@
     "test": "node scripts/test-validations.mjs && node scripts/test-ui-sorting-filtering.mjs && node scripts/test-connectors.mjs",
     "test:validations": "node scripts/test-validations.mjs",
     "test:ui": "node scripts/test-ui-sorting-filtering.mjs",
-    "scrape": "node scripts/run-scraper.mjs"
+    "scrape": "node scripts/run-scraper.mjs",
+    "scrape:maps": "node scripts/scrape-maps.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -21,6 +22,9 @@
     "next": "16.4.0",
     "nodemailer": "^10.1.0",
     "pg": "^8.23.1",
+    "puppeteer": "^25.14.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.5"

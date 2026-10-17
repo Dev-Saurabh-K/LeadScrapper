@@ -8,6 +8,7 @@ This report documents the live operational status of all country registry scrape
 
 | Country | Source Registry & Multi-Source Feeds | Status | API Key Required? | Data Mode | Live Latency | Contact Data Included |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| 📍 **Google Maps** | Google Maps Hyper-Local Places | ✅ **Working** | ❌ None (100% Free) | **Headless Stealth Engine** | ~1.5s/place | **Direct Phones, Addresses, Websites & Enriched Emails** |
 | 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | ✅ **Working** | ❌ None | **Live API** | ~1.3s | Email / Phone if published |
 | 🇫🇷 **France** | `api.gouv.fr` + BODACC (`data.gouv.fr`) | ✅ **Working** | ❌ None | **Multi-Source Live** | ~1.3s | Legal Officers, City, SIREN |
 | 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | ✅ **Working** | ❌ None | **Live API** | ~4.9s | Address, SSIC, UEN |

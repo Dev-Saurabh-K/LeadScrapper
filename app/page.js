@@ -40,12 +40,14 @@ import {
   ChevronRight,
   Info,
   Star,
-  LayoutDashboard
+  LayoutDashboard,
+  MapPin
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
 
 const COUNTRIES = [
+  { code: 'MAPS', name: 'Google Maps (Hyper-Local)', source: 'Google Maps Free Headless Engine', free: true },
   { code: 'GLOBAL', name: 'Global (GLEIF)', source: 'GLEIF 2.6M+ LEIs', free: true },
   { code: 'EU', name: 'European Union', source: 'EU TED Public Procurement', free: true },
   { code: 'NO', name: 'Norway', source: 'BRREG (data.brreg.no)', free: true },
@@ -59,6 +61,9 @@ const COUNTRIES = [
 
 function CountryFlag({ code, className = "h-3.5 w-5" }) {
   const c = code?.toUpperCase();
+  if (c === 'MAPS' || c === 'GMAPS' || c === 'GOOGLE MAPS') {
+    return <MapPin className={`${className} text-rose-500`} />;
+  }
   if (c === 'EU' || c === 'EUROPE' || c === 'EUROPEAN UNION') {
     return (
       <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
