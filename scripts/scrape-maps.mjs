@@ -28,6 +28,7 @@ import { normalizer } from '../lib/services/normalizer.js';
 import { enrichment } from '../lib/services/enrichment.js';
 import { exporter } from '../lib/services/exporter.js';
 import { db } from '../lib/database.js';
+import { buildMapsQuery } from '../lib/data/geo_locations.js';
 
 console.log('================================================================');
 console.log('📍 100% FREE GOOGLE MAPS HYPER-LOCAL BUSINESS SCRAPER');
@@ -36,12 +37,31 @@ console.log('================================================================\n'
 // Parse CLI flags
 const args = process.argv.slice(2);
 const queryArg = args.find(a => a.startsWith('--query='))?.split('=')[1];
-const categoryArg = args.find(a => a.startsWith('--category='))?.split('=')[1] || 'plumber';
-const locationArg = args.find(a => a.startsWith('--location='))?.split('=')[1] || 'Brooklyn, NY';
+const categoryArg = args.find(a => a.startsWith('--category='))?.split('=')[1] || 'school';
+const localityArg = args.find(a => a.startsWith('--locality='))?.split('=')[1] || '';
+const cityArg = args.find(a => a.startsWith('--city='))?.split('=')[1] || '';
+const countryArg = args.find(a => a.startsWith('--country='))?.split('=')[1] || '';
+const locationArg = args.find(a => a.startsWith('--location='))?.split('=')[1] || '';
 const limitArg = parseInt(args.find(a => a.startsWith('--limit='))?.split('=')[1] || '10', 10);
 const enrichArg = !args.includes('--no-enrich');
 
-const searchQuery = queryArg ? queryArg.replace(/^["']|["']$/g, '') : `${categoryArg} in ${locationArg}`.replace(/^["']|["']$/g, '');
+let searchQuery = '';
+if (queryArg) {
+  searchQuery = queryArg.replace(/^["']|["']$/g, '');
+} else if (locationArg) {
+  searchQuery = `${categoryArg} in ${locationArg}`.replace(/^["']|["']$/g, '');
+} else {
+  searchQuery = buildMapsQuery({
+    category: categoryArg,
+    locality: localityArg,
+    city: cityArg,
+    country: countryArg
+  });
+}
+
+if (!searchQuery) {
+  searchQuery = 'school in Kolkata, India';
+}
 
 console.log(`🔎 Target Query : "${searchQuery}"`);
 console.log(`📊 Max Listings : ${limitArg}`);

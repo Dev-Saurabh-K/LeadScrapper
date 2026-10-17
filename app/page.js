@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
+import { GEO_COUNTRIES, buildMapsQuery, POPULAR_NICHES } from '@/lib/data/geo_locations.js';
 
 const COUNTRIES = [
   { code: 'MAPS', name: 'Google Maps (Hyper-Local)', source: 'Google Maps Free Headless Engine', free: true },
@@ -188,6 +189,25 @@ export default function Dashboard() {
   const [jobSummary, setJobSummary] = useState(null);
   const logsEndRef = useRef(null);
 
+  // Google Maps Hyper-Local Location Builder states
+  const [mapsCountryCode, setMapsCountryCode] = useState('IN');
+  const [mapsCity, setMapsCity] = useState('Kolkata');
+  const [mapsCustomCity, setMapsCustomCity] = useState('');
+  const [mapsLocality, setMapsLocality] = useState('Nayabad');
+  const [mapsCategory, setMapsCategory] = useState('school');
+  const [mapsFreeform, setMapsFreeform] = useState(false);
+
+  const isMapsSelected = selectedCountries.includes('MAPS');
+  const activeCountryObj = GEO_COUNTRIES.find((c) => c.code === mapsCountryCode) || GEO_COUNTRIES[0];
+  const activeCity = mapsCity === 'Custom City' ? mapsCustomCity : mapsCity;
+  const activeCountryName = activeCountryObj.code === 'CUSTOM' ? '' : activeCountryObj.name;
+  const synthesizedMapsQuery = buildMapsQuery({
+    category: mapsCategory,
+    locality: mapsLocality,
+    city: activeCity,
+    country: activeCountryName
+  });
+
   // Dedicated Email Dispatch UI states
   const [emailRecipient, setEmailRecipient] = useState('saurabhkumar.sakr@gmail.com');
   const [emailSubject, setEmailSubject] = useState('');
@@ -286,6 +306,8 @@ export default function Dashboard() {
     setActiveTab('scraper');
 
     try {
+      const effectiveQuery = isMapsSelected && !mapsFreeform ? synthesizedMapsQuery : scraperQuery;
+
       const response = await fetch('/api/scrape', {
         method: 'POST',
         headers: {
@@ -294,7 +316,7 @@ export default function Dashboard() {
         },
         body: JSON.stringify({
           countries: selectedCountries,
-          query: scraperQuery,
+          query: effectiveQuery,
           limit: Number(scraperLimit),
           enrich: enrichWebsite,
           delayMs: Number(delayMs),
@@ -922,19 +944,162 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Search Query / Industry */}
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-700">
-                    Industry / Keyword Search Query
-                  </label>
-                  <input
-                    type="text"
-                    value={scraperQuery}
-                    onChange={(e) => setScraperQuery(e.target.value)}
-                    placeholder="e.g. software, logistics, finance (leave blank for latest)"
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
-                  />
-                </div>
+                {/* Search Query / Dynamic Hyper-Local Location Selector */}
+                {isMapsSelected && !mapsFreeform ? (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-rose-900">
+                        <MapPin className="h-4 w-4 text-rose-600 shrink-0" />
+                        <span>Google Maps Hyper-Local Targeting</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMapsFreeform(true)}
+                        className="text-[11px] font-medium text-rose-700 hover:text-rose-900 hover:underline"
+                      >
+                        Freeform Search
+                      </button>
+                    </div>
+
+                    {/* Row 1: Target Country & City Dropdowns */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                          Target Country
+                        </label>
+                        <select
+                          value={mapsCountryCode}
+                          onChange={(e) => {
+                            const nextCode = e.target.value;
+                            setMapsCountryCode(nextCode);
+                            const found = GEO_COUNTRIES.find(c => c.code === nextCode);
+                            if (found && found.cities.length > 0) {
+                              setMapsCity(found.cities[0]);
+                            }
+                          }}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
+                        >
+                          {GEO_COUNTRIES.map(c => (
+                            <option key={c.code} value={c.code}>
+                              {c.flag} {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                          Target City
+                        </label>
+                        <select
+                          value={mapsCity}
+                          onChange={(e) => setMapsCity(e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
+                        >
+                          {(activeCountryObj?.cities || []).map(city => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                          <option value="Custom City">➕ Other / Custom City...</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Write-in input if Custom City is selected */}
+                    {mapsCity === 'Custom City' && (
+                      <div>
+                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                          Enter Custom City Name
+                        </label>
+                        <input
+                          type="text"
+                          value={mapsCustomCity}
+                          onChange={(e) => setMapsCustomCity(e.target.value)}
+                          placeholder="e.g. Asansol, Siliguri, Nagpur, Surat..."
+                          className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
+                        />
+                      </div>
+                    )}
+
+                    {/* Row 2: Neighborhood / Locality / Suburb */}
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                        Neighborhood / Locality / Suburb <span className="font-normal text-slate-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={mapsLocality}
+                        onChange={(e) => setMapsLocality(e.target.value)}
+                        placeholder="e.g. Nayabad, Park Street, Salt Lake, Brooklyn, Camden..."
+                        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Row 3: Business Category / Niche */}
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                        Business Category / Niche
+                      </label>
+                      <input
+                        type="text"
+                        value={mapsCategory}
+                        onChange={(e) => setMapsCategory(e.target.value)}
+                        placeholder="e.g. school, dentist, plumber, restaurant, software company..."
+                        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
+                      />
+                      {/* Quick Niche Selection Pills */}
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {POPULAR_NICHES.map(niche => (
+                          <button
+                            key={niche.label}
+                            type="button"
+                            onClick={() => setMapsCategory(niche.query)}
+                            className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition ${
+                              mapsCategory.toLowerCase() === niche.query.toLowerCase()
+                                ? 'bg-rose-600 text-white font-semibold shadow-xs'
+                                : 'bg-white border border-rose-200 text-rose-800 hover:bg-rose-100'
+                            }`}
+                          >
+                            {niche.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Live Query Preview Badge */}
+                    <div className="mt-1 rounded-lg border border-rose-200/90 bg-white p-2">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700 mb-0.5">
+                        📍 Compiled Google Maps Query:
+                      </div>
+                      <div className="font-mono text-xs font-semibold text-slate-900 break-all">
+                        "{synthesizedMapsQuery}"
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        {isMapsSelected ? 'Google Maps Freeform Search Query' : 'Industry / Keyword Search Query'}
+                      </label>
+                      {isMapsSelected && (
+                        <button
+                          type="button"
+                          onClick={() => setMapsFreeform(false)}
+                          className="text-[11px] font-medium text-rose-600 hover:text-rose-800 hover:underline"
+                        >
+                          Use Location & City Dropdowns
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={scraperQuery}
+                      onChange={(e) => setScraperQuery(e.target.value)}
+                      placeholder={isMapsSelected ? "e.g. schools in Nayabad Kolkata, dentists in Brooklyn NY..." : "e.g. software, logistics, finance (leave blank for latest)"}
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    />
+                  </div>
+                )}
 
                 {/* Limit and Delay */}
                 <div className="grid grid-cols-2 gap-3">
