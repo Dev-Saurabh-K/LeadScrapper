@@ -187,7 +187,8 @@ export default function Dashboard() {
   const [isScraping, setIsScraping] = useState(false);
   const [liveLogs, setLiveLogs] = useState([]);
   const [jobSummary, setJobSummary] = useState(null);
-  const logsEndRef = useRef(null);
+  const logContainerRef = useRef(null);
+  const [autoScrollLogs, setAutoScrollLogs] = useState(false);
 
   // Google Maps Hyper-Local Location Builder states
   const [mapsCountryCode, setMapsCountryCode] = useState('IN');
@@ -227,12 +228,12 @@ export default function Dashboard() {
     fetchJobs();
   }, []);
 
-  // Auto-scroll logs
+  // Confine log scrolling strictly inside the terminal box if explicitly enabled (never scrolls browser window)
   useEffect(() => {
-    if (logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (autoScrollLogs && logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
-  }, [liveLogs]);
+  }, [liveLogs, autoScrollLogs]);
 
   const fetchHealth = async () => {
     try {
@@ -1187,13 +1188,22 @@ export default function Dashboard() {
                     Live Scraping Console (SSE Stream)
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {isScraping && (
                     <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-200">
                       <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
                       Streaming
                     </span>
                   )}
+                  <label className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={autoScrollLogs}
+                      onChange={(e) => setAutoScrollLogs(e.target.checked)}
+                      className="h-3 w-3 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>Auto-scroll</span>
+                  </label>
                   <button
                     onClick={() => setLiveLogs([])}
                     className="text-[11px] text-slate-500 hover:text-slate-800 transition"
@@ -1204,7 +1214,10 @@ export default function Dashboard() {
               </div>
 
               {/* Terminal Logs Window (High-contrast Developer Dark Screen) */}
-              <div className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed max-h-[460px] min-h-[360px] rounded-xl bg-slate-950 p-3 space-y-1 border border-slate-900 shadow-inner">
+              <div
+                ref={logContainerRef}
+                className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed max-h-[460px] min-h-[360px] rounded-xl bg-slate-950 p-3 space-y-1 border border-slate-900 shadow-inner"
+              >
                 {liveLogs.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center py-16 text-slate-500">
                     <Terminal className="h-8 w-8 mb-2 opacity-40 text-slate-500" />
@@ -1228,7 +1241,6 @@ export default function Dashboard() {
                     );
                   })
                 )}
-                <div ref={logsEndRef} />
               </div>
 
               {/* Job Completed Summary Banner */}
