@@ -18,15 +18,21 @@ import {
   Globe,
   Loader2,
   Send,
-  X
+  X,
+  Eye,
+  Sparkles,
+  Building2,
+  Filter
 } from 'lucide-react';
 import MicrosoftExcelIcon from './MicrosoftExcelIcon';
+import CountryFlag from './CountryFlag';
 
-export default function LeadDataExporter() {
+export default function LeadDataExporter({ onEnrichLeadExternal }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
   const [exportSuccess, setExportSuccess] = useState(null);
+  const [enrichSuccessMsg, setEnrichSuccessMsg] = useState(null);
 
   // Email Dispatch States for this particular table & selected columns
   const [showEmailPanel, setShowEmailPanel] = useState(false);
@@ -52,6 +58,7 @@ export default function LeadDataExporter() {
   // Filters state
   const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'inactive' | 'all'
   const [contactPriorityFilter, setContactPriorityFilter] = useState('all'); // 'all' | 'p1_both' | 'p1_either' | 'p2_website'
+  const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,6 +70,10 @@ export default function LeadDataExporter() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [exportFileName, setExportFileName] = useState('B2B_Exported_Leads.xlsx');
+
+  // Lead Details Modal & Enrichment state
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [enrichingId, setEnrichingId] = useState(null);
 
   // Priority metadata helper: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
   const getColumnPriorityMeta = (colName) => {
@@ -171,6 +182,7 @@ export default function LeadDataExporter() {
   const handleClearFilters = () => {
     setStatusFilter('active');
     setContactPriorityFilter('all');
+    setSelectedCountry('');
     setSelectedIndustry('');
     setSelectedCity('');
     setSearchQuery('');
@@ -183,6 +195,16 @@ export default function LeadDataExporter() {
     const key = Object.keys(record).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
     return key && record[key] ? String(record[key]).trim() : '';
   };
+
+  const availableCountries = useMemo(() => {
+    if (!dataset.records || dataset.records.length === 0) return [];
+    const set = new Set();
+    dataset.records.forEach((r) => {
+      const c = getRecordField(r, 'country');
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort();
+  }, [dataset.records]);
 
   // Reactive filtering & Priority Sorting
   const filteredRecords = useMemo(() => {
@@ -205,6 +227,11 @@ export default function LeadDataExporter() {
         if (!emailVal && !phoneVal) return false;
       } else if (contactPriorityFilter === 'p2_website') {
         if (!websiteVal) return false;
+      }
+
+      if (selectedCountry) {
+        const countryVal = getRecordField(record, 'country');
+        if (!countryVal.toLowerCase().includes(selectedCountry.toLowerCase())) return false;
       }
 
       if (selectedIndustry) {
@@ -240,11 +267,11 @@ export default function LeadDataExporter() {
       };
       return getScore(a) - getScore(b);
     });
-  }, [dataset.records, statusFilter, contactPriorityFilter, selectedIndustry, selectedCity, searchQuery]);
+  }, [dataset.records, statusFilter, contactPriorityFilter, selectedCountry, selectedIndustry, selectedCity, searchQuery]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, contactPriorityFilter, selectedIndustry, selectedCity, searchQuery]);
+  }, [statusFilter, contactPriorityFilter, selectedCountry, selectedIndustry, selectedCity, searchQuery]);
 
   const totalPages = Math.ceil(filteredRecords.length / pageSize) || 1;
   const paginatedRecords = useMemo(() => {
@@ -369,28 +396,67 @@ export default function LeadDataExporter() {
     }
   };
 
+  const handleEnrichLead = async (row) => {
+    const leadId = row.id || row.__rowId;
+    const website = getRecordField(row, 'website');
+    if (!website) {
+      alert('No website recorded for this lead to crawl.');
+      return;
+    }
+
+    setEnrichingId(leadId);
+    setEnrichSuccessMsg(null);
+
+    try {
+      if (onEnrichLeadExternal) {
+        await onEnrichLeadExternal(leadId);
+      } else {
+        const res = await fetch('/api/enrich', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: leadId, url: website })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setEnrichSuccessMsg(`Contact enrichment complete for "${getRecordField(row, 'company') || 'Company'}"!`);
+          setTimeout(() => setEnrichSuccessMsg(null), 4000);
+          await loadScrapedLeads();
+          if (selectedLead) {
+            setSelectedLead((prev) => (prev ? { ...prev, ...data.lead } : null));
+          }
+        } else {
+          alert(data.error || 'Enrichment failed');
+        }
+      }
+    } catch (err) {
+      alert('Enrichment error: ' + err.message);
+    } finally {
+      setEnrichingId(null);
+    }
+  };
+
   const validColumns = useMemo(() => {
     const raw = (dataset.columns || []).filter(c => !c.startsWith('__'));
     return sortColumnsByPriority(raw);
   }, [dataset.columns]);
 
-  const isFiltered = statusFilter !== 'active' || contactPriorityFilter !== 'all' || selectedIndustry || selectedCity || searchQuery;
+  const isFiltered = statusFilter !== 'active' || contactPriorityFilter !== 'all' || selectedCountry || selectedIndustry || selectedCity || searchQuery;
 
   return (
     <div className="space-y-4 text-slate-900">
-      {/* Sleek Minimal Header Bar */}
+      {/* Sleek Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
             <MicrosoftExcelIcon className="h-4 w-4 shrink-0" />
-            <h2 className="text-base font-bold text-black">Leads Explorer</h2>
+            <h2 className="text-base font-bold text-black">Leads Explorer & Exporter</h2>
             <span className="text-xs text-slate-500 font-mono">
-              ({dataset.totalRecords} leads in database)
+              ({dataset.totalRecords} verified leads in database)
             </span>
             {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
           </div>
           <p className="text-xs text-slate-600 mt-0.5">
-            Explore, filter, and export verified leads with all dataset columns visible by default.
+            Explore, filter, select columns, enrich websites, and export verified leads with full control.
           </p>
         </div>
 
@@ -412,7 +478,7 @@ export default function LeadDataExporter() {
             title="Download Excel spreadsheet locally"
           >
             {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MicrosoftExcelIcon className="h-3.5 w-3.5" />}
-            <span>Export ({filteredRecords.length})</span>
+            <span>Export Excel ({filteredRecords.length})</span>
           </button>
 
           {/* Send Email of Table */}
@@ -572,6 +638,12 @@ export default function LeadDataExporter() {
           <span>{exportSuccess}</span>
         </div>
       )}
+      {enrichSuccessMsg && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs text-emerald-800 font-medium">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>{enrichSuccessMsg}</span>
+        </div>
+      )}
       {error && (
         <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs text-rose-800 font-medium">
           <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
@@ -592,6 +664,18 @@ export default function LeadDataExporter() {
             className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-8 pr-3 py-1.5 text-xs text-black placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
           />
         </div>
+
+        {/* Country Filter */}
+        <select
+          value={selectedCountry}
+          onChange={(e) => setSelectedCountry(e.target.value)}
+          className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[140px] truncate"
+        >
+          <option value="">All Countries</option>
+          {availableCountries.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
 
         {/* Status Dropdown */}
         <select
@@ -621,7 +705,7 @@ export default function LeadDataExporter() {
           <select
             value={selectedIndustry}
             onChange={(e) => setSelectedIndustry(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[160px] truncate"
+            className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[150px] truncate"
           >
             <option value="">All Industries</option>
             {dataset.industries.map(ind => (
@@ -669,9 +753,9 @@ export default function LeadDataExporter() {
       <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2 text-xs shadow-xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-black">Columns to Export:</span>
+            <span className="font-bold text-black">Columns to View & Export:</span>
             <span className="text-[11px] text-slate-500 font-mono">
-              ({selectedColumns.length} of {validColumns.length} selected)
+              ({selectedColumns.length} of {validColumns.length} visible)
             </span>
           </div>
           <div className="flex items-center gap-2 text-[11px]">
@@ -691,7 +775,7 @@ export default function LeadDataExporter() {
           </div>
         </div>
 
-        {/* Clean, quiet column pill toggles */}
+        {/* Clean column pill toggles */}
         <div className="flex flex-wrap gap-1.5">
           {validColumns.map((col) => {
             const isSelected = selectedColumns.includes(col);
@@ -725,7 +809,7 @@ export default function LeadDataExporter() {
 
       {/* Clean Live Preview Table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="overflow-x-auto max-h-[460px]">
+        <div className="overflow-x-auto max-h-[500px]">
           {filteredRecords.length === 0 ? (
             <div className="py-12 text-center text-slate-500">
               <p className="text-xs font-medium">No company records match your current filters.</p>
@@ -770,14 +854,20 @@ export default function LeadDataExporter() {
                       </th>
                     );
                   })}
+                  <th className="px-3.5 py-2.5 text-right font-semibold text-black whitespace-nowrap">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {paginatedRecords.map((row, idx) => {
                   const rowNumber = (currentPage - 1) * pageSize + idx + 1;
+                  const rowId = row.id || row.__rowId || idx;
+                  const websiteVal = getRecordField(row, 'website');
+
                   return (
                     <tr
-                      key={row.__rowId || idx}
+                      key={rowId}
                       className="hover:bg-slate-50 transition-colors"
                     >
                       <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-400">
@@ -792,7 +882,13 @@ export default function LeadDataExporter() {
                           return (
                             <td key={col} className="px-3.5 py-2 whitespace-nowrap font-mono text-[11px]">
                               {val ? (
-                                <span className="text-emerald-700 font-semibold">{val}</span>
+                                <a
+                                  href={`tel:${val}`}
+                                  className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline"
+                                >
+                                  <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
+                                  <span>{val}</span>
+                                </a>
                               ) : (
                                 <span className="text-slate-300">—</span>
                               )}
@@ -807,9 +903,10 @@ export default function LeadDataExporter() {
                               {val ? (
                                 <a
                                   href={`mailto:${val}`}
-                                  className="text-emerald-700 hover:underline font-semibold"
+                                  className="inline-flex items-center gap-1 text-emerald-700 hover:underline font-semibold"
                                 >
-                                  {val}
+                                  <Mail className="h-3 w-3 text-emerald-600 shrink-0" />
+                                  <span>{val}</span>
                                 </a>
                               ) : (
                                 <span className="text-slate-300">—</span>
@@ -844,7 +941,7 @@ export default function LeadDataExporter() {
                             <td key={col} className="px-3.5 py-2 whitespace-nowrap">
                               <span
                                 className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
-                                   isInactive
+                                  isInactive
                                     ? 'text-rose-700 bg-rose-50 border-rose-200'
                                     : 'text-emerald-700 bg-emerald-50 border-emerald-200'
                                 }`}
@@ -859,8 +956,9 @@ export default function LeadDataExporter() {
                         if (lowerCol === 'country') {
                           return (
                             <td key={col} className="px-3.5 py-2 whitespace-nowrap">
-                              <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 border border-slate-200">
-                                {val || <span className="text-slate-300 font-normal">—</span>}
+                              <span className="inline-flex items-center gap-1.5 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 border border-slate-200">
+                                <CountryFlag code={val} className="h-3 w-4" />
+                                <span>{val || <span className="text-slate-300 font-normal">—</span>}</span>
                               </span>
                             </td>
                           );
@@ -877,6 +975,33 @@ export default function LeadDataExporter() {
                           </td>
                         );
                       })}
+
+                      {/* Row Actions */}
+                      <td className="px-3.5 py-2 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setSelectedLead(row)}
+                            className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 hover:text-black transition"
+                            title="View Lead Details"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          {websiteVal && (
+                            <button
+                              onClick={() => handleEnrichLead(row)}
+                              disabled={enrichingId === rowId}
+                              className="rounded-lg p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition disabled:opacity-40"
+                              title="Crawl Website for Contact Info"
+                            >
+                              {enrichingId === rowId ? (
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -901,6 +1026,7 @@ export default function LeadDataExporter() {
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
               <span className="text-slate-500 ml-1">
                 Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredRecords.length)} of {filteredRecords.length}
@@ -929,6 +1055,127 @@ export default function LeadDataExporter() {
           </div>
         )}
       </div>
+
+      {/* LEAD DETAILS MODAL */}
+      {selectedLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  {getRecordField(selectedLead, 'company') || selectedLead.company_name || 'Company Details'}
+                </h3>
+                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                  <CountryFlag code={getRecordField(selectedLead, 'country') || selectedLead.country} className="h-3 w-4.5" />
+                  <span>{getRecordField(selectedLead, 'country') || selectedLead.country || 'International'}</span>
+                  <span>•</span>
+                  <span className="text-emerald-600 font-semibold">
+                    {selectedLead.__status || getRecordField(selectedLead, 'status') || selectedLead.status || 'Active'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLead(null)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Registration Number</div>
+                  <div className="font-mono font-medium text-slate-900">
+                    {getRecordField(selectedLead, 'registration') || selectedLead.registration_number || 'N/A'}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Industry / Type</div>
+                  <div className="font-medium text-slate-900">
+                    {getRecordField(selectedLead, 'industry') || getRecordField(selectedLead, 'type') || selectedLead.industry || selectedLead.company_type || 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                <div className="text-slate-500">Director / Officers</div>
+                <div className="font-medium text-slate-900">
+                  {getRecordField(selectedLead, 'director') || getRecordField(selectedLead, 'officer') || selectedLead.director || 'None recorded'}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                <div className="text-slate-500">Registered Address</div>
+                <div className="text-slate-900">
+                  {getRecordField(selectedLead, 'address') || selectedLead.address || 'N/A'}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Email Contact (Priority 1)</div>
+                  <div className="font-mono text-emerald-600 font-semibold truncate">
+                    {getRecordField(selectedLead, 'email') ? (
+                      <a href={`mailto:${getRecordField(selectedLead, 'email')}`} className="hover:underline">
+                        {getRecordField(selectedLead, 'email')}
+                      </a>
+                    ) : (
+                      'None discovered'
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Phone Contact (Priority 1)</div>
+                  <div className="font-mono text-emerald-600 font-semibold truncate">
+                    {getRecordField(selectedLead, 'phone') ? (
+                      <a href={`tel:${getRecordField(selectedLead, 'phone')}`} className="hover:underline">
+                        {getRecordField(selectedLead, 'phone')}
+                      </a>
+                    ) : (
+                      'None recorded'
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {getRecordField(selectedLead, 'website') && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500">Website (Priority 2)</div>
+                  <a
+                    href={getRecordField(selectedLead, 'website').startsWith('http') ? getRecordField(selectedLead, 'website') : `https://${getRecordField(selectedLead, 'website')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-blue-600 hover:underline mt-0.5 font-medium truncate"
+                  >
+                    <span className="truncate">{getRecordField(selectedLead, 'website')}</span>
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2 border-t border-slate-200 pt-3">
+              {getRecordField(selectedLead, 'website') && (
+                <button
+                  onClick={() => handleEnrichLead(selectedLead)}
+                  disabled={enrichingId === (selectedLead.id || selectedLead.__rowId)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs disabled:opacity-50"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>{enrichingId === (selectedLead.id || selectedLead.__rowId) ? 'Enriching...' : 'Enrich Contacts'}</span>
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedLead(null)}
+                className="rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition shadow-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

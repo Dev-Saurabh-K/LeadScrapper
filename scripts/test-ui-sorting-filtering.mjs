@@ -498,7 +498,7 @@ async function runTestSuite() {
   });
 
   await test('Database result respects priority sorting (Both Phone+Email first)', async () => {
-    const all = await db.getAllLeads({ limit: '100' });
+    const all = await db.getAllLeads({ limit: '500' });
     const testSubset = all.filter((l) =>
       testLeads.some((t) => t.registration_number === l.registration_number)
     );

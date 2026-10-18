@@ -37,12 +37,15 @@ const validEmailCases = [
   { email: 'kontakt@bedrift.no', desc: 'Norwegian national TLD (.no)' },
   { email: 'enquiries@singapore.sg', desc: 'Singapore national TLD (.sg)' },
   { email: 'support@business.com.au', desc: 'Australian company domain (.com.au)' },
-  { email: 'billing@sub.dept.enterprise.com', desc: 'Multi-subdomain corporate email' }
+  { email: 'billing@sub.dept.enterprise.com', desc: 'Multi-subdomain corporate email' },
+  { email: '<founder@venture.io>', desc: 'Email enclosed in angle brackets stripped' },
+  { email: '"ceo@startup.co"', desc: 'Email enclosed in quotes stripped' }
 ];
 
 for (const c of validEmailCases) {
   const res = contactValidator.validateEmail(c.email);
-  assert(res.isValid === true && res.sanitized === c.email.toLowerCase(), c.desc, res.error);
+  const expectedSanitized = c.email.replace(/[<">]/g, '').toLowerCase();
+  assert(res.isValid === true && res.sanitized === expectedSanitized, c.desc, res.error);
 }
 console.log();
 
@@ -70,6 +73,16 @@ const invalidEmailCases = [
   { email: 'temp123@tempmail.com', expected: 'Disposable tempmail.com' },
   { email: 'quick@10minutemail.com', expected: 'Disposable 10minutemail.com' },
   { email: 'hacker@guerrillamail.com', expected: 'Disposable guerrillamail.com' },
+  { email: 'test@maildrop.cc', expected: 'Disposable maildrop.cc' },
+  { email: 'temp@burnermail.io', expected: 'Disposable burnermail.io' },
+
+  // Placeholder / dummy local parts
+  { email: 'noreply@stripe.com', expected: 'Dummy local-part noreply' },
+  { email: 'null@google.com', expected: 'Dummy local-part null' },
+  { email: 'undefined@apple.com', expected: 'Dummy local-part undefined' },
+
+  // Telemetry false positives
+  { email: 'error@ingest.sentry.io', expected: 'Telemetry ingest.sentry.io' },
 
   // Malformed syntax
   { email: 'missing-at-sign.com', expected: 'Missing @ symbol' },
@@ -112,7 +125,13 @@ const validPhoneCases = [
 
   // Singapore & Australia (International fallback)
   { raw: '+65 6789 0123', country: 'Singapore', expectedFormatted: '+6567890123', desc: 'Singapore international with +' },
-  { raw: '+61 2 9262 1443', country: 'Australia', expectedFormatted: '+61292621443', desc: 'Australia international with +' }
+  { raw: '+61 2 9262 1443', country: 'Australia', expectedFormatted: '+61292621443', desc: 'Australia international with +' },
+
+  // India
+  { raw: '9820012345', country: 'India', expectedFormatted: '+91 98200 12345', desc: 'India 10-digit mobile -> +91 98200 12345' },
+
+  // International 00 prefix converted to +
+  { raw: '0044 2079 460192', country: 'UK', expectedFormatted: '+44 2079 460192', desc: 'Leading 00 converted to +44 UK prefix' }
 ];
 
 for (const c of validPhoneCases) {
@@ -130,6 +149,7 @@ const invalidPhoneCases = [
   // Repetitive dummy digits
   { phone: '0000000000', expected: 'All zeros' },
   { phone: '1111111111', expected: 'All ones' },
+  { phone: '2222222222', expected: 'All twos' },
   { phone: '9999999999', expected: 'All nines' },
   { phone: '7777777', expected: 'All sevens' },
 
@@ -137,6 +157,10 @@ const invalidPhoneCases = [
   { phone: '12345678', expected: 'Sequential digits' },
   { phone: '1234567890', expected: 'Sequential 10 digits' },
   { phone: '98765432', expected: 'Reverse sequential digits' },
+
+  // Alternating dummy digits
+  { phone: '12121212', expected: 'Alternating 12121212' },
+  { phone: '01010101', expected: 'Alternating 01010101' },
 
   // US fictional movie 555 numbers
   { phone: '5550143', expected: 'US Fictional 555-01xx' },

@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
+import CountryFlag from '@/components/CountryFlag';
 import { GEO_COUNTRIES, buildMapsQuery, POPULAR_NICHES } from '@/lib/data/geo_locations.js';
 
 const COUNTRIES = [
@@ -59,106 +60,6 @@ const COUNTRIES = [
   { code: 'CA', name: 'Canada', source: 'Corporations Canada', free: true },
   { code: 'AU', name: 'Australia', source: 'ABN Lookup', free: false, note: 'Free GUID' }
 ];
-
-function CountryFlag({ code, className = "h-3.5 w-5" }) {
-  const c = code?.toUpperCase();
-  if (c === 'MAPS' || c === 'GMAPS' || c === 'GOOGLE MAPS') {
-    return <MapPin className={`${className} text-rose-500`} />;
-  }
-  if (c === 'EU' || c === 'EUROPE' || c === 'EUROPEAN UNION') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="22" height="16" fill="#003399" />
-        <circle cx="11" cy="4" r="0.8" fill="#FFCC00" />
-        <circle cx="14" cy="5.2" r="0.8" fill="#FFCC00" />
-        <circle cx="15.2" cy="8" r="0.8" fill="#FFCC00" />
-        <circle cx="14" cy="10.8" r="0.8" fill="#FFCC00" />
-        <circle cx="11" cy="12" r="0.8" fill="#FFCC00" />
-        <circle cx="8" cy="10.8" r="0.8" fill="#FFCC00" />
-        <circle cx="6.8" cy="8" r="0.8" fill="#FFCC00" />
-        <circle cx="8" cy="5.2" r="0.8" fill="#FFCC00" />
-      </svg>
-    );
-  }
-  if (c === 'GLOBAL' || c === 'GL' || c === 'WORLD') {
-    return <Globe className={`${className} text-emerald-500`} />;
-  }
-  if (c === 'NO' || c === 'NORWAY') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="22" height="16" fill="#BA0C2F" />
-        <path d="M0 8h22M7 0v16" stroke="#fff" strokeWidth="4" />
-        <path d="M0 8h22M7 0v16" stroke="#00205B" strokeWidth="2" />
-      </svg>
-    );
-  }
-  if (c === 'FR' || c === 'FRANCE') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="7.33" height="16" fill="#002654" />
-        <rect x="7.33" width="7.34" height="16" fill="#fff" />
-        <rect x="14.67" width="7.33" height="16" fill="#ED2939" />
-      </svg>
-    );
-  }
-  if (c === 'SG' || c === 'SINGAPORE') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="22" height="8" fill="#ED2939" />
-        <rect y="8" width="22" height="8" fill="#fff" />
-        <circle cx="4.5" cy="4" r="2.5" fill="#fff" />
-        <circle cx="5.2" cy="4" r="2.2" fill="#ED2939" />
-      </svg>
-    );
-  }
-  if (c === 'US' || c === 'UNITED STATES' || c === 'USA') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="22" height="16" fill="#B22234" />
-        <path d="M0 2.4h22M0 4.8h22M0 7.2h22M0 9.6h22M0 12h22M0 14.4h22" stroke="#fff" strokeWidth="1.2" />
-        <rect width="9" height="8.4" fill="#3C3B6E" />
-        <circle cx="4.5" cy="4.2" r="1.5" fill="#fff" opacity="0.9" />
-      </svg>
-    );
-  }
-  if (c === 'UK' || c === 'GB' || c === 'UNITED KINGDOM') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="22" height="16" fill="#012169" />
-        <path d="M0 0l22 16M22 0L0 16" stroke="#fff" strokeWidth="3" />
-        <path d="M0 0l22 16M22 0L0 16" stroke="#C8102E" strokeWidth="1.5" />
-        <path d="M11 0v16M0 8h22" stroke="#fff" strokeWidth="5" />
-        <path d="M11 0v16M0 8h22" stroke="#C8102E" strokeWidth="3" />
-      </svg>
-    );
-  }
-  if (c === 'CA' || c === 'CANADA') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="5.5" height="16" fill="#FF0000" />
-        <rect x="5.5" width="11" height="16" fill="#fff" />
-        <rect x="16.5" width="5.5" height="16" fill="#FF0000" />
-        <path d="M11 3.5l1 2 2-.5-1 1.8 1.5 1.2-2 .5.5 1.8-1.5-1.2-1.5 1.2.5-1.8-2-.5 1.5-1.2-1-1.8 2 .5z" fill="#FF0000" />
-      </svg>
-    );
-  }
-  if (c === 'AU' || c === 'AUSTRALIA') {
-    return (
-      <svg viewBox="0 0 22 16" className={`${className} rounded-xs shadow-xs shrink-0 overflow-hidden`}>
-        <rect width="22" height="16" fill="#00008B" />
-        <rect width="10" height="8" fill="#012169" />
-        <path d="M0 0l10 8M10 0L0 8" stroke="#fff" strokeWidth="1.5" />
-        <path d="M5 0v8M0 4h10" stroke="#fff" strokeWidth="2.5" />
-        <path d="M5 0v8M0 4h10" stroke="#C8102E" strokeWidth="1.5" />
-        <circle cx="16" cy="4" r="1" fill="#fff" />
-        <circle cx="18" cy="7" r="1" fill="#fff" />
-        <circle cx="14" cy="9" r="1" fill="#fff" />
-        <circle cx="17" cy="12" r="1" fill="#fff" />
-      </svg>
-    );
-  }
-  return <Globe className={`${className} text-slate-400`} />;
-}
 
 export default function Dashboard() {
   // Navigation
@@ -556,9 +457,9 @@ export default function Dashboard() {
               }`}
             >
               <MicrosoftExcelIcon className="h-4 w-4" />
-              <span>Leads Explorer</span>
+              <span>Leads Explorer & Exporter</span>
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[10px] text-emerald-800 border border-emerald-200">
-                All Columns
+                All Columns & Export
               </span>
             </button>
             <button
@@ -678,117 +579,180 @@ export default function Dashboard() {
               </div>
             </section>
 
-            {/* Search & Filter Bar */}
-            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search company, director, or registration number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2 pl-10 pr-4 text-xs text-black placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
-                />
+            {/* Contact Quality Breakdown & Quick Actions */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {/* Quality Funnel */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-2">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Lead Intelligence Quality Funnel</h3>
+                    <p className="text-xs text-slate-500">Contact enrichment status across entire database</p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('exporter')}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition"
+                  >
+                    <span>View All In Explorer</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                      <Star className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
+                      <span>P1: Both Phone & Email</span>
+                    </div>
+                    <div className="mt-2 text-2xl font-extrabold text-emerald-900">
+                      {leads.filter((l) => l.email && l.phone).length}
+                    </div>
+                    <p className="text-[11px] text-emerald-700 mt-0.5">Ready for multi-channel outreach</p>
+                  </div>
+
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800">
+                      <Mail className="h-3.5 w-3.5 text-blue-600" />
+                      <span>P1: Either Phone or Email</span>
+                    </div>
+                    <div className="mt-2 text-2xl font-extrabold text-blue-900">
+                      {leads.filter((l) => (l.email && !l.phone) || (!l.email && l.phone)).length}
+                    </div>
+                    <p className="text-[11px] text-blue-700 mt-0.5">Direct contact available</p>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800">
+                      <Globe className="h-3.5 w-3.5 text-amber-600" />
+                      <span>P2: Website Ready to Crawl</span>
+                    </div>
+                    <div className="mt-2 text-2xl font-extrabold text-amber-900">
+                      {leads.filter((l) => !l.email && !l.phone && l.website).length}
+                    </div>
+                    <p className="text-[11px] text-amber-700 mt-0.5">Enrichable via web contact crawler</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 p-3 border border-slate-200 text-xs">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    <span className="font-medium text-slate-700">Strict Validation Active:</span>
+                    <span className="text-slate-500">RFC 5322 email syntax, disposable domain filters & ITU-T E.164 phone formats.</span>
+                  </div>
+                  <span className="font-bold text-emerald-700">100% Sanitized</span>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={selectedCountryFilter}
-                  onChange={(e) => setSelectedCountryFilter(e.target.value)}
-                  className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800 focus:border-blue-600 focus:bg-white focus:outline-none"
-                >
-                  <option value="">All Countries</option>
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.name}>
-                      {c.code} — {c.name}
-                    </option>
-                  ))}
-                </select>
+              {/* Quick Actions Panel */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Quick Actions</h3>
+                  <p className="text-xs text-slate-500">Accelerate your lead prospecting workflow</p>
+                </div>
 
-                <button
-                  onClick={() => setHasEmailFilter(!hasEmailFilter)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                    hasEmailFilter
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-xs'
-                      : 'border-slate-300 bg-slate-50 text-slate-600 hover:text-black hover:bg-slate-100'
-                  }`}
-                >
-                  <Mail className="h-3.5 w-3.5" />
-                  Has Email
-                </button>
+                <div className="my-3 space-y-2">
+                  <button
+                    onClick={() => setActiveTab('scraper')}
+                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-left transition hover:border-blue-300 hover:bg-blue-50/50 group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="rounded-lg bg-blue-100 p-1.5 text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition">
+                        <Play className="h-4 w-4 fill-current" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900">Launch New Scrape Job</div>
+                        <div className="text-[11px] text-slate-500">Query 7+ international registries</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition" />
+                  </button>
 
-                <button
-                  onClick={() => setHasPhoneFilter(!hasPhoneFilter)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                    hasPhoneFilter
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-xs'
-                      : 'border-slate-300 bg-slate-50 text-slate-600 hover:text-black hover:bg-slate-100'
-                  }`}
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  Has Phone
-                </button>
+                  <button
+                    onClick={() => setActiveTab('exporter')}
+                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-left transition hover:border-emerald-300 hover:bg-emerald-50/50 group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="rounded-lg bg-emerald-100 p-1.5 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
+                        <MicrosoftExcelIcon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900">Explore & Export Dataset</div>
+                        <div className="text-[11px] text-slate-500">Filter, select columns & export Excel</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 transition" />
+                  </button>
 
-                <button
-                  onClick={() => {
-                    fetchLeads();
-                    fetchHealth();
-                  }}
-                  className="rounded-xl border border-slate-300 bg-slate-50 p-2 text-slate-600 hover:text-black hover:bg-slate-100 transition"
-                  title="Refresh Leads"
-                >
-                  <RefreshCw className={`h-4 w-4 ${loadingLeads ? 'animate-spin' : ''}`} />
-                </button>
+                  <button
+                    onClick={() => setActiveTab('email')}
+                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-left transition hover:border-purple-300 hover:bg-purple-50/50 group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="rounded-lg bg-purple-100 p-1.5 text-purple-700 group-hover:bg-purple-600 group-hover:text-white transition">
+                        <Send className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900">Dispatch Email Report</div>
+                        <div className="text-[11px] text-slate-500">Deliver Excel attachments via SMTP</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-600 transition" />
+                  </button>
+                </div>
+
+                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-2.5 text-center text-xs text-blue-700">
+                  <span className="font-semibold">Master Dataset File:</span> <code className="font-mono text-[11px]">exports/Master_B2B_Leads.xlsx</code>
+                </div>
               </div>
             </div>
 
-            {/* Leads Table */}
+            {/* Recent Leads Preview & Full Table Link */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+              <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Recent Verified Leads Preview</h3>
+                  <p className="text-[11px] text-slate-500">Latest 5 company profiles captured from public records</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('exporter')}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Open Full Leads Explorer ({leads.length} Records)</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs text-slate-800 table-auto">
                   <thead className="border-b border-slate-200 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-700 font-semibold">
                     <tr>
                       <th className="py-2.5 pl-3.5 pr-2 text-black font-bold">Company Name</th>
-                      <th className="px-2.5 py-2.5 font-bold text-emerald-700">
-                        <span className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-emerald-600 text-emerald-600 shrink-0" />
-                          <span>Phone & Email (P1)</span>
-                        </span>
-                      </th>
-                      <th className="px-2.5 py-2.5 font-bold text-blue-700">
-                        <span className="flex items-center gap-1">
-                          <Globe className="h-3 w-3 text-blue-600 shrink-0" />
-                          <span>Website (P2)</span>
-                        </span>
-                      </th>
+                      <th className="px-2.5 py-2.5 font-bold text-emerald-700">Phone & Email (P1)</th>
+                      <th className="px-2.5 py-2.5 font-bold text-blue-700">Website (P2)</th>
                       <th className="px-2.5 py-2.5">Country</th>
                       <th className="px-2.5 py-2.5">Reg. Number</th>
                       <th className="px-2.5 py-2.5">Director / Officers</th>
-                      <th className="px-2.5 py-2.5">Industry / Type</th>
                       <th className="py-2.5 pl-1 pr-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-normal">
                     {leads.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="py-12 text-center text-slate-500">
+                        <td colSpan="7" className="py-8 text-center text-slate-500">
                           {loadingLeads ? (
                             <div className="flex flex-col items-center justify-center gap-2">
-                              <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
-                              <span className="font-medium text-slate-700">Loading leads from database...</span>
+                              <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
+                              <span className="font-medium text-slate-700">Loading leads...</span>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center gap-2">
-                              <Building2 className="h-8 w-8 text-slate-400" />
-                              <span className="font-bold text-black">No leads found</span>
-                              <p className="text-xs text-slate-500">
-                                Launch a scrape job using the button above to populate your database!
-                              </p>
+                              <Building2 className="h-6 w-6 text-slate-400" />
+                              <span className="font-bold text-black">No leads found yet</span>
                               <button
                                 onClick={() => setActiveTab('scraper')}
-                                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs"
+                                className="mt-1 inline-flex items-center gap-1 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
                               >
-                                <Play className="h-3.5 w-3.5 fill-current" />
+                                <Play className="h-3 w-3 fill-current" />
                                 Start Scraping Now
                               </button>
                             </div>
@@ -796,45 +760,39 @@ export default function Dashboard() {
                         </td>
                       </tr>
                     ) : (
-                      leads.map((lead) => (
+                      leads.slice(0, 5).map((lead) => (
                         <tr key={lead.id} className="transition-colors hover:bg-slate-50">
-                          <td className="py-2.5 pl-3.5 pr-2">
-                            <div className="font-bold text-black truncate max-w-[170px]" title={lead.company_name}>
-                              {lead.company_name}
-                            </div>
+                          <td className="py-2.5 pl-3.5 pr-2 font-bold text-black truncate max-w-[170px]" title={lead.company_name}>
+                            {lead.company_name}
                           </td>
-                          {/* Priority 1: Phone & Email */}
                           <td className="px-2.5 py-2.5">
                             <div className="flex flex-col gap-0.5 max-w-[190px]">
-                              {lead.phone ? (
-                                <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold font-mono text-[11px] truncate" title={lead.phone}>
+                              {lead.phone && (
+                                <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold font-mono text-[11px] truncate">
                                   <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
                                   <span className="truncate">{lead.phone}</span>
                                 </span>
-                              ) : null}
-                              {lead.email ? (
+                              )}
+                              {lead.email && (
                                 <a
                                   href={`mailto:${lead.email}`}
-                                  title={lead.email}
                                   className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-semibold font-mono text-[11px] truncate"
                                 >
                                   <Mail className="h-3 w-3 text-emerald-600 shrink-0" />
                                   <span className="truncate">{lead.email}</span>
                                 </a>
-                              ) : null}
+                              )}
                               {!lead.email && !lead.phone && (
                                 <span className="text-[11px] text-slate-400 font-mono">None discovered</span>
                               )}
                             </div>
                           </td>
-                          {/* Priority 2: Website */}
                           <td className="px-2.5 py-2.5">
                             {lead.website ? (
                               <a
                                 href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                title={lead.website}
                                 className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline font-medium truncate max-w-[130px]"
                               >
                                 <Globe className="h-3 w-3 text-blue-600 shrink-0" />
@@ -854,11 +812,8 @@ export default function Dashboard() {
                           <td className="whitespace-nowrap px-2.5 py-2.5 font-mono text-[11px] text-slate-800">
                             {lead.registration_number || <span className="text-slate-400">—</span>}
                           </td>
-                          <td className="max-w-[140px] truncate px-2.5 py-2.5 text-slate-700 text-[11px]" title={lead.director}>
+                          <td className="max-w-[140px] truncate px-2.5 py-2.5 text-slate-700 text-[11px]">
                             {lead.director || <span className="text-slate-400">—</span>}
-                          </td>
-                          <td className="max-w-[130px] truncate px-2.5 py-2.5 text-slate-600 text-[11px]" title={lead.industry || lead.company_type}>
-                            {lead.industry || lead.company_type || <span className="text-slate-400">—</span>}
                           </td>
                           <td className="whitespace-nowrap py-2.5 pl-1 pr-3 text-right">
                             <div className="flex items-center justify-end gap-1">
@@ -887,10 +842,15 @@ export default function Dashboard() {
                 </table>
               </div>
 
-              {/* Table Footer */}
-              <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-                <span>Showing <strong className="text-black">{leads.length}</strong> leads</span>
-                <span className="font-mono text-slate-500">Master Dataset: exports/Master_B2B_Leads.xlsx</span>
+              <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
+                <span>Showing <strong>{Math.min(5, leads.length)}</strong> of <strong>{leads.length}</strong> total leads</span>
+                <button
+                  onClick={() => setActiveTab('exporter')}
+                  className="font-semibold text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  <span>Go to Leads Explorer for pagination, custom columns & filters</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
           </div>
