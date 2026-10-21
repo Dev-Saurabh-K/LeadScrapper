@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Download,
   Search,
@@ -26,6 +26,61 @@ import {
 } from 'lucide-react';
 import MicrosoftExcelIcon from './MicrosoftExcelIcon';
 import CountryFlag from './CountryFlag';
+
+const getColumnPriorityMeta = (colName) => {
+  const lower = colName.trim().toLowerCase();
+  if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
+    return { priority: 3, rank: 0 };
+  }
+  if (lower.includes('phone') || lower.includes('mobile')) {
+    return { priority: 1, rank: 1 };
+  }
+  if (lower.includes('email')) {
+    return { priority: 1, rank: 2 };
+  }
+  if (lower.includes('website') || lower.includes('url') || lower.includes('web')) {
+    return { priority: 2, rank: 3 };
+  }
+  if (lower.includes('country') || lower.includes('jurisdiction')) {
+    return { priority: 3, rank: 4 };
+  }
+  if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
+    return { priority: 3, rank: 5 };
+  }
+  if (lower.includes('registration') || lower.includes('gst')) {
+    return { priority: 3, rank: 6 };
+  }
+  if (lower.includes('status')) {
+    return { priority: 3, rank: 7 };
+  }
+  if (lower.includes('industry') || lower.includes('type')) {
+    return { priority: 3, rank: 8 };
+  }
+  if (lower.includes('address') || lower.includes('city') || lower.includes('postal')) {
+    return { priority: 3, rank: 9 };
+  }
+  if (lower.includes('date') || lower.includes('incorporation')) {
+    return { priority: 3, rank: 10 };
+  }
+  if (lower.includes('source') || lower.includes('registry')) {
+    return { priority: 3, rank: 11 };
+  }
+  return { priority: 3, rank: 12 };
+};
+
+const sortColumnsByPriority = (columns) => {
+  return [...columns].sort((a, b) => {
+    const metaA = getColumnPriorityMeta(a);
+    const metaB = getColumnPriorityMeta(b);
+    if (metaA.rank !== metaB.rank) return metaA.rank - metaB.rank;
+    return a.localeCompare(b);
+  });
+};
+
+const getRecordField = (record, keyword) => {
+  const key = Object.keys(record).find((candidate) => candidate.toLowerCase().includes(keyword.toLowerCase()));
+  return key && record[key] ? String(record[key]).trim() : '';
+};
 
 export default function LeadDataExporter({ onEnrichLeadExternal }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -75,62 +130,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
   const [selectedLead, setSelectedLead] = useState(null);
   const [enrichingId, setEnrichingId] = useState(null);
 
-  // Priority metadata helper: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
-  const getColumnPriorityMeta = (colName) => {
-    const lower = colName.trim().toLowerCase();
-    if (lower === 'company name' || lower === 'company_name' || lower === 'company') {
-      return { priority: 3, rank: 0 };
-    }
-    if (lower.includes('phone') || lower.includes('mobile')) {
-      return { priority: 1, rank: 1 };
-    }
-    if (lower.includes('email')) {
-      return { priority: 1, rank: 2 };
-    }
-    if (lower.includes('website') || lower.includes('url') || lower.includes('web')) {
-      return { priority: 2, rank: 3 };
-    }
-    if (lower.includes('country') || lower.includes('jurisdiction')) {
-      return { priority: 3, rank: 4 };
-    }
-    if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
-      return { priority: 3, rank: 5 };
-    }
-    if (lower.includes('registration') || lower.includes('gst')) {
-      return { priority: 3, rank: 6 };
-    }
-    if (lower.includes('status')) {
-      return { priority: 3, rank: 7 };
-    }
-    if (lower.includes('industry') || lower.includes('type')) {
-      return { priority: 3, rank: 8 };
-    }
-    if (lower.includes('address') || lower.includes('city') || lower.includes('postal')) {
-      return { priority: 3, rank: 9 };
-    }
-    if (lower.includes('date') || lower.includes('incorporation')) {
-      return { priority: 3, rank: 10 };
-    }
-    if (lower.includes('source') || lower.includes('registry')) {
-      return { priority: 3, rank: 11 };
-    }
-    return { priority: 3, rank: 12 };
-  };
-
-  const sortColumnsByPriority = (columns) => {
-    return [...columns].sort((a, b) => {
-      const metaA = getColumnPriorityMeta(a);
-      const metaB = getColumnPriorityMeta(b);
-      if (metaA.rank !== metaB.rank) return metaA.rank - metaB.rank;
-      return a.localeCompare(b);
-    });
-  };
-
-  useEffect(() => {
-    loadScrapedLeads();
-  }, []);
-
-  const applyDataset = (data) => {
+  const applyDataset = useCallback((data) => {
     setDataset(data);
     setError(null);
     setCurrentPage(1);
@@ -140,9 +140,9 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
 
     // Show ALL valid columns by default so nothing is hidden from the user
     setSelectedColumns(sortedCols);
-  };
+  }, []);
 
-  const loadScrapedLeads = async () => {
+  const loadScrapedLeads = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -158,7 +158,14 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [applyDataset]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadScrapedLeads();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadScrapedLeads]);
 
   const toggleColumn = (colName) => {
     setSelectedColumns((prev) => {
@@ -189,11 +196,6 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     setCurrentPage(1);
     const validCols = (dataset.columns || []).filter(c => !c.startsWith('__'));
     setSelectedColumns(sortColumnsByPriority(validCols));
-  };
-
-  const getRecordField = (record, keyword) => {
-    const key = Object.keys(record).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
-    return key && record[key] ? String(record[key]).trim() : '';
   };
 
   const availableCountries = useMemo(() => {
@@ -268,10 +270,6 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
       return getScore(a) - getScore(b);
     });
   }, [dataset.records, statusFilter, contactPriorityFilter, selectedCountry, selectedIndustry, selectedCity, searchQuery]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, contactPriorityFilter, selectedCountry, selectedIndustry, selectedCity, searchQuery]);
 
   const totalPages = Math.ceil(filteredRecords.length / pageSize) || 1;
   const paginatedRecords = useMemo(() => {
@@ -659,7 +657,10 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search company, phone, email, director..."
             className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-8 pr-3 py-1.5 text-xs text-black placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
           />
@@ -668,7 +669,10 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         {/* Country Filter */}
         <select
           value={selectedCountry}
-          onChange={(e) => setSelectedCountry(e.target.value)}
+          onChange={(e) => {
+            setSelectedCountry(e.target.value);
+            setCurrentPage(1);
+          }}
           className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[140px] truncate"
         >
           <option value="">All Countries</option>
@@ -680,7 +684,10 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         {/* Status Dropdown */}
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setCurrentPage(1);
+          }}
           className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none"
         >
           <option value="active">Active Only</option>
@@ -691,7 +698,10 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         {/* Priority Filter */}
         <select
           value={contactPriorityFilter}
-          onChange={(e) => setContactPriorityFilter(e.target.value)}
+          onChange={(e) => {
+            setContactPriorityFilter(e.target.value);
+            setCurrentPage(1);
+          }}
           className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none"
         >
           <option value="all">All Contacts</option>
@@ -704,7 +714,10 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         {dataset.industries?.length > 0 && (
           <select
             value={selectedIndustry}
-            onChange={(e) => setSelectedIndustry(e.target.value)}
+            onChange={(e) => {
+              setSelectedIndustry(e.target.value);
+              setCurrentPage(1);
+            }}
             className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[150px] truncate"
           >
             <option value="">All Industries</option>
@@ -718,7 +731,10 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         {dataset.cities?.length > 0 && (
           <select
             value={selectedCity}
-            onChange={(e) => setSelectedCity(e.target.value)}
+            onChange={(e) => {
+              setSelectedCity(e.target.value);
+              setCurrentPage(1);
+            }}
             className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none max-w-[130px] truncate"
           >
             <option value="">All Cities</option>

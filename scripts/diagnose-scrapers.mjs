@@ -16,6 +16,27 @@ const results = [];
 
 async function test(country, connector, query = '', limit = 5) {
   process.stdout.write(`Testing ${country} (${connector.registryName})... `);
+  const hasRequiredCredential = !connector.requiresAuth ||
+    (country === 'UK' && config.registries.hasUKKey) ||
+    (country === 'Australia' && config.registries.hasAustraliaGuid);
+
+  if (!hasRequiredCredential) {
+    console.log('SKIPPED (credential required)');
+    results.push({
+      country,
+      source: connector.registryName,
+      status: 'CONFIG_REQUIRED',
+      recordCount: 0,
+      sampleCompany: 'None',
+      sampleReg: 'None',
+      durationMs: 0,
+      requiresKey: true,
+      hasKeyConfigured: false,
+      error: country === 'Australia' ? 'Set ABN_LOOKUP_GUID to test live ABN Lookup results.' : 'Set the required credential to test this registry.'
+    });
+    return;
+  }
+
   const start = Date.now();
   try {
     const records = await connector.search(query, limit);

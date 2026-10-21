@@ -2,6 +2,7 @@
   "name": "leadscrape",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -31,9 +32,10 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "^4",
+    "@tailwindcss/postcss": "^4.3.3",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "postcss": "^8.5.31",
     "tailwindcss": "^4"
   }
 }

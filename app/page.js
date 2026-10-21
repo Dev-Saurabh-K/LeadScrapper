@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Download,
   Play,
@@ -122,21 +122,7 @@ export default function Dashboard() {
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [emailStatusMsg, setEmailStatusMsg] = useState(null);
 
-  // Fetch initial data
-  useEffect(() => {
-    fetchHealth();
-    fetchLeads();
-    fetchJobs();
-  }, []);
-
-  // Confine log scrolling strictly inside the terminal box if explicitly enabled (never scrolls browser window)
-  useEffect(() => {
-    if (autoScrollLogs && logContainerRef.current) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-    }
-  }, [liveLogs, autoScrollLogs]);
-
-  const fetchHealth = async () => {
+  const fetchHealth = useCallback(async () => {
     try {
       const res = await fetch('/api/health');
       const data = await res.json();
@@ -144,9 +130,9 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Error fetching health:', err);
     }
-  };
+  }, []);
 
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     setLoadingLeads(true);
     try {
       const params = new URLSearchParams();
@@ -166,9 +152,9 @@ export default function Dashboard() {
     } finally {
       setLoadingLeads(false);
     }
-  };
+  }, [searchQuery, selectedCountryFilter, hasEmailFilter, hasPhoneFilter]);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       const res = await fetch('/api/jobs');
       const data = await res.json();
@@ -178,15 +164,28 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Error fetching jobs:', err);
     }
-  };
+  }, []);
+
+  // Fetch initial data that does not depend on the lead filters.
+  useEffect(() => {
+    void fetchHealth();
+    void fetchJobs();
+  }, [fetchHealth, fetchJobs]);
+
+  // Confine log scrolling strictly inside the terminal box if explicitly enabled (never scrolls browser window)
+  useEffect(() => {
+    if (autoScrollLogs && logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [liveLogs, autoScrollLogs]);
 
   // Trigger search on filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchLeads();
+      void fetchLeads();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedCountryFilter, hasEmailFilter, hasPhoneFilter]);
+  }, [fetchLeads]);
 
   // Country selection toggle
   const toggleCountry = (code) => {
@@ -1032,7 +1031,7 @@ export default function Dashboard() {
                         📍 Compiled Google Maps Query:
                       </div>
                       <div className="font-mono text-xs font-semibold text-slate-900 break-all">
-                        "{synthesizedMapsQuery}"
+                        &quot;{synthesizedMapsQuery}&quot;
                       </div>
                     </div>
                   </div>

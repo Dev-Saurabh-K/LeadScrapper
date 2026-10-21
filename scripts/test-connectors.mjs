@@ -8,6 +8,8 @@ import { usaConnector } from '../lib/connectors/usa_socrata.js';
 import { ukConnector } from '../lib/connectors/companies_house.js';
 import { euConnector } from '../lib/connectors/eu_ted.js';
 import { gleifConnector } from '../lib/connectors/global_gleif.js';
+import { AustraliaAbnConnector, australiaConnector } from '../lib/connectors/australia_abn.js';
+import { config } from '../lib/config.js';
 import { normalizer } from '../lib/services/normalizer.js';
 import { exporter } from '../lib/services/exporter.js';
 import { db } from '../lib/database.js';
@@ -73,6 +75,39 @@ async function runTests() {
 
   // 8. Test De-duplication Logic
   totalTests++;
+  console.log(`[TEST ${totalTests}] Testing Australia ABN response mapping...`);
+  try {
+    const savedGuid = config.registries.abnLookupGuid;
+    config.registries.abnLookupGuid = '';
+    await australiaConnector.search('technology', 1)
+      .then(() => {
+        throw new Error('Australia connector accepted a missing ABN_LOOKUP_GUID');
+      })
+      .catch((error) => {
+        if (!error.message.includes('ABN_LOOKUP_GUID is required')) throw error;
+      });
+
+    config.registries.abnLookupGuid = 'test-guid';
+    const australiaTestConnector = new AustraliaAbnConnector();
+    australiaTestConnector.safeFetch = async () => ({
+      Names: [{ ABN: '62102443916', Name: 'TEST AUSTRALIA PTY LTD', State: 'NSW', Postcode: '2000', Status: 'Active' }]
+    });
+    const [lead] = await australiaTestConnector.search('technology', 1);
+    config.registries.abnLookupGuid = savedGuid;
+
+    if (!lead || lead.company_name !== 'TEST AUSTRALIA PTY LTD' || lead.registration_number !== '62102443916' || lead.source !== australiaTestConnector.registryName) {
+      throw new Error('ABN response was not normalized into a valid lead');
+    }
+
+    console.log(`  -> Mapped ABN ${lead.registration_number} for ${lead.company_name}`);
+    console.log('  ✅ Australia ABN mapping passed!\n');
+    passedTests++;
+  } catch (err) {
+    console.error('  ❌ Australia ABN mapping failed:', err.message, '\n');
+  }
+
+  // 9. Test De-duplication Logic
+  totalTests++;
   console.log(`[TEST ${totalTests}] Testing De-duplication Logic...`);
   try {
     const testLead = {
@@ -99,7 +134,7 @@ async function runTests() {
     console.error(`  ❌ De-duplication failed:`, err.message, '\n');
   }
 
-  // 9. Test Excel Generation
+  // 10. Test Excel Generation
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing Master_B2B_Leads.xlsx Generation...`);
   try {
@@ -118,7 +153,7 @@ async function runTests() {
     console.error(`  ❌ Excel Export failed:`, err.message, '\n');
   }
 
-  // 10. Test Email & Phone Number Validation Engine
+  // 11. Test Email & Phone Number Validation Engine
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing Email & Phone Number Validation Engine...`);
   try {

@@ -42,7 +42,7 @@ Runs in the background, updates Supabase, updates [`exports/Master_B2B_Leads.xls
 | 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | 🟢 Live | ❌ None |
 | 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | 🟢 Live | ❌ None |
 | 🇨🇦 **Canada** | Corporations Canada Open Data | 🟢 Live | ❌ None |
-| 🇦🇺 **Australia** | Australian Business Register (ABN Lookup) | 🟢 Live / Ready | 🔑 Free GUID (Optional) |
+| 🇦🇺 **Australia** | Australian Business Register (ABN Lookup) | 🟢 Live / Ready | 🔑 Free GUID required |
 
 ---
 
