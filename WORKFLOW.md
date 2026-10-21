@@ -69,7 +69,7 @@ The scraper contacts external networks **only when a scrape job is explicitly tr
 3. **Queries Supabase for Duplicates**:
    Before saving, the scraper checks Supabase to verify if the company is already stored:
    ```sql
-   SELECT id, company_name FROM leads WHERE country = $1 AND registration_number = $2 LIMIT 1;
+   SELECT id, company_name FROM leads WHERE country = $1 AND registration_number = $2 LIMIT 1;;
    ```
    If a match is found, the lead is **skipped** to prevent duplicate rows.
 4. **Crawls Company Websites for Contacts (Enrichment)**:
