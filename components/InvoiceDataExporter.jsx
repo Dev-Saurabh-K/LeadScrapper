@@ -91,7 +91,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
 
   // Email Dispatch States for this particular table & selected columns
   const [showEmailPanel, setShowEmailPanel] = useState(false);
-  const [emailRecipient, setEmailRecipient] = useState('saurabhkumar.sakr@gmail.com');
+  const [emailRecipient, setEmailRecipient] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailCustomNote, setEmailCustomNote] = useState('');
   const [alsoDownloadExcel, setAlsoDownloadExcel] = useState(true);

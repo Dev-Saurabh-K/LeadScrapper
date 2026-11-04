@@ -78,6 +78,7 @@ export default function Dashboard() {
   const [scraperLimit, setScraperLimit] = useState(10);
   const [enrichWebsite, setEnrichWebsite] = useState(true);
   const [delayMs, setDelayMs] = useState(1000);
+  const [notificationEmail, setNotificationEmail] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [liveLogs, setLiveLogs] = useState([]);
   const [jobSummary, setJobSummary] = useState(null);
@@ -103,7 +104,7 @@ export default function Dashboard() {
   });
 
   // Dedicated Email Dispatch UI states
-  const [emailRecipient, setEmailRecipient] = useState('saurabhkumar.sakr@gmail.com');
+  const [emailRecipient, setEmailRecipient] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailCustomNote, setEmailCustomNote] = useState('Hi Team, please find attached the latest verified B2B leads extracted from international corporate registries.');
   const [emailCountryFilter, setEmailCountryFilter] = useState('');
@@ -205,7 +206,8 @@ export default function Dashboard() {
           limit: Number(scraperLimit),
           enrich: enrichWebsite,
           delayMs: Number(delayMs),
-          stream: true
+          stream: true,
+          notificationEmail: notificationEmail.trim()
         })
       });
 
@@ -1069,6 +1071,27 @@ export default function Dashboard() {
                   />
                 </div>
 
+                {/* Optional Email Notification */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5 text-slate-500" />
+                      <span>Send Summary Email to (Optional)</span>
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium">Optional</span>
+                  </div>
+                  <input
+                    type="email"
+                    value={notificationEmail}
+                    onChange={(e) => setNotificationEmail(e.target.value)}
+                    placeholder="Enter email to auto-send results, or leave blank to skip"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    If left blank, no email is sent. You can always dispatch emails manually from the Dispatch Email tab.
+                  </p>
+                </div>
+
                 {/* Action Button */}
                 <button
                   type="button"
@@ -1280,7 +1303,7 @@ export default function Dashboard() {
                       required
                       value={emailRecipient}
                       onChange={(e) => setEmailRecipient(e.target.value)}
-                      placeholder="saurabhkumar.sakr@gmail.com"
+                      placeholder="e.g. client@company.com"
                       className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                     />
                     {/* Quick-fill Pills */}

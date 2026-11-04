@@ -25,7 +25,8 @@ export async function GET() {
                     limit: { type: 'integer', default: 20, description: 'Number of places to scrape' },
                     enrich: { type: 'boolean', default: true, description: 'Crawl business websites for contact emails' },
                     delayMs: { type: 'integer', default: 1000 },
-                    stream: { type: 'boolean', default: false, description: 'Set true to receive Server-Sent Events (SSE) live logs' }
+                    stream: { type: 'boolean', default: false, description: 'Set true to receive Server-Sent Events (SSE) live logs' },
+                    notificationEmail: { type: 'string', description: 'Optional recipient email for scrape summary. If omitted, no email is sent.' }
                   }
                 }
               }
