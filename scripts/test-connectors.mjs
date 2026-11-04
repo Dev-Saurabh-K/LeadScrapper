@@ -1,165 +1,133 @@
 // scripts/test-connectors.mjs
-// Comprehensive automated test suite for B2B Lead Scraper connectors & services
+// Automated verification suite for Google Maps Hyper-Local Scraper & Pipeline Services
 
-import { norwayConnector } from '../lib/connectors/norway_brreg.js';
-import { franceConnector } from '../lib/connectors/france_insee.js';
-import { singaporeConnector } from '../lib/connectors/singapore_acra.js';
-import { usaConnector } from '../lib/connectors/usa_socrata.js';
-import { ukConnector } from '../lib/connectors/companies_house.js';
-import { euConnector } from '../lib/connectors/eu_ted.js';
-import { gleifConnector } from '../lib/connectors/global_gleif.js';
-import { AustraliaAbnConnector, australiaConnector } from '../lib/connectors/australia_abn.js';
-import { config } from '../lib/config.js';
+import { googleMapsConnector } from '../lib/connectors/google_maps.js';
+import { getConnector, listConnectors } from '../lib/connectors/index.js';
 import { normalizer } from '../lib/services/normalizer.js';
 import { exporter } from '../lib/services/exporter.js';
 import { db } from '../lib/database.js';
 import fs from 'fs';
 
 console.log('================================================================');
-console.log('🚀 RUNNING B2B LEAD SCRAPER VERIFICATION SUITE');
+console.log('🚀 RUNNING GOOGLE MAPS HYPER-LOCAL SCRAPER VERIFICATION SUITE');
 console.log('================================================================\n');
 
 async function runTests() {
   let passedTests = 0;
   let totalTests = 0;
 
-  async function testConnector(name, connector, query = '', limit = 20) {
-    totalTests++;
-    console.log(`[TEST ${totalTests}] Testing ${name} Connector (${limit} records)...`);
-    try {
-      const records = await connector.search(query, limit);
-      console.log(`  -> Fetched ${records.length} records from ${name}`);
-
-      if (records.length === 0) {
-        throw new Error(`Returned 0 records from ${name}`);
-      }
-
-      // Validate every record with normalizer & Zod schema
-      for (const raw of records) {
-        const clean = normalizer.normalizeLead(raw);
-        if (!clean.company_name || !clean.country) {
-          throw new Error(`Invalid record: missing company_name or country: ${JSON.stringify(clean)}`);
-        }
-      }
-
-      console.log(`  -> Sample Lead: "${records[0].company_name}" (Reg: ${records[0].registration_number || 'N/A'}, Country: ${records[0].country})`);
-      console.log(`  ✅ ${name} passed! (${records.length}/${limit} records validated)\n`);
-      passedTests++;
-      return records;
-    } catch (err) {
-      console.error(`  ❌ ${name} failed:`, err.message, '\n');
-      return [];
-    }
-  }
-
-  // 1. Test Norway BRREG (20 real live records)
-  const norwayLeads = await testConnector('Norway BRREG', norwayConnector, '', 20);
-
-  // 2. Test France API (20 real live records)
-  const franceLeads = await testConnector('France api.gouv.fr', franceConnector, 'tech', 20);
-
-  // 3. Test Singapore ACRA (20 real live records)
-  const sgLeads = await testConnector('Singapore ACRA', singaporeConnector, 'tech', 20);
-
-  // 4. Test USA Socrata (20 real live records - CO, NY, CHI)
-  const usaLeads = await testConnector('USA Socrata (CO/NY/CHI)', usaConnector, '', 20);
-
-  // 5. Test UK Companies House / Contracts Finder (20 records)
-  const ukLeads = await testConnector('UK Companies House', ukConnector, 'tech', 20);
-
-  // 6. Test EU TED Public Procurement (20 records)
-  const euLeads = await testConnector('EU TED Public Procurement', euConnector, 'software', 20);
-
-  // 7. Test Global GLEIF Legal Entity Identifier (20 records)
-  const gleifLeads = await testConnector('Global GLEIF Registry', gleifConnector, 'tech', 20);
-
-  // 8. Test De-duplication Logic
+  // [TEST 1] Connector Registry
   totalTests++;
-  console.log(`[TEST ${totalTests}] Testing Australia ABN response mapping...`);
+  console.log(`[TEST ${totalTests}] Testing Connector Registry (Google Maps sole engine)...`);
   try {
-    const savedGuid = config.registries.abnLookupGuid;
-    config.registries.abnLookupGuid = '';
-    await australiaConnector.search('technology', 1)
-      .then(() => {
-        throw new Error('Australia connector accepted a missing ABN_LOOKUP_GUID');
-      })
-      .catch((error) => {
-        if (!error.message.includes('ABN_LOOKUP_GUID is required')) throw error;
-      });
-
-    config.registries.abnLookupGuid = 'test-guid';
-    const australiaTestConnector = new AustraliaAbnConnector();
-    australiaTestConnector.safeFetch = async () => ({
-      Names: [{ ABN: '62102443916', Name: 'TEST AUSTRALIA PTY LTD', State: 'NSW', Postcode: '2000', Status: 'Active' }]
-    });
-    const [lead] = await australiaTestConnector.search('technology', 1);
-    config.registries.abnLookupGuid = savedGuid;
-
-    if (!lead || lead.company_name !== 'TEST AUSTRALIA PTY LTD' || lead.registration_number !== '62102443916' || lead.source !== australiaTestConnector.registryName) {
-      throw new Error('ABN response was not normalized into a valid lead');
+    const list = listConnectors();
+    if (list.length !== 1 || list[0].code !== 'MAPS') {
+      throw new Error(`Expected exactly 1 MAPS connector, got: ${JSON.stringify(list)}`);
     }
-
-    console.log(`  -> Mapped ABN ${lead.registration_number} for ${lead.company_name}`);
-    console.log('  ✅ Australia ABN mapping passed!\n');
+    const conn = getConnector('MAPS');
+    if (!conn || typeof conn.search !== 'function') {
+      throw new Error('getConnector("MAPS") failed to return a valid connector instance');
+    }
+    console.log(`  -> Registry correctly dedicated to: ${list[0].name}`);
+    console.log(`  ✅ Connector Registry passed!\n`);
     passedTests++;
   } catch (err) {
-    console.error('  ❌ Australia ABN mapping failed:', err.message, '\n');
+    console.error(`  ❌ Connector Registry failed:`, err.message, '\n');
   }
 
-  // 9. Test De-duplication Logic
+  // [TEST 2] Live Google Maps Hyper-Local Scraper
+  totalTests++;
+  console.log(`[TEST ${totalTests}] Testing Live Google Maps Scraper (2 records)...`);
+  try {
+    const records = await googleMapsConnector.search('bakery in Brooklyn, New York', 2);
+    console.log(`  -> Harvested ${records.length} records from Google Maps`);
+
+    if (records.length === 0) {
+      throw new Error('Google Maps returned 0 records');
+    }
+
+    // Validate with normalizer
+    for (const raw of records) {
+      const clean = normalizer.normalizeLead(raw);
+      if (!clean.company_name || !clean.country) {
+        throw new Error(`Invalid record: missing company_name or country: ${JSON.stringify(clean)}`);
+      }
+    }
+
+    console.log(`  -> Sample Lead: "${records[0].company_name}" (Phone: ${records[0].phone || 'N/A'}, Address: ${records[0].address || 'N/A'})`);
+    console.log(`  ✅ Live Google Maps Scraper passed! (${records.length} records validated)\n`);
+    passedTests++;
+  } catch (err) {
+    console.error(`  ❌ Live Google Maps Scraper failed:`, err.message, '\n');
+  }
+
+  // [TEST 3] De-duplication Logic
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing De-duplication Logic...`);
   try {
-    const testLead = {
-      company_name: 'TEST ACME GLOBAL LTD',
-      registration_number: 'TEST-999888',
-      country: 'Norway',
+    const uniqueCompany = `Unique Maps Bakery ${Date.now()}`;
+    const testLead1 = {
+      company_name: uniqueCompany,
+      registration_number: `MAPS-${Date.now()}`,
+      country: 'United States',
       status: 'Active',
-      source: 'Test Suite'
+      source: 'Google Maps (Hyper-Local)'
     };
 
-    // First insert
-    await db.insertLead(testLead);
+    await db.insertLead(testLead1);
+    const dupCheck = await db.findDuplicate(testLead1.country, testLead1.registration_number, testLead1.company_name);
 
-    // Second check
-    const dupCheck = await normalizer.checkDuplicate(testLead);
     if (!dupCheck.isDuplicate) {
-      throw new Error('De-duplication failed: duplicate was not detected!');
+      throw new Error('De-duplication failed to catch duplicate lead');
     }
 
-    console.log(`  -> Duplicate detected via field: ${dupCheck.matchField}`);
+    console.log(`  -> Duplicate detected via field: ${dupCheck.matchedField}`);
     console.log(`  ✅ De-duplication passed!\n`);
     passedTests++;
   } catch (err) {
     console.error(`  ❌ De-duplication failed:`, err.message, '\n');
   }
 
-  // 10. Test Excel Generation
+  // [TEST 4] Master_B2B_Leads.xlsx Generation
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing Master_B2B_Leads.xlsx Generation...`);
   try {
-    const sampleBatch = [...norwayLeads.slice(0, 3), ...franceLeads.slice(0, 3), ...euLeads.slice(0, 3), ...gleifLeads.slice(0, 3)];
-    const excelResult = await exporter.generateMasterExcel(sampleBatch);
+    const testLeads = [
+      {
+        company_name: 'Brooklyn Bread Co',
+        phone: '+1 (718) 555-0199',
+        email: 'info@brooklynbread.com',
+        website: 'https://brooklynbread.com',
+        address: '123 Atlantic Ave, Brooklyn, NY',
+        country: 'United States',
+        status: 'Active',
+        source: 'Google Maps (Hyper-Local)'
+      }
+    ];
 
-    if (!fs.existsSync(excelResult.filePath)) {
-      throw new Error(`Excel file was not created at ${excelResult.filePath}`);
+    const result = await exporter.generateMasterExcel(testLeads);
+    if (!fs.existsSync(result.filePath)) {
+      throw new Error(`File was not created at ${result.filePath}`);
     }
 
-    const stats = fs.statSync(excelResult.filePath);
-    console.log(`  -> File created at: ${excelResult.filePath} (${stats.size} bytes, ${excelResult.count} leads)`);
+    const stats = fs.statSync(result.filePath);
+    if (stats.size === 0) {
+      throw new Error('Created Excel file is empty');
+    }
+
+    console.log(`  -> File created at: ${result.filePath} (${stats.size} bytes, ${result.count} leads)`);
     console.log(`  ✅ Excel Export passed!\n`);
     passedTests++;
   } catch (err) {
     console.error(`  ❌ Excel Export failed:`, err.message, '\n');
   }
 
-  // 11. Test Email & Phone Number Validation Engine
+  // [TEST 5] Email & Phone Number Validation Engine
   totalTests++;
   console.log(`[TEST ${totalTests}] Testing Email & Phone Number Validation Engine...`);
   try {
     const { contactValidator } = await import('../lib/services/validator.js');
 
-    // Email test assertions
     const validEmails = ['contact@stripe.com', 'first.last@service.co.uk', 'sales+deals@startup.io'];
     for (const em of validEmails) {
       const res = contactValidator.validateEmail(em);
@@ -179,11 +147,10 @@ async function runTests() {
       if (res.isValid) throw new Error(`Invalid email "${em}" was incorrectly marked as valid!`);
     }
 
-    // Phone test assertions
     const validPhones = [
-      { raw: '2127526166', country: 'USA' },
-      { raw: '+44 20 7946 0192', country: 'UK' },
-      { raw: '+47 451 72 987', country: 'Norway' }
+      { raw: '2127526166', country: 'United States' },
+      { raw: '+44 20 7946 0192', country: 'United Kingdom' },
+      { raw: '+91 98200 12345', country: 'India' }
     ];
     for (const ph of validPhones) {
       const res = contactValidator.validatePhone(ph.raw, ph.country);

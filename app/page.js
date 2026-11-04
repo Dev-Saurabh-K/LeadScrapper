@@ -48,18 +48,12 @@ import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
 import CountryFlag from '@/components/CountryFlag';
 import { GEO_COUNTRIES, buildMapsQuery, POPULAR_NICHES } from '@/lib/data/geo_locations.js';
 
-const COUNTRIES = [
-  { code: 'MAPS', name: 'Google Maps (Hyper-Local)', source: 'Google Maps Free Headless Engine', free: true },
-  { code: 'GLOBAL', name: 'Global (GLEIF)', source: 'GLEIF 2.6M+ LEIs', free: true },
-  { code: 'EU', name: 'European Union', source: 'EU TED Public Procurement', free: true },
-  { code: 'NO', name: 'Norway', source: 'BRREG (data.brreg.no)', free: true },
-  { code: 'FR', name: 'France', source: 'api.gouv.fr', free: true },
-  { code: 'SG', name: 'Singapore', source: 'ACRA (data.gov.sg)', free: true },
-  { code: 'US', name: 'United States', source: 'Socrata Open Data', free: true },
-  { code: 'UK', name: 'United Kingdom', source: 'Companies House', free: false, note: 'Free Key' },
-  { code: 'CA', name: 'Canada', source: 'Corporations Canada', free: true },
-  { code: 'AU', name: 'Australia', source: 'ABN Lookup', free: false, note: 'Free GUID' }
-];
+const MAPS_ENGINE = {
+  code: 'MAPS',
+  name: 'Google Maps (Hyper-Local)',
+  source: 'Google Maps Search',
+  free: true
+};
 
 export default function Dashboard() {
   // Navigation
@@ -79,9 +73,8 @@ export default function Dashboard() {
   const [hasEmailFilter, setHasEmailFilter] = useState(false);
   const [hasPhoneFilter, setHasPhoneFilter] = useState(false);
 
-  // Scraper form state
-  const [selectedCountries, setSelectedCountries] = useState(['NO', 'FR', 'SG', 'US']);
-  const [scraperQuery, setScraperQuery] = useState('technology');
+  // Scraper form state (Google Maps Dedicated Engine)
+  const [scraperQuery, setScraperQuery] = useState('');
   const [scraperLimit, setScraperLimit] = useState(10);
   const [enrichWebsite, setEnrichWebsite] = useState(true);
   const [delayMs, setDelayMs] = useState(1000);
@@ -99,7 +92,6 @@ export default function Dashboard() {
   const [mapsCategory, setMapsCategory] = useState('school');
   const [mapsFreeform, setMapsFreeform] = useState(false);
 
-  const isMapsSelected = selectedCountries.includes('MAPS');
   const activeCountryObj = GEO_COUNTRIES.find((c) => c.code === mapsCountryCode) || GEO_COUNTRIES[0];
   const activeCity = mapsCity === 'Custom City' ? mapsCustomCity : mapsCity;
   const activeCountryName = activeCountryObj.code === 'CUSTOM' ? '' : activeCountryObj.name;
@@ -187,17 +179,11 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [fetchLeads]);
 
-  // Country selection toggle
-  const toggleCountry = (code) => {
-    setSelectedCountries((prev) =>
-      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
-    );
-  };
-
-  // Start Scrape Job via Server-Sent Events (SSE)
+  // Start Google Maps Scrape Job via Server-Sent Events (SSE)
   const handleStartScrape = async () => {
-    if (selectedCountries.length === 0) {
-      alert('Please select at least one country registry.');
+    const queryToUse = mapsFreeform ? scraperQuery.trim() : synthesizedMapsQuery.trim();
+    if (!queryToUse) {
+      alert('Please specify a business category/niche or enter a search query.');
       return;
     }
 
@@ -207,8 +193,6 @@ export default function Dashboard() {
     setActiveTab('scraper');
 
     try {
-      const effectiveQuery = isMapsSelected && !mapsFreeform ? synthesizedMapsQuery : scraperQuery;
-
       const response = await fetch('/api/scrape', {
         method: 'POST',
         headers: {
@@ -216,8 +200,8 @@ export default function Dashboard() {
           Accept: 'text/event-stream'
         },
         body: JSON.stringify({
-          countries: selectedCountries,
-          query: effectiveQuery,
+          countries: ['MAPS'],
+          query: queryToUse,
           limit: Number(scraperLimit),
           enrich: enrichWebsite,
           delayMs: Number(delayMs),
@@ -407,24 +391,24 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold tracking-tight text-black">B2B Lead Scraper</h1>
-                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200">
-                  Global Registries
+                <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 border border-rose-200">
+                  Google Maps Leads
                 </span>
               </div>
-              <p className="text-xs text-slate-600">Automated multi-country lead intelligence & export</p>
+              <p className="text-xs text-slate-600">Find local businesses, verified phone numbers, addresses, and email contacts</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* System Health Indicators */}
+            {/* System Status Indicators */}
             <div className="flex items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 shadow-2xs">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-medium text-slate-700">
-                DB: {health?.database?.mode === 'supabase' ? 'Supabase Cloud' : 'Local Storage'}
+                Database: {health?.database?.status === 'ok' || health?.database?.mode ? 'Connected' : 'Ready'}
               </span>
               <span className="text-slate-300">|</span>
               <span className="text-xs font-medium text-slate-700">
-                SMTP: {health?.email?.isConfigured ? 'Ready' : 'Off'}
+                Email Delivery: {health?.email?.isConfigured ? 'Ready' : 'Optional'}
               </span>
             </div>
           </div>
@@ -465,13 +449,13 @@ export default function Dashboard() {
               onClick={() => setActiveTab('scraper')}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'scraper'
-                  ? 'border border-blue-200 bg-blue-50 text-blue-700 shadow-xs font-semibold'
+                  ? 'border border-rose-200 bg-rose-50 text-rose-700 shadow-xs font-semibold'
                   : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
-              <Sliders className="h-4 w-4" />
-              <span>Scraper Control & Live Logs</span>
-              {isScraping && <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />}
+              <MapPin className="h-4 w-4" />
+              <span>Find Leads (Google Maps)</span>
+              {isScraping && <span className="h-2 w-2 rounded-full bg-rose-600 animate-ping" />}
             </button>
             <button
               onClick={() => setActiveTab('email')}
@@ -493,7 +477,7 @@ export default function Dashboard() {
               }`}
             >
               <Clock className="h-4 w-4" />
-              <span>Job History</span>
+              <span>Search History</span>
               <span className="rounded-full bg-slate-100 px-1.5 py-0.2 font-mono text-[10px] text-slate-700 border border-slate-200">
                 {jobs.length}
               </span>
@@ -540,14 +524,14 @@ export default function Dashboard() {
 
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Enriched Contacts</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Direct Contacts Found</span>
                   <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-2 text-emerald-600">
                     <Mail className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
                   <span className="text-2xl font-bold tracking-tight text-black">{enrichedLeads}</span>
-                  <span className="text-xs font-semibold text-emerald-700">{enrichedPct}% with contact</span>
+                  <span className="text-xs font-semibold text-emerald-700">{enrichedPct}% phone or email</span>
                 </div>
               </div>
 
@@ -560,7 +544,7 @@ export default function Dashboard() {
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
                   <span className="text-2xl font-bold tracking-tight text-black">{activeCountries}</span>
-                  <span className="text-xs text-slate-500">of 7 supported</span>
+                  <span className="text-xs text-slate-500">Live Places Engine</span>
                 </div>
               </div>
 
@@ -584,8 +568,8 @@ export default function Dashboard() {
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-2">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Lead Intelligence Quality Funnel</h3>
-                    <p className="text-xs text-slate-500">Contact enrichment status across entire database</p>
+                    <h3 className="text-sm font-bold text-slate-900">Contact Info Summary</h3>
+                    <p className="text-xs text-slate-500">Breakdown of available phone numbers, emails, and websites</p>
                   </div>
                   <button
                     onClick={() => setActiveTab('exporter')}
@@ -600,18 +584,18 @@ export default function Dashboard() {
                   <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
                       <Star className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
-                      <span>P1: Both Phone & Email</span>
+                      <span>Both Phone & Email</span>
                     </div>
                     <div className="mt-2 text-2xl font-extrabold text-emerald-900">
                       {leads.filter((l) => l.email && l.phone).length}
                     </div>
-                    <p className="text-[11px] text-emerald-700 mt-0.5">Ready for multi-channel outreach</p>
+                    <p className="text-[11px] text-emerald-700 mt-0.5">Ready for calls and email outreach</p>
                   </div>
 
                   <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800">
                       <Mail className="h-3.5 w-3.5 text-blue-600" />
-                      <span>P1: Either Phone or Email</span>
+                      <span>Phone or Email Found</span>
                     </div>
                     <div className="mt-2 text-2xl font-extrabold text-blue-900">
                       {leads.filter((l) => (l.email && !l.phone) || (!l.email && l.phone)).length}
@@ -622,22 +606,22 @@ export default function Dashboard() {
                   <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800">
                       <Globe className="h-3.5 w-3.5 text-amber-600" />
-                      <span>P2: Website Ready to Crawl</span>
+                      <span>Website Available</span>
                     </div>
                     <div className="mt-2 text-2xl font-extrabold text-amber-900">
                       {leads.filter((l) => !l.email && !l.phone && l.website).length}
                     </div>
-                    <p className="text-[11px] text-amber-700 mt-0.5">Enrichable via web contact crawler</p>
+                    <p className="text-[11px] text-amber-700 mt-0.5">Can check website for email & phone</p>
                   </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 p-3 border border-slate-200 text-xs">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                    <span className="font-medium text-slate-700">Strict Validation Active:</span>
-                    <span className="text-slate-500">RFC 5322 email syntax, disposable domain filters & ITU-T E.164 phone formats.</span>
+                    <span className="font-medium text-slate-700">Clean Data Verified:</span>
+                    <span className="text-slate-500">Invalid emails, fake numbers, and temporary inboxes are filtered out.</span>
                   </div>
-                  <span className="font-bold text-emerald-700">100% Sanitized</span>
+                  <span className="font-bold text-emerald-700">Verified</span>
                 </div>
               </div>
 
@@ -658,8 +642,8 @@ export default function Dashboard() {
                         <Play className="h-4 w-4 fill-current" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-900">Launch New Scrape Job</div>
-                        <div className="text-[11px] text-slate-500">Query 7+ international registries</div>
+                        <div className="text-xs font-bold text-slate-900">Launch Google Maps Scraper</div>
+                        <div className="text-[11px] text-slate-500">Target verified local businesses & contacts</div>
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition" />
@@ -827,7 +811,7 @@ export default function Dashboard() {
                                 <button
                                   onClick={() => handleEnrichLead(lead.id)}
                                   className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
-                                  title="Crawl Website for Contact Info"
+                                  title="Check Website for Contact Info"
                                 >
                                   <Sparkles className="h-4 w-4" />
                                 </button>
@@ -862,71 +846,55 @@ export default function Dashboard() {
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">Scraper Settings</h2>
-                  <p className="text-xs text-slate-500">Target free public corporate registries</p>
+                  <h2 className="text-base font-bold text-slate-900">Search Google Maps</h2>
+                  <p className="text-xs text-slate-500">Find local businesses, phone numbers, addresses, and websites</p>
                 </div>
-                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-200">
-                  Polite Rate Limiting
+                <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-200 flex items-center gap-1">
+                  <MapPin className="h-3 w-3 text-rose-600" />
+                  <span>Google Maps</span>
                 </span>
               </div>
 
               <div className="space-y-4">
-                {/* Country Checkboxes */}
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                    Select Target Registries
-                  </label>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {COUNTRIES.map((c) => {
-                      const isSelected = selectedCountries.includes(c.code);
-                      return (
-                        <button
-                          key={c.code}
-                          type="button"
-                          onClick={() => toggleCountry(c.code)}
-                          className={`flex items-center justify-between rounded-xl border p-2.5 text-left text-xs transition ${
-                            isSelected
-                              ? 'border-blue-600 bg-blue-50 text-blue-900 shadow-xs'
-                              : 'border-slate-200 bg-slate-50/70 text-slate-600 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <CountryFlag code={c.code} className="h-4 w-5" />
-                            <div>
-                              <div className="font-medium text-slate-900">{c.name}</div>
-                              <div className="text-[10px] text-slate-500">{c.source}</div>
-                            </div>
-                          </div>
-                          {isSelected && <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </div>
+                {/* Mode Selector: Location Builder vs Freeform */}
+                <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setMapsFreeform(false)}
+                    className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                      !mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-rose-600" />
+                      <span>Choose by Location & Niche</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMapsFreeform(true)}
+                    className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                      mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Search className="h-3.5 w-3.5 text-slate-500" />
+                      <span>Type Custom Search</span>
+                    </span>
+                  </button>
                 </div>
 
-                {/* Search Query / Dynamic Hyper-Local Location Selector */}
-                {isMapsSelected && !mapsFreeform ? (
+                {!mapsFreeform ? (
                   <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-rose-900">
-                        <MapPin className="h-4 w-4 text-rose-600 shrink-0" />
-                        <span>Google Maps Hyper-Local Targeting</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setMapsFreeform(true)}
-                        className="text-[11px] font-medium text-rose-700 hover:text-rose-900 hover:underline"
-                      >
-                        Freeform Search
-                      </button>
-                    </div>
-
                     {/* Row 1: Target Country & City Dropdowns */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                          Target Country
-                        </label>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <CountryFlag code={mapsCountryCode} className="h-3.5 w-4.5 shrink-0 rounded-xs" />
+                          <label className="block text-[11px] font-semibold text-slate-700">
+                            Country
+                          </label>
+                        </div>
                         <select
                           value={mapsCountryCode}
                           onChange={(e) => {
@@ -941,7 +909,7 @@ export default function Dashboard() {
                         >
                           {GEO_COUNTRIES.map(c => (
                             <option key={c.code} value={c.code}>
-                              {c.flag} {c.name}
+                              {c.name}
                             </option>
                           ))}
                         </select>
@@ -949,7 +917,7 @@ export default function Dashboard() {
 
                       <div>
                         <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                          Target City
+                          City
                         </label>
                         <select
                           value={mapsCity}
@@ -959,7 +927,7 @@ export default function Dashboard() {
                           {(activeCountryObj?.cities || []).map(city => (
                             <option key={city} value={city}>{city}</option>
                           ))}
-                          <option value="Custom City">➕ Other / Custom City...</option>
+                          <option value="Custom City">Custom City / Other...</option>
                         </select>
                       </div>
                     </div>
@@ -983,7 +951,7 @@ export default function Dashboard() {
                     {/* Row 2: Neighborhood / Locality / Suburb */}
                     <div>
                       <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                        Neighborhood / Locality / Suburb <span className="font-normal text-slate-500">(Optional)</span>
+                        Area / Neighborhood <span className="font-normal text-slate-500">(Optional)</span>
                       </label>
                       <input
                         type="text"
@@ -997,7 +965,7 @@ export default function Dashboard() {
                     {/* Row 3: Business Category / Niche */}
                     <div>
                       <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                        Business Category / Niche
+                        Business Type / Category
                       </label>
                       <input
                         type="text"
@@ -1027,8 +995,9 @@ export default function Dashboard() {
 
                     {/* Live Query Preview Badge */}
                     <div className="mt-1 rounded-lg border border-rose-200/90 bg-white p-2">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700 mb-0.5">
-                        📍 Compiled Google Maps Query:
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-700 mb-0.5">
+                        <Search className="h-3 w-3 text-rose-600 shrink-0" />
+                        <span>Search Phrase Preview:</span>
                       </div>
                       <div className="font-mono text-xs font-semibold text-slate-900 break-all">
                         &quot;{synthesizedMapsQuery}&quot;
@@ -1037,26 +1006,15 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-slate-700">
-                        {isMapsSelected ? 'Google Maps Freeform Search Query' : 'Industry / Keyword Search Query'}
-                      </label>
-                      {isMapsSelected && (
-                        <button
-                          type="button"
-                          onClick={() => setMapsFreeform(false)}
-                          className="text-[11px] font-medium text-rose-600 hover:text-rose-800 hover:underline"
-                        >
-                          Use Location & City Dropdowns
-                        </button>
-                      )}
-                    </div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Type Your Search Phrase
+                    </label>
                     <input
                       type="text"
                       value={scraperQuery}
                       onChange={(e) => setScraperQuery(e.target.value)}
-                      placeholder={isMapsSelected ? "e.g. schools in Brooklyn NY, dentists in Camden London, cafes in Shibuya..." : "e.g. software, logistics, finance (leave blank for latest)"}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      placeholder="e.g. bakeries in Brooklyn NY, dentists in Camden London, cafes in Shibuya Tokyo..."
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-600"
                     />
                   </div>
                 )}
@@ -1065,49 +1023,49 @@ export default function Dashboard() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1 block text-xs font-semibold text-slate-700">
-                      Limit per Country
+                      Number of Results (Limit)
                     </label>
                     <select
                       value={scraperLimit}
                       onChange={(e) => setScraperLimit(Number(e.target.value))}
                       className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none"
                     >
-                      <option value="5">5 records</option>
-                      <option value="10">10 records</option>
-                      <option value="20">20 records (Standard)</option>
-                      <option value="50">50 records</option>
+                      <option value="5">5 businesses</option>
+                      <option value="10">10 businesses (Recommended)</option>
+                      <option value="20">20 businesses</option>
+                      <option value="50">50 businesses</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="mb-1 block text-xs font-semibold text-slate-700">
-                      Polite Delay (ms)
+                      Search Speed
                     </label>
                     <select
                       value={delayMs}
                       onChange={(e) => setDelayMs(Number(e.target.value))}
                       className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none"
                     >
-                      <option value="500">500 ms</option>
-                      <option value="1000">1000 ms (Recommended)</option>
-                      <option value="2000">2000 ms (High politeness)</option>
+                      <option value="500">Fast (0.5s pause)</option>
+                      <option value="1000">Standard (1s pause) — Recommended</option>
+                      <option value="2000">Safe & Steady (2s pause)</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Enrichment Toggle */}
+                {/* Website Contact Enrichment Toggle */}
                 <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-3">
                   <div>
-                    <div className="text-xs font-semibold text-slate-900">Enrich Company Websites</div>
+                    <div className="text-xs font-semibold text-slate-900">Find Email on Website</div>
                     <div className="text-[11px] text-slate-500">
-                      Politely crawl Contact/About page for publicly visible emails & phones
+                      Automatically check company websites for contact emails and extra phone numbers
                     </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={enrichWebsite}
                     onChange={(e) => setEnrichWebsite(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-slate-300 bg-white text-rose-600 focus:ring-rose-500"
                   />
                 </div>
 
@@ -1118,19 +1076,19 @@ export default function Dashboard() {
                   onClick={handleStartScrape}
                   className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition active:scale-[0.98] ${
                     isScraping
-                      ? 'cursor-not-allowed bg-blue-800 opacity-60'
-                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
+                      ? 'cursor-not-allowed bg-rose-800 opacity-60'
+                      : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
                   }`}
                 >
                   {isScraping ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>Scraping in Progress...</span>
+                      <span>Searching Google Maps...</span>
                     </>
                   ) : (
                     <>
                       <Play className="h-4 w-4 fill-current" />
-                      <span>Start Lead Scraping Job</span>
+                      <span>Find Leads Now</span>
                     </>
                   )}
                 </button>
@@ -1144,14 +1102,14 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <Terminal className="h-3.5 w-3.5 text-blue-600" />
                   <span className="font-mono text-xs font-semibold text-slate-900">
-                    Live Scraping Console (SSE Stream)
+                    Search Activity & Progress
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   {isScraping && (
                     <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-200">
                       <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
-                      Streaming
+                      Active
                     </span>
                   )}
                   <label className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800 cursor-pointer select-none">
@@ -1167,7 +1125,7 @@ export default function Dashboard() {
                     onClick={() => setLiveLogs([])}
                     className="text-[11px] text-slate-500 hover:text-slate-800 transition"
                   >
-                    Clear Console
+                    Clear Updates
                   </button>
                 </div>
               </div>
@@ -1180,8 +1138,8 @@ export default function Dashboard() {
                 {liveLogs.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center py-16 text-slate-500">
                     <Terminal className="h-8 w-8 mb-2 opacity-40 text-slate-500" />
-                    <span>Terminal idle. Ready to receive scrape stream.</span>
-                    <span className="text-[10px] text-slate-600">Live SSE events stream here in real-time.</span>
+                    <span className="font-medium text-slate-400">No active search right now.</span>
+                    <span className="text-[10px] text-slate-500 mt-1">Select a location and business type above, then click Find Leads Now.</span>
                   </div>
                 ) : (
                   liveLogs.map((log, idx) => {
@@ -1208,7 +1166,7 @@ export default function Dashboard() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-semibold">
                     <div className="flex items-center gap-1.5">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>Scrape Job Complete (All Data Saved in Supabase)</span>
+                      <span>Search Complete (All Leads Saved to Database)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -1216,7 +1174,8 @@ export default function Dashboard() {
                         className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition active:scale-[0.98]"
                       >
                         <Sliders className="h-3.5 w-3.5" />
-                        <span>Select Columns & Export / Email Table →</span>
+                        <span>Select Columns & Export / Email Table</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1720,12 +1679,12 @@ export default function Dashboard() {
                     <span className="text-slate-900 font-semibold">/api/scrape</span>
                   </div>
                   <p className="mt-1.5 text-xs text-slate-600">
-                    Triggers a multi-country scrape job. Supports Server-Sent Events with <code>Accept: text/event-stream</code>.
+                    Triggers a Google Maps scrape job. Supports live updates with <code>Accept: text/event-stream</code>.
                   </p>
                   <pre className="mt-2 rounded-lg bg-slate-950 p-2.5 font-mono text-[11px] text-slate-200 border border-slate-900 shadow-inner">
 {`curl -X POST http://localhost:3000/api/scrape \\
   -H "Content-Type: application/json" \\
-  -d '{"countries": ["NO", "FR", "SG", "US"], "query": "technology", "limit": 20, "enrich": true}'`}
+  -d '{"query": "bakery in Brooklyn, New York", "limit": 20, "enrich": true}'`}
                   </pre>
                 </div>
 
@@ -1871,7 +1830,7 @@ export default function Dashboard() {
                   className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>Enrich Contacts</span>
+                  <span>Find Website Contacts</span>
                 </button>
               )}
               <button

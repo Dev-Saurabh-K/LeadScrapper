@@ -1,5 +1,5 @@
 // scripts/run-scraper.mjs
-// Standalone headless CLI scraper runner
+// Standalone headless Google Maps CLI scraper runner
 // Can be executed directly via `npm run scrape` or automated via Windows Task Scheduler / cron
 
 import fs from 'fs';
@@ -26,27 +26,25 @@ try {
 import { collector } from '../lib/services/collector.js';
 
 console.log('================================================================');
-console.log('🚀 AUTOMATED B2B LEAD SCRAPER — HEADLESS RUNNER');
+console.log('🚀 LIVE GOOGLE MAPS HYPER-LOCAL SCRAPER — HEADLESS RUNNER');
 console.log('================================================================\n');
 
 // Parse CLI flags or use intelligent defaults
 const args = process.argv.slice(2);
-const queryArg = args.find(a => a.startsWith('--query='))?.split('=')[1] || 'technology';
-const limitArg = parseInt(args.find(a => a.startsWith('--limit='))?.split('=')[1] || '20', 10);
+const queryArg = args.find(a => a.startsWith('--query='))?.split('=')[1] || 'coffee shop in New York';
+const limitArg = parseInt(args.find(a => a.startsWith('--limit='))?.split('=')[1] || '10', 10);
 const enrichArg = !args.includes('--no-enrich');
 
-const targetCountries = ['NO', 'FR', 'SG', 'US'];
-
-console.log(`Target Registries: ${targetCountries.join(', ')}`);
+console.log(`Target Engine    : Google Maps (Hyper-Local Stealth Puppeteer)`);
 console.log(`Search Query     : "${queryArg}"`);
-console.log(`Limit per Country: ${limitArg}`);
+console.log(`Target Limit     : ${limitArg} places`);
 console.log(`Website Enriched : ${enrichArg ? 'Yes' : 'No'}\n`);
 
 async function run() {
   const start = Date.now();
   try {
     const result = await collector.runJob({
-      countries: targetCountries,
+      countries: ['MAPS'],
       query: queryArg,
       limit: limitArg,
       enrich: enrichArg,

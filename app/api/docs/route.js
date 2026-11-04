@@ -1,20 +1,19 @@
 // app/api/docs/route.js
 // GET /api/docs - Returns OpenAPI 3.0 JSON specification
 
-
 export async function GET() {
   const spec = {
     openapi: '3.0.0',
     info: {
-      title: 'B2B Lead Scraper API',
-      version: '1.0.0',
-      description: 'REST API for international public registry scraping, lead normalization, website enrichment, and Excel exports.'
+      title: 'Google Maps B2B Lead Scraper API',
+      version: '2.0.0',
+      description: 'REST API for live Google Maps hyper-local places scraping, verified contact normalization, website email crawling, and Excel exports.'
     },
     paths: {
       '/api/scrape': {
         post: {
-          summary: 'Trigger a scraping job',
-          description: 'Executes connectors across specified countries, deduplicates leads, optionally enriches website contacts, updates Master_B2B_Leads.xlsx, and sends email summaries.',
+          summary: 'Trigger a Google Maps scraping job',
+          description: 'Executes headless stealth browser queries on Google Maps for local businesses, extracts verified phone numbers and addresses, crawls company websites for emails, and appends to Master_B2B_Leads.xlsx.',
           requestBody: {
             required: true,
             content: {
@@ -22,14 +21,12 @@ export async function GET() {
                 schema: {
                   type: 'object',
                   properties: {
-                    countries: { type: 'array', items: { type: 'string' }, example: ['NO', 'FR', 'SG', 'US'] },
-                    query: { type: 'string', example: 'software' },
-                    limit: { type: 'integer', default: 20 },
-                    enrich: { type: 'boolean', default: false },
+                    query: { type: 'string', example: 'school in Manhattan, New York, United States', description: 'Location and niche search query' },
+                    limit: { type: 'integer', default: 20, description: 'Number of places to scrape' },
+                    enrich: { type: 'boolean', default: true, description: 'Crawl business websites for contact emails' },
                     delayMs: { type: 'integer', default: 1000 },
                     stream: { type: 'boolean', default: false, description: 'Set true to receive Server-Sent Events (SSE) live logs' }
-                  },
-                  required: ['countries']
+                  }
                 }
               }
             }
@@ -98,12 +95,6 @@ export async function GET() {
         post: {
           summary: 'Send job summary email via SMTP',
           responses: { '200': { description: 'Notification status' } }
-        }
-      },
-      '/api/health': {
-        get: {
-          summary: 'System health, connectors, and diagnostics',
-          responses: { '200': { description: 'Health check result' } }
         }
       }
     }

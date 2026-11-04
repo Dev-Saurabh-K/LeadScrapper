@@ -115,16 +115,10 @@ leadscrape/
 │   ├── config.js                        # Centralized configuration & env loader
 │   ├── models.js                        # Zod runtime schemas (Lead, Job, Request)
 │   ├── database.js                      # Dual-mode PostgreSQL / local database service
-│   ├── connectors/                      # International Registry Connectors
+│   ├── connectors/                      # Scraping Connectors
 │   │   ├── base.js                      # Abstract base connector class
 │   │   ├── index.js                     # Connector catalog & resolver
-│   │   ├── norway_brreg.js              # Norway (data.brreg.no)
-│   │   ├── france_insee.js              # France (api.gouv.fr)
-│   │   ├── singapore_acra.js            # Singapore ACRA (data.gov.sg)
-│   │   ├── usa_socrata.js               # USA Colorado (data.colorado.gov)
-│   │   ├── companies_house.js           # UK Companies House API
-│   │   ├── canada_ised.js               # Canada Corporations Open Data
-│   │   └── australia_abn.js             # Australia ABN Lookup
+│   │   └── google_maps.js               # Google Maps Hyper-Local Places Stealth Scraper
 │   └── services/                        # Domain Services
 │       ├── collector.js                 # Job orchestrator & concurrency coordinator
 │       ├── normalizer.js                # Cleaning & 2-stage de-duplication
@@ -257,11 +251,12 @@ export const germanyConnector = new GermanyConnector();
 2. Register the connector in `lib/connectors/index.js` under `CONNECTORS`.
 3. Add the country code to the UI list in `app/page.js`.
 
-### 4.3 Multi-Source Under-the-Hood Strategy (Zero-UI Clutter)
-To maximize lead density and capture direct phone numbers and emails without cluttering the UI with complex nested checkboxes, connectors aggregate complementary official sources for the same jurisdiction under the hood:
-* **United States (`lib/connectors/usa_socrata.js`)**: Queries both **Colorado Socrata** (`data.colorado.gov`) and **New York City Open Data** (`data.cityofnewyork.us`). NYC supplies direct contact phone numbers (`contact_phone`), active business licenses, and verified street addresses.
-* **France (`lib/connectors/france_insee.js`)**: Queries both **Recherche d'entreprises** (`api.gouv.fr`) and **BODACC Commercial Announcements** (`bodacc-datadila.opendatasoft.com`), capturing newly registered commercial businesses across all French departments.
-* **United Kingdom (`lib/connectors/companies_house.js`)**: Queries both **UK Contracts Finder Open Data (Cabinet Office OCDS)** and **Companies House API**. Yields live UK commercial suppliers and contractors with official Companies House registration numbers and direct contact emails, ensuring 100% live execution without requiring API keys for baseline operation.
+### 4.3 Google Maps Hyper-Local Scraping Engine
+The core scraping engine queries Google Maps using Puppeteer with stealth plugins to bypass anti-bot challenges and extract high-quality, verified contact data:
+* **Business Names & Place Categories**: Precise local business listings.
+* **Direct Phone Numbers**: Local landlines and mobile numbers.
+* **Street Addresses**: Physical storefronts, offices, and postal codes.
+* **Website Contact Crawling**: Real-time HTTP crawling of discovered company websites for verified email addresses (`support@`, `contact@`, `info@`).
 
 ---
 

@@ -1,10 +1,9 @@
 // app/api/health/route.js
-// GET /api/health - System diagnostic status for database, SMTP, and connectors
+// GET /api/health - System diagnostic status for database, SMTP, and Google Maps scraper engine
 
 import { db } from '@/lib/database.js';
 import { config } from '@/lib/config.js';
 import { CONNECTORS } from '@/lib/connectors/index.js';
-
 
 export async function GET() {
   try {
@@ -17,12 +16,13 @@ export async function GET() {
       name: c.name,
       flag: c.flag,
       source: c.source,
-      requiresAuth: c.requiresAuth,
-      isReady: !c.requiresAuth || (c.code === 'UK' && config.registries.hasUKKey) || (c.code === 'AU' && config.registries.hasAustraliaGuid)
+      requiresAuth: false,
+      isReady: true
     }));
 
     return Response.json({
       status: 'healthy',
+      engine: 'Google Maps (Hyper-Local Scraper)',
       database: dbStatus,
       email: {
         isConfigured: config.smtp.isConfigured,
@@ -30,11 +30,7 @@ export async function GET() {
         recipient: config.smtp.recipient,
         user: config.smtp.user ? `${config.smtp.user.slice(0, 3)}***` : 'None'
       },
-      registries: {
-        hasUKKey: config.registries.hasUKKey,
-        hasAustraliaGuid: config.registries.hasAustraliaGuid,
-        connectors: connectorsList
-      },
+      connectors: connectorsList,
       stats: {
         totalLeads: leads.length,
         totalJobs: jobs.length,

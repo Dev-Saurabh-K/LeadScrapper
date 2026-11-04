@@ -398,7 +398,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     const leadId = row.id || row.__rowId;
     const website = getRecordField(row, 'website');
     if (!website) {
-      alert('No website recorded for this lead to crawl.');
+      alert('No website is available for this business.');
       return;
     }
 
@@ -416,18 +416,18 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         });
         const data = await res.json();
         if (data.success) {
-          setEnrichSuccessMsg(`Contact enrichment complete for "${getRecordField(row, 'company') || 'Company'}"!`);
+          setEnrichSuccessMsg(`Website contacts updated for "${getRecordField(row, 'company') || 'Company'}"!`);
           setTimeout(() => setEnrichSuccessMsg(null), 4000);
           await loadScrapedLeads();
           if (selectedLead) {
             setSelectedLead((prev) => (prev ? { ...prev, ...data.lead } : null));
           }
         } else {
-          alert(data.error || 'Enrichment failed');
+          alert(data.error || 'Could not find contacts on website');
         }
       }
     } catch (err) {
-      alert('Enrichment error: ' + err.message);
+      alert('Error finding contacts: ' + err.message);
     } finally {
       setEnrichingId(null);
     }
@@ -454,7 +454,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
             {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
           </div>
           <p className="text-xs text-slate-600 mt-0.5">
-            Explore, filter, select columns, enrich websites, and export verified leads with full control.
+            Browse, filter, customize columns, find website contacts, and export leads to Excel.
           </p>
         </div>
 
@@ -1007,7 +1007,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
                               onClick={() => handleEnrichLead(row)}
                               disabled={enrichingId === rowId}
                               className="rounded-lg p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition disabled:opacity-40"
-                              title="Crawl Website for Contact Info"
+                              title="Find Contacts on Website"
                             >
                               {enrichingId === rowId ? (
                                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -1179,7 +1179,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
                   className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs disabled:opacity-50"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>{enrichingId === (selectedLead.id || selectedLead.__rowId) ? 'Enriching...' : 'Enrich Contacts'}</span>
+                  <span>{enrichingId === (selectedLead.id || selectedLead.__rowId) ? 'Searching...' : 'Find Website Contacts'}</span>
                 </button>
               )}
               <button
