@@ -13,6 +13,7 @@
     "test:ui": "node scripts/test-ui-sorting-filtering.mjs",
     "test:linkedin": "node scripts/test-linkedin-connector.mjs",
     "test:phases": "node scripts/test-phases.mjs",
+    "test:edge": "node scripts/test-edge-cases.mjs",
     "test:all": "node scripts/test-all-features.mjs",
     "scrape": "node scripts/run-scraper.mjs",
     "scrape:maps": "node scripts/scrape-maps.mjs"
