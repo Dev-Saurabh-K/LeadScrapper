@@ -2219,14 +2219,43 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                  <div className="text-slate-500">Email Contact (Priority 1)</div>
-                  <div className="font-mono text-emerald-600 font-semibold">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Email (Priority 1)</span>
+                    {selectedLead.email && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(selectedLead.email, 'modal_email')}
+                        className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold"
+                        title="Copy Email"
+                      >
+                        {copiedId === 'modal_email' ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                        <span>{copiedId === 'modal_email' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="font-mono text-emerald-600 font-semibold mt-1 truncate" title={selectedLead.email}>
                     {selectedLead.email || 'None discovered'}
                   </div>
                 </div>
+
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                  <div className="text-slate-500">Phone Contact (Priority 1)</div>
-                  <div className="font-mono text-emerald-600 font-semibold">{selectedLead.phone || 'None recorded'}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Phone (Priority 1)</span>
+                    {selectedLead.phone && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(selectedLead.phone, 'modal_phone')}
+                        className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold"
+                        title="Copy Phone"
+                      >
+                        {copiedId === 'modal_phone' ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                        <span>{copiedId === 'modal_phone' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="font-mono text-emerald-600 font-semibold mt-1 truncate" title={selectedLead.phone}>
+                    {selectedLead.phone || 'None recorded'}
+                  </div>
                 </div>
               </div>
 
@@ -2234,34 +2263,57 @@ export default function Dashboard() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <div className="text-slate-500">Website (Priority 2)</div>
                   <a
-                    href={selectedLead.website}
+                    href={selectedLead.website.startsWith('http') ? selectedLead.website : `https://${selectedLead.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-blue-600 hover:underline mt-0.5 font-medium"
+                    className="flex items-center gap-1.5 text-blue-600 hover:underline mt-0.5 font-medium truncate"
                   >
-                    <span>{selectedLead.website}</span>
-                    <ExternalLink className="h-3 w-3" />
+                    <span className="truncate">{selectedLead.website}</span>
+                    <ExternalLink className="h-3 w-3 shrink-0" />
                   </a>
                 </div>
               )}
             </div>
 
-            <div className="mt-5 flex justify-end gap-2 border-t border-slate-200 pt-3">
-              {selectedLead.website && (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3">
+              <div className="flex items-center gap-2">
+                {selectedLead.phone && (
+                  <a
+                    href={`tel:${selectedLead.phone}`}
+                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 text-xs font-semibold hover:bg-emerald-100 transition"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    <span>Call</span>
+                  </a>
+                )}
+                {selectedLead.email && (
+                  <a
+                    href={`mailto:${selectedLead.email}`}
+                    className="inline-flex items-center gap-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 text-xs font-semibold hover:bg-blue-100 transition"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    <span>Send Email</span>
+                  </a>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedLead.website && !selectedLead.website.includes('linkedin.com') && (
+                  <button
+                    onClick={() => handleEnrichLead(selectedLead.id)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Find Website Contacts</span>
+                  </button>
+                )}
                 <button
-                  onClick={() => handleEnrichLead(selectedLead.id)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+                  onClick={() => setSelectedLead(null)}
+                  className="rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition shadow-xs"
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>Find Website Contacts</span>
+                  Close
                 </button>
-              )}
-              <button
-                onClick={() => setSelectedLead(null)}
-                className="rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition shadow-xs"
-              >
-                Close
-              </button>
+              </div>
             </div>
           </div>
         </div>
