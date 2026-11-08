@@ -96,6 +96,7 @@ export default function Dashboard() {
   const [selectedCountryFilter, setSelectedCountryFilter] = useState('');
   const [hasEmailFilter, setHasEmailFilter] = useState(false);
   const [hasPhoneFilter, setHasPhoneFilter] = useState(false);
+  const [previewFilter, setPreviewFilter] = useState('ALL');
 
   // Scraper form state
   const [scraperQuery, setScraperQuery] = useState('');
@@ -143,6 +144,18 @@ export default function Dashboard() {
     liLocation ? liLocation.trim() : '',
     liCompany ? liCompany.trim() : ''
   ].filter(Boolean).join(' ');
+
+  const filteredPreviewLeads = useMemo(() => {
+    let list = leads;
+    if (previewFilter === 'P1') {
+      list = leads.filter((l) => l.email && l.phone);
+    } else if (previewFilter === 'LINKEDIN') {
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:'));
+    } else if (previewFilter === 'MAPS') {
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('maps'));
+    }
+    return list.slice(0, 8);
+  }, [leads, previewFilter]);
 
   // Dedicated Email Dispatch UI states
   const [emailRecipient, setEmailRecipient] = useState('');
@@ -789,14 +802,59 @@ export default function Dashboard() {
 
             {/* Recent Leads Preview & Full Table Link */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-              <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Recent Verified Leads Preview</h3>
-                  <p className="text-[11px] text-slate-500">Latest 5 company profiles captured from public records</p>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Verified Leads Preview</h3>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewFilter('ALL')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                        previewFilter === 'ALL'
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      All ({leads.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewFilter('P1')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                        previewFilter === 'P1'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50'
+                      }`}
+                    >
+                      Both Phone & Email ({leads.filter((l) => l.email && l.phone).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewFilter('LINKEDIN')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                        previewFilter === 'LINKEDIN'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'
+                      }`}
+                    >
+                      LinkedIn ({leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:')).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewFilter('MAPS')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                        previewFilter === 'MAPS'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
+                      }`}
+                    >
+                      Google Maps ({leads.filter((l) => (l.source || '').toLowerCase().includes('maps')).length})
+                    </button>
+                  </div>
                 </div>
                 <button
                   onClick={() => setActiveTab('exporter')}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition shrink-0 self-start sm:self-auto"
                 >
                   <Eye className="h-3.5 w-3.5" />
                   <span>Open Full Leads Explorer ({leads.length} Records)</span>
@@ -842,7 +900,7 @@ export default function Dashboard() {
                         </td>
                       </tr>
                     ) : (
-                      leads.slice(0, 5).map((lead) => (
+                      filteredPreviewLeads.map((lead) => (
                         <tr key={lead.id} className="transition-colors hover:bg-slate-50">
                           <td className="py-2.5 pl-3.5 pr-2 font-bold text-black truncate max-w-[170px]" title={lead.company_name}>
                             {lead.company_name}
@@ -925,7 +983,7 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-                <span>Showing <strong>{Math.min(5, leads.length)}</strong> of <strong>{leads.length}</strong> total leads</span>
+                <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : 'Google Maps'})</span>
                 <button
                   onClick={() => setActiveTab('exporter')}
                   className="font-semibold text-blue-600 hover:underline flex items-center gap-1"
