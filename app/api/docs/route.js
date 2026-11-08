@@ -5,9 +5,9 @@ export async function GET() {
   const spec = {
     openapi: '3.0.0',
     info: {
-      title: 'Google Maps B2B Lead Scraper API',
-      version: '2.0.0',
-      description: 'REST API for live Google Maps hyper-local places scraping, verified contact normalization, website email crawling, and Excel exports.'
+      title: 'B2B Lead Scraper & Sales Intelligence API',
+      version: '2.1.0',
+      description: 'REST API for Google Maps hyper-local places scraping, LinkedIn authless decision-maker leads extraction, multi-format exports (Excel, CSV, JSON), and CRM pipeline management.'
     },
     paths: {
       '/api/scrape': {
@@ -31,7 +31,8 @@ export async function GET() {
                     enrich: { type: 'boolean', default: true, description: 'Crawl business websites for contact emails' },
                     delayMs: { type: 'integer', default: 1000 },
                     stream: { type: 'boolean', default: false, description: 'Set true to receive Server-Sent Events (SSE) live logs' },
-                    notificationEmail: { type: 'string', description: 'Optional recipient email for scrape summary. If omitted, no email is sent.' }
+                    notificationEmail: { type: 'string', description: 'Optional recipient email for scrape summary. If omitted, no email is sent.' },
+                    webhookUrl: { type: 'string', description: 'Optional webhook endpoint (Slack, Discord, Zapier, Make) to receive completion events.' }
                   }
                 }
               }
@@ -55,19 +56,83 @@ export async function GET() {
           responses: {
             '200': { description: 'List of lead records' }
           }
+        },
+        patch: {
+          summary: 'Update lead status or details',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Lead UUID' },
+                    status: { type: 'string', enum: ['Active', 'New', 'Contacted', 'Meeting Scheduled', 'Qualified', 'Unqualified', 'Converted'] }
+                  },
+                  required: ['id']
+                }
+              }
+            }
+          },
+          responses: {
+            '200': { description: 'Lead updated successfully' }
+          }
+        },
+        delete: {
+          summary: 'Delete a lead record',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Lead UUID' }
+                  },
+                  required: ['id']
+                }
+              }
+            }
+          },
+          responses: {
+            '200': { description: 'Lead deleted successfully' }
+          }
         }
       },
       '/api/export': {
         get: {
-          summary: 'Download Master_B2B_Leads.xlsx',
-          description: 'Streams the styled Excel workbook containing all leads.',
+          summary: 'Download Master dataset (Excel, CSV, or JSON)',
+          description: 'Streams the master leads dataset in Excel (.xlsx), CSV (.csv), or JSON (.json) format.',
+          parameters: [
+            { name: 'format', in: 'query', schema: { type: 'string', enum: ['xlsx', 'csv', 'json'], default: 'xlsx' }, description: 'Desired output format' }
+          ],
           responses: {
-            '200': {
-              description: 'Binary Excel file',
-              content: {
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {}
+            '200': { description: 'Exported dataset buffer' }
+          }
+        }
+      },
+      '/api/custom-export/download': {
+        post: {
+          summary: 'Download custom filtered records with specific columns',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    rows: { type: 'array', items: { type: 'object' } },
+                    selectedColumns: { type: 'array', items: { type: 'string' } },
+                    fileName: { type: 'string', default: 'Exported_Leads.xlsx' },
+                    format: { type: 'string', enum: ['xlsx', 'csv', 'json'], default: 'xlsx' }
+                  },
+                  required: ['rows']
+                }
               }
             }
+          },
+          responses: {
+            '200': { description: 'Export file download' }
           }
         }
       },
