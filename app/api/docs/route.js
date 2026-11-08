@@ -7,13 +7,13 @@ export async function GET() {
     info: {
       title: 'B2B Lead Scraper & Sales Intelligence API',
       version: '2.1.0',
-      description: 'REST API for Google Maps hyper-local places scraping, LinkedIn authless decision-maker leads extraction, multi-format exports (Excel, CSV, JSON), and CRM pipeline management.'
+      description: 'REST API for Google Maps hyper-local places scraping, LinkedIn decision-maker leads extraction, multi-format exports (Excel, CSV, JSON), and CRM pipeline management.'
     },
     paths: {
       '/api/scrape': {
         post: {
           summary: 'Trigger a scraping job (Google Maps or LinkedIn Leads)',
-          description: 'Executes headless queries for local businesses on Google Maps or decision-makers/professionals on LinkedIn (Authless), extracts verified phone numbers and addresses, crawls websites for emails, and appends to Master_B2B_Leads.xlsx.',
+          description: 'Executes headless queries for local businesses on Google Maps or decision-makers and businesses on LinkedIn, extracts verified phone numbers and addresses, crawls websites for emails, and appends to Master_B2B_Leads.xlsx.',
           requestBody: {
             required: true,
             content: {

@@ -130,19 +130,27 @@ export default function Dashboard() {
     country: activeCountryName
   });
 
-  // LinkedIn Search States
-  const [liRole, setLiRole] = useState('Founder CEO');
+  // LinkedIn Business & Decision Maker Search States (aligned with Google Maps location flow)
+  const [liCountryCode, setLiCountryCode] = useState('US');
+  const [liCity, setLiCity] = useState('San Francisco');
+  const [liCustomCity, setLiCustomCity] = useState('');
+  const [liLocality, setLiLocality] = useState('');
   const [liIndustry, setLiIndustry] = useState('SaaS Software');
-  const [liLocation, setLiLocation] = useState('San Francisco');
+  const [liRole, setLiRole] = useState('Founder CEO');
   const [liCompany, setLiCompany] = useState('');
   const [liFreeform, setLiFreeform] = useState(false);
   const [liCustomQuery, setLiCustomQuery] = useState('');
 
+  const activeLiCountryObj = GEO_COUNTRIES.find((c) => c.code === liCountryCode) || GEO_COUNTRIES[0];
+  const activeLiCity = liCity === 'Custom City' ? liCustomCity : liCity;
+  const activeLiCountryName = activeLiCountryObj.code === 'CUSTOM' ? '' : activeLiCountryObj.name;
+  const activeLiLocation = [liLocality.trim(), activeLiCity.trim(), activeLiCountryName.trim()].filter(Boolean).join(', ');
+
   const synthesizedLinkedInQuery = [
     'site:linkedin.com/in',
-    liRole ? liRole.trim() : '',
     liIndustry ? liIndustry.trim() : '',
-    liLocation ? liLocation.trim() : '',
+    activeLiLocation ? activeLiLocation.trim() : '',
+    liRole ? liRole.trim() : '',
     liCompany ? liCompany.trim() : ''
   ].filter(Boolean).join(' ');
 
@@ -241,7 +249,7 @@ export default function Dashboard() {
     if (selectedEngine === 'LINKEDIN') {
       const queryToUse = liFreeform ? liCustomQuery.trim() : synthesizedLinkedInQuery.trim();
       if (!queryToUse) {
-        alert('Please specify a role, industry, or enter a LinkedIn search query.');
+        alert('Please specify a business category, location, or enter a LinkedIn search query.');
         return;
       }
       payload = {
@@ -250,7 +258,7 @@ export default function Dashboard() {
         query: queryToUse,
         role: liRole,
         industry: liIndustry,
-        location: liLocation,
+        location: activeLiLocation,
         company: liCompany,
         limit: Number(scraperLimit),
         enrich: enrichWebsite,
@@ -1052,7 +1060,7 @@ export default function Dashboard() {
                   </h2>
                   <p className="text-xs text-slate-500">
                     {selectedEngine === 'LINKEDIN'
-                      ? 'Find key decision-makers and professionals on LinkedIn'
+                      ? 'Find businesses, companies, and decision makers on LinkedIn'
                       : 'Find local businesses, phone numbers, addresses, and websites'}
                   </p>
                 </div>
@@ -1286,7 +1294,7 @@ export default function Dashboard() {
                       >
                         <span className="inline-flex items-center justify-center gap-1.5">
                           <Building2 className="h-3.5 w-3.5 text-blue-600" />
-                          <span>Role & Industry Builder</span>
+                          <span>Choose by Location & Business Niche</span>
                         </span>
                       </button>
                       <button
@@ -1305,45 +1313,87 @@ export default function Dashboard() {
 
                     {!liFreeform ? (
                       <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 space-y-3">
-                        {/* Target Job Role / Title */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="text-[11px] font-semibold text-slate-700">
-                              Target Role / Title
-                            </label>
-                            <span className="text-[10px] text-blue-700 font-medium">Decision Maker</span>
+                        {/* Row 1: Target Country & City Dropdowns (Aligned with Google Maps) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <CountryFlag code={liCountryCode} className="h-3.5 w-4.5 shrink-0 rounded-xs" />
+                              <label className="block text-[11px] font-semibold text-slate-700">
+                                Country
+                              </label>
+                            </div>
+                            <select
+                              value={liCountryCode}
+                              onChange={(e) => {
+                                const nextCode = e.target.value;
+                                setLiCountryCode(nextCode);
+                                const found = GEO_COUNTRIES.find(c => c.code === nextCode);
+                                if (found && found.cities.length > 0) {
+                                  setLiCity(found.cities[0]);
+                                }
+                              }}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                            >
+                              {GEO_COUNTRIES.map(c => (
+                                <option key={c.code} value={c.code}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
                           </div>
-                          <input
-                            type="text"
-                            value={liRole}
-                            onChange={(e) => setLiRole(e.target.value)}
-                            placeholder="e.g. Founder, CEO, VP Sales, Purchasing Manager..."
-                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
-                          />
-                          {/* Quick Role Pills */}
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {POPULAR_LI_ROLES.map((r) => (
-                              <button
-                                key={r.label}
-                                type="button"
-                                onClick={() => setLiRole(r.query)}
-                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
-                                  liRole.toLowerCase() === r.query.toLowerCase()
-                                    ? 'bg-blue-600 text-white font-semibold shadow-xs'
-                                    : 'bg-white border border-blue-200 text-blue-800 hover:bg-blue-100'
-                                }`}
-                              >
-                                {r.label}
-                              </button>
-                            ))}
+
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              City
+                            </label>
+                            <select
+                              value={liCity}
+                              onChange={(e) => setLiCity(e.target.value)}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                            >
+                              {(activeLiCountryObj?.cities || []).map(city => (
+                                <option key={city} value={city}>{city}</option>
+                              ))}
+                              <option value="Custom City">Custom City / Other...</option>
+                            </select>
                           </div>
                         </div>
 
-                        {/* Industry / Domain */}
+                        {/* Write-in input if Custom City is selected */}
+                        {liCity === 'Custom City' && (
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              Enter Custom City Name
+                            </label>
+                            <input
+                              type="text"
+                              value={liCustomCity}
+                              onChange={(e) => setLiCustomCity(e.target.value)}
+                              placeholder="e.g. Asansol, Siliguri, Austin, Manchester..."
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                            />
+                          </div>
+                        )}
+
+                        {/* Row 2: Neighborhood / Locality / Suburb */}
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                            Area / Neighborhood <span className="font-normal text-slate-500">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={liLocality}
+                            onChange={(e) => setLiLocality(e.target.value)}
+                            placeholder="e.g. Silicon Valley, Manhattan, Canary Wharf, Whitefield, Soho..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Row 3: Business Type / Industry Niche */}
                         <div>
                           <div className="flex items-center justify-between mb-1">
-                            <label className="text-[11px] font-semibold text-slate-700">
-                              Industry / Domain
+                            <label className="block text-[11px] font-semibold text-slate-700">
+                              Business Type / Category
                             </label>
                             <span className="text-[10px] text-blue-700 font-medium">Business Niche</span>
                           </div>
@@ -1351,8 +1401,8 @@ export default function Dashboard() {
                             type="text"
                             value={liIndustry}
                             onChange={(e) => setLiIndustry(e.target.value)}
-                            placeholder="e.g. SaaS, Real Estate, Healthcare, Fintech..."
-                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                            placeholder="e.g. SaaS, Real Estate, Healthcare, Digital Agency, Manufacturing..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
                           />
                           {/* Quick Industry Pills */}
                           <div className="mt-2 flex flex-wrap gap-1">
@@ -1373,42 +1423,62 @@ export default function Dashboard() {
                           </div>
                         </div>
 
-                        {/* Location & Optional Company */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              Location / City
+                        {/* Row 4: Target Decision Maker / Role (Optional) */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-semibold text-slate-700">
+                              Target Decision Maker / Role <span className="font-normal text-slate-500">(Optional)</span>
                             </label>
-                            <input
-                              type="text"
-                              value={liLocation}
-                              onChange={(e) => setLiLocation(e.target.value)}
-                              placeholder="e.g. San Francisco, London, New York..."
-                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
-                            />
+                            <span className="text-[10px] text-blue-700 font-medium">Leadership</span>
                           </div>
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              Target Company (Optional)
-                            </label>
-                            <input
-                              type="text"
-                              value={liCompany}
-                              onChange={(e) => setLiCompany(e.target.value)}
-                              placeholder="e.g. Stripe, Amazon, or leave blank for all"
-                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
-                            />
+                          <input
+                            type="text"
+                            value={liRole}
+                            onChange={(e) => setLiRole(e.target.value)}
+                            placeholder="e.g. Founder, CEO, Owner, Managing Director (or leave blank for all)"
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                          />
+                          {/* Quick Role Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {POPULAR_LI_ROLES.map((r) => (
+                              <button
+                                key={r.label}
+                                type="button"
+                                onClick={() => setLiRole(r.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
+                                  liRole.toLowerCase() === r.query.toLowerCase()
+                                    ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-blue-200 text-blue-800 hover:bg-blue-100'
+                                }`}
+                              >
+                                {r.label}
+                              </button>
+                            ))}
                           </div>
                         </div>
 
-                        {/* Target Criteria Preview */}
+                        {/* Row 5: Specific Target Company (Optional) */}
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Specific Target Company <span className="font-normal text-slate-500">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={liCompany}
+                            onChange={(e) => setLiCompany(e.target.value)}
+                            placeholder="e.g. Stripe, Amazon, or leave blank to search all businesses in this category"
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Live Query Preview Badge */}
                         <div className="mt-1 rounded-lg border border-blue-200/90 bg-white p-2">
                           <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 mb-0.5">
                             <Search className="h-3 w-3 text-blue-600 shrink-0" />
-                            <span>Target Search Criteria:</span>
+                            <span>Search Phrase Preview:</span>
                           </div>
                           <div className="font-mono text-xs font-semibold text-slate-900 break-all">
-                            &quot;{[liRole, liIndustry, liLocation, liCompany].filter(Boolean).join(' · ') || 'All Professionals'}&quot;
+                            &quot;{synthesizedLinkedInQuery}&quot;
                           </div>
                         </div>
                       </div>
@@ -1421,7 +1491,7 @@ export default function Dashboard() {
                           type="text"
                           value={liCustomQuery}
                           onChange={(e) => setLiCustomQuery(e.target.value)}
-                          placeholder="e.g. VP of Sales FinTech London, Founder Healthcare Austin..."
+                          placeholder="e.g. SaaS Founders San Francisco, Real Estate Brokers London, School Directors New York..."
                           className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                         />
                       </div>
