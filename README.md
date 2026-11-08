@@ -1,8 +1,8 @@
 # 🚀 B2B Lead Scraper & International Registry Intelligence
 
-An automated multi-country B2B lead scraping engine and sales dashboard built with **Next.js 16 (App Router)**, **Tailwind CSS**, and **Supabase (PostgreSQL)**.
+An automated multi-source B2B lead scraping engine and sales dashboard built with **Next.js 16 (App Router)**, **Tailwind CSS**, and **Supabase (PostgreSQL)** with automatic local JSON fallback.
 
-Extracts company data from international corporate registries, de-duplicates leads, enriches contact details (emails & phones) via polite website crawling, updates a styled `Master_B2B_Leads.xlsx` workbook, and sends post-job SMTP email summaries.
+Supports both **Hyper-Local Google Maps Scraping** and **Authless LinkedIn Lead Generation (Zero Tokens / No Login Required)**, de-duplicates leads, normalizes contacts, automatically appends to a unified `Master_B2B_Leads.xlsx` workbook, and supports optional on-demand email dispatches.
 
 ---
 
@@ -12,13 +12,65 @@ Extracts company data from international corporate registries, de-duplicates lea
 ```bash
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser to launch scrapes, search leads, and export to Excel.
+Open **[http://localhost:3000](http://localhost:3000)** in your browser to launch scrapes, switch between engines, search leads, inspect columns, and export to Excel.
 
 ### 2. Run Automated Headless Scraper (CLI)
 ```bash
 npm run scrape
+# Or specifically target Google Maps:
+npm run scrape:maps
 ```
-Runs in the background, updates Supabase, updates [`exports/Master_B2B_Leads.xlsx`](exports/Master_B2B_Leads.xlsx), and sends an email summary with the Excel sheet attached.
+Runs in the background, updates the database, appends to [`exports/Master_B2B_Leads.xlsx`](exports/Master_B2B_Leads.xlsx), and sends an email summary if configured.
+
+---
+
+## 🎯 Supported Engines
+
+| Engine | Target Data | Method | Auth Required | Status |
+| :--- | :--- | :--- | :---: | :---: |
+| 📍 **Google Maps** | Local businesses, phone numbers, websites, physical addresses, review counts, coordinates | Stealth Puppeteer hyper-local extraction | ❌ Zero API keys | 🟢 Active |
+| 💼 **LinkedIn Leads** | Decision-makers, Job Titles (CEOs, VPs, Heads of Sales), company names, locations, profile links, contact info | Authless Search Engine X-Ray & structured snippet extraction | ❌ No tokens / No login | 🟢 Active |
+
+---
+
+## 📊 Priority Sorting & Excel Master Workbook
+
+All leads across both engines are unified into a single workbook: [`exports/Master_B2B_Leads.xlsx`](exports/Master_B2B_Leads.xlsx).
+Rows and columns are arranged with strict sales priority:
+1. **Priority 1 (P1)**: Leads with **both Phone and Email** verified.
+2. **Priority 2 (P2)**: Leads with **Phone or Email** present.
+3. **Priority 3 (P3)**: Leads with Website or Company profile details only.
+
+Columns are prioritized: **Company Name** → **Phone** → **Email** → **Website** → **Director / Officers** → Registry Details.
+
+---
+
+## ✉️ Optional Email Dispatch
+
+- **Safe by Default**: If no recipient email is entered during a scrape job, auto-emailing is cleanly skipped.
+- **Optional Target Box**: Enter any recipient email address in the scrape form to send the generated Excel sheet immediately upon job completion.
+- **Manual Dispatch Tab**: The dedicated **Dispatch Email** tab allows sending the latest Master Excel workbook to any recipient email with a single click.
+
+---
+
+## 🛠️ Testing & Verification Suites
+
+```bash
+# Run unit & connector test suites (109 tests)
+npm test
+
+# Run the comprehensive 5-phase full-system verification suite (30 assertions)
+npm run test:phases
+
+# Run all feature verification tests
+npm run test:all
+
+# Run LinkedIn connector standalone tests
+npm run test:linkedin
+
+# Build production application (Next.js 16 Turbopack)
+npm run build
+```
 
 ---
 
@@ -29,31 +81,3 @@ Runs in the background, updates Supabase, updates [`exports/Master_B2B_Leads.xls
 * **Live Scraper Audit & Registry Status**: [SCRAPER_STATUS.md](SCRAPER_STATUS.md)
 * **PostgreSQL Database Schema**: [supabase/schema.sql](supabase/schema.sql)
 * **API Documentation**: Available at `/docs` or [http://localhost:3000/docs](http://localhost:3000/docs)
-
----
-
-## 🌍 Supported Registries
-
-| Country | Source Registry & Multi-Source Feeds | Status | Free Key Needed? |
-| :--- | :--- | :---: | :---: |
-| 🇺🇸 **USA** | Colorado Socrata + NYC Open Data (Dual Source) | 🟢 Live | ❌ None |
-| 🇬🇧 **UK** | UK Contracts Finder + Companies House (Dual Source) | 🟢 Live | ❌ None (Key Optional) |
-| 🇫🇷 **France** | Recherche d'entreprises + BODACC (Dual Source) | 🟢 Live | ❌ None |
-| 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | 🟢 Live | ❌ None |
-| 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | 🟢 Live | ❌ None |
-| 🇨🇦 **Canada** | Corporations Canada Open Data | 🟢 Live | ❌ None |
-| 🇦🇺 **Australia** | Australian Business Register (ABN Lookup) | 🟢 Live / Ready | 🔑 Free GUID required |
-
----
-
-## 🛠️ Testing & Verification
-```bash
-# Run connector test suite
-npm test
-
-# Run scrapers audit diagnostic
-node scripts/diagnose-scrapers.mjs
-
-# Build production application
-npm run build
-```
