@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Download,
   Play,
@@ -362,6 +362,15 @@ export default function Dashboard() {
     } catch (err) {
       alert('Enrichment error: ' + err.message);
     }
+  };
+
+  const handleCopyText = (text, key) => {
+    if (!text) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    setCopiedId(key);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   // Test Email
@@ -2170,6 +2179,10 @@ export default function Dashboard() {
                   <span>{selectedLead.country}</span>
                   <span>•</span>
                   <span className="text-emerald-600 font-semibold">{selectedLead.status || 'Active'}</span>
+                  <span>•</span>
+                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
+                    {selectedLead.source || 'Scraped Lead'}
+                  </span>
                 </div>
               </div>
               <button
