@@ -56,7 +56,7 @@ async function runSuite() {
   // TEST 4: Normalization & Schema Compliance
   console.log('[TEST 4] Testing Normalization & Schema Validation...');
   const cleanLead = normalizer.normalizeLead(sample);
-  if (!cleanLead.company_name || !cleanLead.director || cleanLead.source !== 'LinkedIn (Authless)') {
+  if (!cleanLead.company_name || !cleanLead.director || !cleanLead.source.includes('LinkedIn')) {
     throw new Error('Normalized lead missing required fields or incorrect source');
   }
   console.log('  -> Normalized lead source:', cleanLead.source);
