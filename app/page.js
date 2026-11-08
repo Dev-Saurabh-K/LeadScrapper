@@ -902,7 +902,7 @@ export default function Dashboard() {
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
-                              {lead.website && (
+                              {lead.website && !lead.website.includes('linkedin.com') && (
                                 <button
                                   onClick={() => handleEnrichLead(lead.id)}
                                   className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
