@@ -1,8 +1,7 @@
 // app/api/leads/route.js
-// GET /api/leads - Returns leads with search, filter, and pagination
+// GET, PATCH, and DELETE endpoints for leads management
 
 import { db } from '@/lib/database.js';
-
 
 export async function GET(request) {
   try {
@@ -25,6 +24,54 @@ export async function GET(request) {
       success: true,
       count: leads.length,
       leads
+    });
+  } catch (err) {
+    return Response.json(
+      { success: false, error: err.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const body = await request.json();
+    const { id, ...updates } = body;
+
+    if (!id) {
+      return Response.json({ success: false, error: 'Lead id is required' }, { status: 400 });
+    }
+
+    const updated = await db.updateLead(id, updates);
+    if (!updated) {
+      return Response.json({ success: false, error: 'Lead not found' }, { status: 404 });
+    }
+
+    return Response.json({
+      success: true,
+      lead: updated
+    });
+  } catch (err) {
+    return Response.json(
+      { success: false, error: err.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id) {
+      return Response.json({ success: false, error: 'Lead id is required' }, { status: 400 });
+    }
+
+    await db.deleteLead(id);
+    return Response.json({
+      success: true,
+      message: 'Lead deleted successfully'
     });
   } catch (err) {
     return Response.json(

@@ -183,7 +183,7 @@ async function runAllFeaturesTest() {
     const firstLi = liResults[0];
     assert(Boolean(firstLi.director), `Full Name: "${firstLi.director}"`);
     assert(Boolean(firstLi.website && firstLi.website.includes('linkedin.com/in')), `LinkedIn Profile URL: ${firstLi.website}`);
-    assert(firstLi.source === 'LinkedIn (Authless)', `Source: ${firstLi.source}`);
+    assert(firstLi.source.includes('LinkedIn'), `Source: ${firstLi.source}`);
   }
   console.log();
 

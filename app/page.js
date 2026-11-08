@@ -42,7 +42,8 @@ import {
   Star,
   LayoutDashboard,
   MapPin,
-  Webhook
+  Webhook,
+  Trash2
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
@@ -51,7 +52,7 @@ import { GEO_COUNTRIES, buildMapsQuery, POPULAR_NICHES } from '@/lib/data/geo_lo
 
 const MAPS_ENGINE = {
   code: 'MAPS',
-  name: 'Google Maps (Hyper-Local)',
+  name: 'Google Maps',
   source: 'Google Maps Search',
   free: true
 };
@@ -80,7 +81,7 @@ export default function Dashboard() {
   // Navigation
   const [activeTab, setActiveTab] = useState('explorer'); // 'explorer', 'scraper', 'history', 'api'
 
-  // Scraper Engine Mode: 'MAPS' (Google Maps) or 'LINKEDIN' (Authless Decision Makers)
+  // Scraper Mode: 'MAPS' (Google Maps) or 'LINKEDIN' (LinkedIn Leads)
   const [selectedEngine, setSelectedEngine] = useState('MAPS');
 
   // Data states
@@ -373,6 +374,43 @@ export default function Dashboard() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleUpdateLeadStatus = async (leadId, newStatus) => {
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leadId, status: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : null));
+        setLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to update lead status:', err);
+    }
+  };
+
+  const handleDeleteLead = async (leadId) => {
+    if (!confirm('Are you sure you want to delete this lead?')) return;
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leadId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedLead(null);
+        setLeads((prev) => prev.filter((l) => l.id !== leadId));
+      }
+    } catch (err) {
+      console.error('Failed to delete lead:', err);
+    }
+  };
+
   // Test Email
   const handleSendTestEmail = async () => {
     setSendingTestEmail(true);
@@ -483,11 +521,11 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold tracking-tight text-black">B2B Lead Scraper</h1>
-                <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 border border-rose-200">
-                  Google Maps Leads
+                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200">
+                  Google Maps & LinkedIn
                 </span>
               </div>
-              <p className="text-xs text-slate-600">Find local businesses, verified phone numbers, addresses, and email contacts</p>
+              <p className="text-xs text-slate-600">Find local businesses and decision-makers with direct phone and email contacts</p>
             </div>
           </div>
 
@@ -532,10 +570,7 @@ export default function Dashboard() {
               }`}
             >
               <MicrosoftExcelIcon className="h-4 w-4" />
-              <span>Leads Explorer & Exporter</span>
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[10px] text-emerald-800 border border-emerald-200">
-                All Columns & Export
-              </span>
+              <span>Leads Explorer</span>
             </button>
             <button
               onClick={() => setActiveTab('scraper')}
@@ -545,8 +580,8 @@ export default function Dashboard() {
                   : 'border border-transparent text-slate-600 hover:bg-slate-100 hover:text-black'
               }`}
             >
-              <MapPin className="h-4 w-4" />
-              <span>Find Leads (Google Maps)</span>
+              <Search className="h-4 w-4" />
+              <span>Find Leads</span>
               {isScraping && <span className="h-2 w-2 rounded-full bg-rose-600 animate-ping" />}
             </button>
             <button
@@ -636,7 +671,7 @@ export default function Dashboard() {
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
                   <span className="text-2xl font-bold tracking-tight text-black">{activeCountries}</span>
-                  <span className="text-xs text-slate-500">Live Places Engine</span>
+                  <span className="text-xs text-slate-500">Global Coverage</span>
                 </div>
               </div>
 
@@ -734,8 +769,8 @@ export default function Dashboard() {
                         <Play className="h-4 w-4 fill-current" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-900">Launch Google Maps Scraper</div>
-                        <div className="text-[11px] text-slate-500">Target verified local businesses & contacts</div>
+                        <div className="text-xs font-bold text-slate-900">Start New Lead Search</div>
+                        <div className="text-[11px] text-slate-500">Find verified contacts on Google Maps or LinkedIn</div>
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition" />
@@ -876,8 +911,8 @@ export default function Dashboard() {
                   <thead className="border-b border-slate-200 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-700 font-semibold">
                     <tr>
                       <th className="py-2.5 pl-3.5 pr-2 text-black font-bold">Company Name</th>
-                      <th className="px-2.5 py-2.5 font-bold text-emerald-700">Phone & Email (P1)</th>
-                      <th className="px-2.5 py-2.5 font-bold text-blue-700">Website (P2)</th>
+                      <th className="px-2.5 py-2.5 font-bold text-emerald-700">Phone & Email</th>
+                      <th className="px-2.5 py-2.5 font-bold text-blue-700">Website</th>
                       <th className="px-2.5 py-2.5">Country</th>
                       <th className="px-2.5 py-2.5">Reg. Number</th>
                       <th className="px-2.5 py-2.5">Director / Officers</th>
@@ -1017,7 +1052,7 @@ export default function Dashboard() {
                   </h2>
                   <p className="text-xs text-slate-500">
                     {selectedEngine === 'LINKEDIN'
-                      ? 'Find decision-makers & professionals (Authless, No Token)'
+                      ? 'Find key decision-makers and professionals on LinkedIn'
                       : 'Find local businesses, phone numbers, addresses, and websites'}
                   </p>
                 </div>
@@ -1029,7 +1064,7 @@ export default function Dashboard() {
                   {selectedEngine === 'LINKEDIN' ? (
                     <>
                       <Building2 className="h-3 w-3 text-blue-600" />
-                      <span>LinkedIn (Authless)</span>
+                      <span>LinkedIn</span>
                     </>
                   ) : (
                     <>
@@ -1064,7 +1099,7 @@ export default function Dashboard() {
                   }`}
                 >
                   <Building2 className="h-3.5 w-3.5 text-blue-600" />
-                  <span>LinkedIn (Authless)</span>
+                  <span>LinkedIn Leads</span>
                 </button>
               </div>
 
@@ -1366,14 +1401,14 @@ export default function Dashboard() {
                           </div>
                         </div>
 
-                        {/* Live Query Preview Badge */}
+                        {/* Target Criteria Preview */}
                         <div className="mt-1 rounded-lg border border-blue-200/90 bg-white p-2">
                           <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 mb-0.5">
                             <Search className="h-3 w-3 text-blue-600 shrink-0" />
-                            <span>Search Phrase Preview:</span>
+                            <span>Target Search Criteria:</span>
                           </div>
                           <div className="font-mono text-xs font-semibold text-slate-900 break-all">
-                            &quot;{synthesizedLinkedInQuery}&quot;
+                            &quot;{[liRole, liIndustry, liLocation, liCompany].filter(Boolean).join(' · ') || 'All Professionals'}&quot;
                           </div>
                         </div>
                       </div>
@@ -1386,7 +1421,7 @@ export default function Dashboard() {
                           type="text"
                           value={liCustomQuery}
                           onChange={(e) => setLiCustomQuery(e.target.value)}
-                          placeholder="e.g. site:linkedin.com/in VP of Sales FinTech London, Founder Healthcare Austin..."
+                          placeholder="e.g. VP of Sales FinTech London, Founder Healthcare Austin..."
                           className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
                         />
                       </div>
@@ -1507,7 +1542,7 @@ export default function Dashboard() {
                   ) : (
                     <>
                       <Play className="h-4 w-4 fill-current" />
-                      <span>{selectedEngine === 'LINKEDIN' ? 'Start LinkedIn Search (Authless)' : 'Start Google Maps Search'}</span>
+                      <span>{selectedEngine === 'LINKEDIN' ? 'Start LinkedIn Search' : 'Start Google Maps Search'}</span>
                     </>
                   )}
                 </button>
@@ -2174,12 +2209,24 @@ export default function Dashboard() {
             <div className="flex items-start justify-between border-b border-slate-200 pb-3">
               <div>
                 <h3 className="text-base font-bold text-slate-900">{selectedLead.company_name}</h3>
-                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                <div className="flex items-center gap-2 mt-1.5 text-xs">
                   <CountryFlag code={selectedLead.country} className="h-3 w-4.5" />
-                  <span>{selectedLead.country}</span>
-                  <span>•</span>
-                  <span className="text-emerald-600 font-semibold">{selectedLead.status || 'Active'}</span>
-                  <span>•</span>
+                  <span className="text-slate-600 font-medium">{selectedLead.country}</span>
+                  <span className="text-slate-300">•</span>
+                  <select
+                    value={selectedLead.status || 'Active'}
+                    onChange={(e) => handleUpdateLeadStatus(selectedLead.id, e.target.value)}
+                    className="rounded-lg border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-800 shadow-xs focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="New">New</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Meeting Scheduled">Meeting Scheduled</option>
+                    <option value="Qualified">Qualified</option>
+                    <option value="Unqualified">Unqualified</option>
+                    <option value="Converted">Converted</option>
+                  </select>
+                  <span className="text-slate-300">•</span>
                   <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
                     {selectedLead.source || 'Scraped Lead'}
                   </span>
@@ -2307,6 +2354,14 @@ export default function Dashboard() {
                     <span>Find Website Contacts</span>
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteLead(selectedLead.id)}
+                  className="rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition shadow-xs"
+                  title="Delete this lead"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={() => setSelectedLead(null)}
                   className="rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition shadow-xs"

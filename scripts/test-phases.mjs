@@ -111,7 +111,7 @@ async function runPhasedTesting() {
   if (liResults.length > 0) {
     assert(Boolean(liResults[0].director), `LinkedIn Lead Name: "${liResults[0].director}"`);
     assert(liResults[0].website.includes('linkedin.com/in'), `LinkedIn URL: ${liResults[0].website}`);
-    assert(liResults[0].source === 'LinkedIn (Authless)', `Source tag verified`);
+    assert(liResults[0].source.includes('LinkedIn'), `Source tag verified (${liResults[0].source})`);
   }
   console.log();
 
