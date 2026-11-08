@@ -9,6 +9,7 @@ This report documents the live operational status of all country registry scrape
 | Country | Source Registry & Multi-Source Feeds | Status | API Key Required? | Data Mode | Live Latency | Contact Data Included |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
 | 📍 **Google Maps** | Google Maps Hyper-Local Places | ✅ **Working** | ❌ None (100% Free) | **Headless Stealth Engine** | ~1.5s/place | **Direct Phones, Addresses, Websites & Enriched Emails** |
+| 💼 **LinkedIn** | LinkedIn Authless People Search | ✅ **Working** | ❌ None (100% Free) | **Search Engine X-Ray & Multi-Engine HTTP** | ~1.2s/profile | **Decision Makers, Titles, Companies, URLs & Public Emails** |
 | 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | ✅ **Working** | ❌ None | **Live API** | ~1.3s | Email / Phone if published |
 | 🇫🇷 **France** | `api.gouv.fr` + BODACC (`data.gouv.fr`) | ✅ **Working** | ❌ None | **Multi-Source Live** | ~1.3s | Legal Officers, City, SIREN |
 | 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | ✅ **Working** | ❌ None | **Live API** | ~4.9s | Address, SSIC, UEN |
@@ -20,6 +21,14 @@ This report documents the live operational status of all country registry scrape
 ---
 
 ## 🟢 1. Scrapers Working 100% Live (Zero Keys Needed)
+
+### 💼 LinkedIn — Authless B2B Decision Maker X-Ray (Under-the-Hood)
+* **Status**: **Working Live (Multi-Engine Fallback, Zero Credentials / Zero Tokens)**
+* **Primary Source**: DuckDuckGo Search Engine X-Ray Dorking (`site:linkedin.com/in ...`)
+* **Secondary Source**: Bing Search HTTP structured parser fallback
+* **Under-the-Hood Behavior**: Bypasses LinkedIn login walls completely by targeting public profile snippets. Extracts executive names, job headlines, company affiliations, geographic locations, canonical profile URLs, and de-obfuscates public emails and phone numbers.
+* **Sample Live Result**: `Herman Sanghera` (Founder & CEO, `https://www.linkedin.com/in/herman-sanghera-bb27a7116`).
+
 
 ### 🇺🇸 United States — Dual-Source Socrata & New York Open Data (Under-the-Hood)
 * **Status**: **Working Live (Multi-Source)**
