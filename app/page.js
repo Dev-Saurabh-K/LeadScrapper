@@ -55,9 +55,32 @@ const MAPS_ENGINE = {
   free: true
 };
 
+const POPULAR_LI_ROLES = [
+  { label: 'Founder / CEO', query: 'Founder CEO' },
+  { label: 'Managing Director', query: 'Managing Director' },
+  { label: 'VP of Sales', query: 'VP of Sales' },
+  { label: 'Marketing Head', query: 'Marketing Director CMO' },
+  { label: 'Procurement / Buyer', query: 'Procurement Purchasing Manager' },
+  { label: 'Operations Lead', query: 'Head of Operations COO' },
+  { label: 'HR / Talent', query: 'Head of HR Talent Acquisition' }
+];
+
+const POPULAR_LI_INDUSTRIES = [
+  { label: 'SaaS & Tech', query: 'SaaS Software' },
+  { label: 'Real Estate', query: 'Real Estate Commercial Property' },
+  { label: 'Healthcare & Medical', query: 'Healthcare Medical Devices' },
+  { label: 'Finance & Fintech', query: 'Finance Fintech Banking' },
+  { label: 'E-Commerce & Retail', query: 'E-Commerce Retail Brands' },
+  { label: 'Manufacturing', query: 'Manufacturing Industrial' },
+  { label: 'Digital Agencies', query: 'Digital Marketing Advertising Agency' }
+];
+
 export default function Dashboard() {
   // Navigation
   const [activeTab, setActiveTab] = useState('explorer'); // 'explorer', 'scraper', 'history', 'api'
+
+  // Scraper Engine Mode: 'MAPS' (Google Maps) or 'LINKEDIN' (Authless Decision Makers)
+  const [selectedEngine, setSelectedEngine] = useState('MAPS');
 
   // Data states
   const [leads, setLeads] = useState([]);
@@ -73,7 +96,7 @@ export default function Dashboard() {
   const [hasEmailFilter, setHasEmailFilter] = useState(false);
   const [hasPhoneFilter, setHasPhoneFilter] = useState(false);
 
-  // Scraper form state (Google Maps Dedicated Engine)
+  // Scraper form state
   const [scraperQuery, setScraperQuery] = useState('');
   const [scraperLimit, setScraperLimit] = useState(10);
   const [enrichWebsite, setEnrichWebsite] = useState(true);
@@ -102,6 +125,22 @@ export default function Dashboard() {
     city: activeCity,
     country: activeCountryName
   });
+
+  // LinkedIn Search States
+  const [liRole, setLiRole] = useState('Founder CEO');
+  const [liIndustry, setLiIndustry] = useState('SaaS Software');
+  const [liLocation, setLiLocation] = useState('San Francisco');
+  const [liCompany, setLiCompany] = useState('');
+  const [liFreeform, setLiFreeform] = useState(false);
+  const [liCustomQuery, setLiCustomQuery] = useState('');
+
+  const synthesizedLinkedInQuery = [
+    'site:linkedin.com/in',
+    liRole ? liRole.trim() : '',
+    liIndustry ? liIndustry.trim() : '',
+    liLocation ? liLocation.trim() : '',
+    liCompany ? liCompany.trim() : ''
+  ].filter(Boolean).join(' ');
 
   // Dedicated Email Dispatch UI states
   const [emailRecipient, setEmailRecipient] = useState('');
@@ -180,12 +219,45 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [fetchLeads]);
 
-  // Start Google Maps Scrape Job via Server-Sent Events (SSE)
+  // Start Scrape Job via Server-Sent Events (SSE)
   const handleStartScrape = async () => {
-    const queryToUse = mapsFreeform ? scraperQuery.trim() : synthesizedMapsQuery.trim();
-    if (!queryToUse) {
-      alert('Please specify a business category/niche or enter a search query.');
-      return;
+    let payload = {};
+    if (selectedEngine === 'LINKEDIN') {
+      const queryToUse = liFreeform ? liCustomQuery.trim() : synthesizedLinkedInQuery.trim();
+      if (!queryToUse) {
+        alert('Please specify a role, industry, or enter a LinkedIn search query.');
+        return;
+      }
+      payload = {
+        engine: 'LINKEDIN',
+        countries: ['LINKEDIN'],
+        query: queryToUse,
+        role: liRole,
+        industry: liIndustry,
+        location: liLocation,
+        company: liCompany,
+        limit: Number(scraperLimit),
+        enrich: enrichWebsite,
+        delayMs: Number(delayMs),
+        stream: true,
+        notificationEmail: notificationEmail.trim()
+      };
+    } else {
+      const queryToUse = mapsFreeform ? scraperQuery.trim() : synthesizedMapsQuery.trim();
+      if (!queryToUse) {
+        alert('Please specify a business category/niche or enter a search query.');
+        return;
+      }
+      payload = {
+        engine: 'MAPS',
+        countries: ['MAPS'],
+        query: queryToUse,
+        limit: Number(scraperLimit),
+        enrich: enrichWebsite,
+        delayMs: Number(delayMs),
+        stream: true,
+        notificationEmail: notificationEmail.trim()
+      };
     }
 
     setIsScraping(true);
@@ -200,15 +272,7 @@ export default function Dashboard() {
           'Content-Type': 'application/json',
           Accept: 'text/event-stream'
         },
-        body: JSON.stringify({
-          countries: ['MAPS'],
-          query: queryToUse,
-          limit: Number(scraperLimit),
-          enrich: enrichWebsite,
-          delayMs: Number(delayMs),
-          stream: true,
-          notificationEmail: notificationEmail.trim()
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -846,179 +910,388 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Left: Configuration Form */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">Search Google Maps</h2>
-                  <p className="text-xs text-slate-500">Find local businesses, phone numbers, addresses, and websites</p>
+                  <h2 className="text-base font-bold text-slate-900">
+                    {selectedEngine === 'LINKEDIN' ? 'Search LinkedIn Leads' : 'Search Google Maps'}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {selectedEngine === 'LINKEDIN'
+                      ? 'Find decision-makers & professionals (Authless, No Token)'
+                      : 'Find local businesses, phone numbers, addresses, and websites'}
+                  </p>
                 </div>
-                <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-200 flex items-center gap-1">
-                  <MapPin className="h-3 w-3 text-rose-600" />
-                  <span>Google Maps</span>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 flex items-center gap-1.5 ${
+                  selectedEngine === 'LINKEDIN'
+                    ? 'bg-blue-50 text-blue-700 ring-blue-200'
+                    : 'bg-rose-50 text-rose-700 ring-rose-200'
+                }`}>
+                  {selectedEngine === 'LINKEDIN' ? (
+                    <>
+                      <Building2 className="h-3 w-3 text-blue-600" />
+                      <span>LinkedIn (Authless)</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="h-3 w-3 text-rose-600" />
+                      <span>Google Maps</span>
+                    </>
+                  )}
                 </span>
               </div>
 
+              {/* Engine Switcher: Google Maps vs LinkedIn */}
+              <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSelectedEngine('MAPS')}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2 font-semibold transition ${
+                    selectedEngine === 'MAPS'
+                      ? 'bg-white text-rose-700 shadow-xs border border-rose-100'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <MapPin className="h-3.5 w-3.5 text-rose-600" />
+                  <span>Google Maps</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedEngine('LINKEDIN')}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2 font-semibold transition ${
+                    selectedEngine === 'LINKEDIN'
+                      ? 'bg-white text-blue-700 shadow-xs border border-blue-100'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Building2 className="h-3.5 w-3.5 text-blue-600" />
+                  <span>LinkedIn (Authless)</span>
+                </button>
+              </div>
+
               <div className="space-y-4">
-                {/* Mode Selector: Location Builder vs Freeform */}
-                <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setMapsFreeform(false)}
-                    className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                      !mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-rose-600" />
-                      <span>Choose by Location & Niche</span>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapsFreeform(true)}
-                    className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                      mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <Search className="h-3.5 w-3.5 text-slate-500" />
-                      <span>Type Custom Search</span>
-                    </span>
-                  </button>
-                </div>
-
-                {!mapsFreeform ? (
-                  <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5 space-y-3">
-                    {/* Row 1: Target Country & City Dropdowns */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <CountryFlag code={mapsCountryCode} className="h-3.5 w-4.5 shrink-0 rounded-xs" />
-                          <label className="block text-[11px] font-semibold text-slate-700">
-                            Country
-                          </label>
-                        </div>
-                        <select
-                          value={mapsCountryCode}
-                          onChange={(e) => {
-                            const nextCode = e.target.value;
-                            setMapsCountryCode(nextCode);
-                            const found = GEO_COUNTRIES.find(c => c.code === nextCode);
-                            if (found && found.cities.length > 0) {
-                              setMapsCity(found.cities[0]);
-                            }
-                          }}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
-                        >
-                          {GEO_COUNTRIES.map(c => (
-                            <option key={c.code} value={c.code}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                          City
-                        </label>
-                        <select
-                          value={mapsCity}
-                          onChange={(e) => setMapsCity(e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
-                        >
-                          {(activeCountryObj?.cities || []).map(city => (
-                            <option key={city} value={city}>{city}</option>
-                          ))}
-                          <option value="Custom City">Custom City / Other...</option>
-                        </select>
-                      </div>
+                {/* GOOGLE MAPS FORM CONTROLS */}
+                {selectedEngine === 'MAPS' && (
+                  <>
+                    {/* Mode Selector: Location Builder vs Freeform */}
+                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setMapsFreeform(false)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          !mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-rose-600" />
+                          <span>Choose by Location & Niche</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMapsFreeform(true)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <Search className="h-3.5 w-3.5 text-slate-500" />
+                          <span>Type Custom Search</span>
+                        </span>
+                      </button>
                     </div>
 
-                    {/* Write-in input if Custom City is selected */}
-                    {mapsCity === 'Custom City' && (
+                    {!mapsFreeform ? (
+                      <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5 space-y-3">
+                        {/* Row 1: Target Country & City Dropdowns */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <CountryFlag code={mapsCountryCode} className="h-3.5 w-4.5 shrink-0 rounded-xs" />
+                              <label className="block text-[11px] font-semibold text-slate-700">
+                                Country
+                              </label>
+                            </div>
+                            <select
+                              value={mapsCountryCode}
+                              onChange={(e) => {
+                                const nextCode = e.target.value;
+                                setMapsCountryCode(nextCode);
+                                const found = GEO_COUNTRIES.find(c => c.code === nextCode);
+                                if (found && found.cities.length > 0) {
+                                  setMapsCity(found.cities[0]);
+                                }
+                              }}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
+                            >
+                              {GEO_COUNTRIES.map(c => (
+                                <option key={c.code} value={c.code}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              City
+                            </label>
+                            <select
+                              value={mapsCity}
+                              onChange={(e) => setMapsCity(e.target.value)}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
+                            >
+                              {(activeCountryObj?.cities || []).map(city => (
+                                <option key={city} value={city}>{city}</option>
+                              ))}
+                              <option value="Custom City">Custom City / Other...</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Write-in input if Custom City is selected */}
+                        {mapsCity === 'Custom City' && (
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              Enter Custom City Name
+                            </label>
+                            <input
+                              type="text"
+                              value={mapsCustomCity}
+                              onChange={(e) => setMapsCustomCity(e.target.value)}
+                              placeholder="e.g. Asansol, Siliguri, Nagpur, Surat..."
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
+                            />
+                          </div>
+                        )}
+
+                        {/* Row 2: Neighborhood / Locality / Suburb */}
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                            Area / Neighborhood <span className="font-normal text-slate-500">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={mapsLocality}
+                            onChange={(e) => setMapsLocality(e.target.value)}
+                            placeholder="e.g. Brooklyn, Manhattan, Camden, Soho, Indiranagar, Beverly Hills..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Row 3: Business Category / Niche */}
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                            Business Type / Category
+                          </label>
+                          <input
+                            type="text"
+                            value={mapsCategory}
+                            onChange={(e) => setMapsCategory(e.target.value)}
+                            placeholder="e.g. school, dentist, plumber, restaurant, software company..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
+                          />
+                          {/* Quick Niche Selection Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {POPULAR_NICHES.map(niche => (
+                              <button
+                                key={niche.label}
+                                type="button"
+                                onClick={() => setMapsCategory(niche.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition ${
+                                  mapsCategory.toLowerCase() === niche.query.toLowerCase()
+                                    ? 'bg-rose-600 text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-rose-200 text-rose-800 hover:bg-rose-100'
+                                }`}
+                              >
+                                {niche.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Live Query Preview Badge */}
+                        <div className="mt-1 rounded-lg border border-rose-200/90 bg-white p-2">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-700 mb-0.5">
+                            <Search className="h-3 w-3 text-rose-600 shrink-0" />
+                            <span>Search Phrase Preview:</span>
+                          </div>
+                          <div className="font-mono text-xs font-semibold text-slate-900 break-all">
+                            &quot;{synthesizedMapsQuery}&quot;
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
                       <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                          Enter Custom City Name
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Type Your Search Phrase
                         </label>
                         <input
                           type="text"
-                          value={mapsCustomCity}
-                          onChange={(e) => setMapsCustomCity(e.target.value)}
-                          placeholder="e.g. Asansol, Siliguri, Nagpur, Surat..."
-                          className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-500 focus:outline-none"
+                          value={scraperQuery}
+                          onChange={(e) => setScraperQuery(e.target.value)}
+                          placeholder="e.g. bakeries in Brooklyn NY, dentists in Camden London, cafes in Shibuya Tokyo..."
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-600"
                         />
                       </div>
                     )}
+                  </>
+                )}
 
-                    {/* Row 2: Neighborhood / Locality / Suburb */}
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                        Area / Neighborhood <span className="font-normal text-slate-500">(Optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={mapsLocality}
-                        onChange={(e) => setMapsLocality(e.target.value)}
-                        placeholder="e.g. Brooklyn, Manhattan, Camden, Soho, Indiranagar, Beverly Hills..."
-                        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
-                      />
+                {/* LINKEDIN FORM CONTROLS */}
+                {selectedEngine === 'LINKEDIN' && (
+                  <>
+                    {/* Mode Selector for LinkedIn: Guided Criteria vs Freeform */}
+                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setLiFreeform(false)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          !liFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <Building2 className="h-3.5 w-3.5 text-blue-600" />
+                          <span>Role & Industry Builder</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLiFreeform(true)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          liFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <Search className="h-3.5 w-3.5 text-slate-500" />
+                          <span>Type Custom Search</span>
+                        </span>
+                      </button>
                     </div>
 
-                    {/* Row 3: Business Category / Niche */}
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                        Business Type / Category
-                      </label>
-                      <input
-                        type="text"
-                        value={mapsCategory}
-                        onChange={(e) => setMapsCategory(e.target.value)}
-                        placeholder="e.g. school, dentist, plumber, restaurant, software company..."
-                        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
-                      />
-                      {/* Quick Niche Selection Pills */}
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {POPULAR_NICHES.map(niche => (
-                          <button
-                            key={niche.label}
-                            type="button"
-                            onClick={() => setMapsCategory(niche.query)}
-                            className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition ${
-                              mapsCategory.toLowerCase() === niche.query.toLowerCase()
-                                ? 'bg-rose-600 text-white font-semibold shadow-xs'
-                                : 'bg-white border border-rose-200 text-rose-800 hover:bg-rose-100'
-                            }`}
-                          >
-                            {niche.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    {!liFreeform ? (
+                      <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 space-y-3">
+                        {/* Target Job Role / Title */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-semibold text-slate-700">
+                              Target Role / Title
+                            </label>
+                            <span className="text-[10px] text-blue-700 font-medium">Decision Maker</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={liRole}
+                            onChange={(e) => setLiRole(e.target.value)}
+                            placeholder="e.g. Founder, CEO, VP Sales, Purchasing Manager..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                          />
+                          {/* Quick Role Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {POPULAR_LI_ROLES.map((r) => (
+                              <button
+                                key={r.label}
+                                type="button"
+                                onClick={() => setLiRole(r.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
+                                  liRole.toLowerCase() === r.query.toLowerCase()
+                                    ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-blue-200 text-blue-800 hover:bg-blue-100'
+                                }`}
+                              >
+                                {r.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-                    {/* Live Query Preview Badge */}
-                    <div className="mt-1 rounded-lg border border-rose-200/90 bg-white p-2">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-700 mb-0.5">
-                        <Search className="h-3 w-3 text-rose-600 shrink-0" />
-                        <span>Search Phrase Preview:</span>
+                        {/* Industry / Domain */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-semibold text-slate-700">
+                              Industry / Domain
+                            </label>
+                            <span className="text-[10px] text-blue-700 font-medium">Business Niche</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={liIndustry}
+                            onChange={(e) => setLiIndustry(e.target.value)}
+                            placeholder="e.g. SaaS, Real Estate, Healthcare, Fintech..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                          />
+                          {/* Quick Industry Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {POPULAR_LI_INDUSTRIES.map((ind) => (
+                              <button
+                                key={ind.label}
+                                type="button"
+                                onClick={() => setLiIndustry(ind.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
+                                  liIndustry.toLowerCase() === ind.query.toLowerCase()
+                                    ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-blue-200 text-blue-800 hover:bg-blue-100'
+                                }`}
+                              >
+                                {ind.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Location & Optional Company */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Location / City
+                            </label>
+                            <input
+                              type="text"
+                              value={liLocation}
+                              onChange={(e) => setLiLocation(e.target.value)}
+                              placeholder="e.g. San Francisco, London, New York..."
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Target Company (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={liCompany}
+                              onChange={(e) => setLiCompany(e.target.value)}
+                              placeholder="e.g. Stripe, Amazon, or leave blank for all"
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Live Query Preview Badge */}
+                        <div className="mt-1 rounded-lg border border-blue-200/90 bg-white p-2">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 mb-0.5">
+                            <Search className="h-3 w-3 text-blue-600 shrink-0" />
+                            <span>Search Phrase Preview:</span>
+                          </div>
+                          <div className="font-mono text-xs font-semibold text-slate-900 break-all">
+                            &quot;{synthesizedLinkedInQuery}&quot;
+                          </div>
+                        </div>
                       </div>
-                      <div className="font-mono text-xs font-semibold text-slate-900 break-all">
-                        &quot;{synthesizedMapsQuery}&quot;
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Type Your LinkedIn Search Phrase
+                        </label>
+                        <input
+                          type="text"
+                          value={liCustomQuery}
+                          onChange={(e) => setLiCustomQuery(e.target.value)}
+                          placeholder="e.g. site:linkedin.com/in VP of Sales FinTech London, Founder Healthcare Austin..."
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
+                        />
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Type Your Search Phrase
-                    </label>
-                    <input
-                      type="text"
-                      value={scraperQuery}
-                      onChange={(e) => setScraperQuery(e.target.value)}
-                      placeholder="e.g. bakeries in Brooklyn NY, dentists in Camden London, cafes in Shibuya Tokyo..."
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-600"
-                    />
-                  </div>
+                    )}
+                  </>
                 )}
 
                 {/* Limit and Delay */}
@@ -1032,10 +1305,10 @@ export default function Dashboard() {
                       onChange={(e) => setScraperLimit(Number(e.target.value))}
                       className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none"
                     >
-                      <option value="5">5 businesses</option>
-                      <option value="10">10 businesses (Recommended)</option>
-                      <option value="20">20 businesses</option>
-                      <option value="50">50 businesses</option>
+                      <option value="5">5 results</option>
+                      <option value="10">10 results (Recommended)</option>
+                      <option value="20">20 results</option>
+                      <option value="50">50 results</option>
                     </select>
                   </div>
 
@@ -1099,19 +1372,21 @@ export default function Dashboard() {
                   onClick={handleStartScrape}
                   className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition active:scale-[0.98] ${
                     isScraping
-                      ? 'cursor-not-allowed bg-rose-800 opacity-60'
+                      ? 'cursor-not-allowed bg-slate-800 opacity-60'
+                      : selectedEngine === 'LINKEDIN'
+                      ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
                       : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
                   }`}
                 >
                   {isScraping ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>Searching Google Maps...</span>
+                      <span>{selectedEngine === 'LINKEDIN' ? 'Searching LinkedIn Profiles...' : 'Searching Google Maps...'}</span>
                     </>
                   ) : (
                     <>
                       <Play className="h-4 w-4 fill-current" />
-                      <span>Find Leads Now</span>
+                      <span>{selectedEngine === 'LINKEDIN' ? 'Start LinkedIn Search (Authless)' : 'Start Google Maps Search'}</span>
                     </>
                   )}
                 </button>

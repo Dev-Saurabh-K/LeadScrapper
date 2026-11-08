@@ -21,14 +21,15 @@ async function runTests() {
   console.log(`[TEST ${totalTests}] Testing Connector Registry (Google Maps sole engine)...`);
   try {
     const list = listConnectors();
-    if (list.length !== 1 || list[0].code !== 'MAPS') {
-      throw new Error(`Expected exactly 1 MAPS connector, got: ${JSON.stringify(list)}`);
+    const codes = list.map(c => c.code);
+    if (!codes.includes('MAPS') || !codes.includes('LINKEDIN')) {
+      throw new Error(`Expected MAPS and LINKEDIN connectors, got: ${JSON.stringify(codes)}`);
     }
     const conn = getConnector('MAPS');
     if (!conn || typeof conn.search !== 'function') {
       throw new Error('getConnector("MAPS") failed to return a valid connector instance');
     }
-    console.log(`  -> Registry correctly dedicated to: ${list[0].name}`);
+    console.log(`  -> Registry active engines: ${codes.join(', ')}`);
     console.log(`  ✅ Connector Registry passed!\n`);
     passedTests++;
   } catch (err) {

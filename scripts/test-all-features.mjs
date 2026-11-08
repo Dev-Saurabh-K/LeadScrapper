@@ -15,6 +15,7 @@ import { exporter } from '../lib/services/exporter.js';
 import { db } from '../lib/database.js';
 import { buildMapsQuery, GEO_COUNTRIES, POPULAR_NICHES } from '../lib/data/geo_locations.js';
 import { googleMapsConnector } from '../lib/connectors/google_maps.js';
+import { linkedInConnector } from '../lib/connectors/linkedin.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -165,6 +166,24 @@ async function runAllFeaturesTest() {
     const first = mapsResults[0];
     assert(Boolean(first.company_name), `Place name: "${first.company_name}"`);
     assert(Boolean(first.address || first.phone || first.website), `Extracted metadata (Phone: ${first.phone || 'N/A'}, Web: ${first.website || 'N/A'})`);
+  }
+  console.log();
+
+  // -------------------------------------------------------------
+  // FEATURE 8: Live Authless LinkedIn Leads Scraper
+  // -------------------------------------------------------------
+  console.log('📌 FEATURE 8: Authless LinkedIn Leads Scraper (Zero Tokens / No Login)');
+  console.log('  -> Executing live scrape for "Founder CEO SaaS San Francisco" (Limit: 2)...');
+  const liStart = Date.now();
+  const liResults = await linkedInConnector.search({ role: 'Founder CEO', industry: 'SaaS', location: 'San Francisco' }, 2);
+  const liDuration = ((Date.now() - liStart) / 1000).toFixed(1);
+
+  assert(liResults.length >= 1, `Harvested ${liResults.length} live LinkedIn profiles in ${liDuration}s`);
+  if (liResults.length > 0) {
+    const firstLi = liResults[0];
+    assert(Boolean(firstLi.director), `Full Name: "${firstLi.director}"`);
+    assert(Boolean(firstLi.website && firstLi.website.includes('linkedin.com/in')), `LinkedIn Profile URL: ${firstLi.website}`);
+    assert(firstLi.source === 'LinkedIn (Authless)', `Source: ${firstLi.source}`);
   }
   console.log();
 
