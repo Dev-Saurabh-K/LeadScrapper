@@ -748,8 +748,37 @@ export default function Dashboard() {
                   </button>
                 </div>
 
-                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-2.5 text-center text-xs text-blue-700">
-                  <span className="font-semibold">Master Dataset File:</span> <code className="font-mono text-[11px]">exports/Master_B2B_Leads.xlsx</code>
+                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 text-center text-xs text-blue-700">
+                  <div className="font-semibold mb-1">Master Dataset: <code className="font-mono text-[11px]">exports/Master_B2B_Leads.xlsx</code> ({leads.length} leads)</div>
+                  <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                    <a
+                      href="/api/export?format=xlsx"
+                      download="Master_B2B_Leads.xlsx"
+                      className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 shadow-xs transition"
+                      title="Download Master Excel Spreadsheet"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Download Excel</span>
+                    </a>
+                    <a
+                      href="/api/export?format=csv"
+                      download="Master_B2B_Leads.csv"
+                      className="inline-flex items-center gap-1 rounded-lg bg-slate-700 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-slate-800 shadow-xs transition"
+                      title="Download Master CSV Spreadsheet"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Download CSV</span>
+                    </a>
+                    <a
+                      href="/api/export?format=json"
+                      download="Master_B2B_Leads.json"
+                      className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700 shadow-xs transition"
+                      title="Download Master JSON Dataset"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Download JSON</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

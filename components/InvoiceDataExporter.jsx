@@ -281,7 +281,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     return sortColumnsByPriority(selectedColumns);
   }, [selectedColumns]);
 
-  const handleExportExcel = async () => {
+  const handleExport = async (format = 'xlsx') => {
     if (filteredRecords.length === 0) {
       alert('No matching records found to export with current filter settings.');
       return;
@@ -295,32 +295,37 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     setExportSuccess(null);
 
     try {
+      const ext = format === 'csv' ? 'csv' : (format === 'json' ? 'json' : 'xlsx');
+      const baseName = (exportFileName || 'B2B_Exported_Leads').replace(/\.(xlsx|csv|json)$/i, '');
+      const targetFileName = `${baseName}.${ext}`;
+
       const res = await fetch('/api/custom-export/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rows: filteredRecords,
           selectedColumns: orderedSelectedColumns,
-          fileName: exportFileName || 'B2B_Exported_Leads.xlsx'
+          fileName: targetFileName,
+          format: ext
         })
       });
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.error || 'Server error while generating Excel');
+        throw new Error(errData.error || 'Server error while generating export');
       }
 
       const blob = await res.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = exportFileName.endsWith('.xlsx') ? exportFileName : `${exportFileName}.xlsx`;
+      link.download = targetFileName;
       document.body.appendChild(link);
       link.click();
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(link);
 
-      setExportSuccess(`Exported ${filteredRecords.length} records (${orderedSelectedColumns.length} columns) to ${exportFileName}`);
+      setExportSuccess(`Exported ${filteredRecords.length} records (${orderedSelectedColumns.length} columns) to ${targetFileName}`);
       setTimeout(() => setExportSuccess(null), 5000);
     } catch (err) {
       console.error('[LeadExporter] Export failed:', err);
@@ -329,6 +334,8 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
       setIsExporting(false);
     }
   };
+
+  const handleExportExcel = () => handleExport('xlsx');
 
   const handleSendCustomTableEmail = async (e) => {
     if (e) e.preventDefault();
@@ -470,13 +477,35 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
 
           {/* Export to Excel (Download) */}
           <button
-            onClick={handleExportExcel}
+            onClick={() => handleExport('xlsx')}
             disabled={isExporting || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition active:scale-[0.98] disabled:opacity-40"
-            title="Download Excel spreadsheet locally"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition active:scale-[0.98] disabled:opacity-40"
+            title="Download Excel (.xlsx) spreadsheet locally"
           >
             {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MicrosoftExcelIcon className="h-3.5 w-3.5" />}
-            <span>Export Excel ({filteredRecords.length})</span>
+            <span>Excel (.xlsx)</span>
+          </button>
+
+          {/* Export to CSV (Download) */}
+          <button
+            onClick={() => handleExport('csv')}
+            disabled={isExporting || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-700 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition active:scale-[0.98] disabled:opacity-40"
+            title="Download CSV (.csv) spreadsheet locally"
+          >
+            {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            <span>CSV (.csv)</span>
+          </button>
+
+          {/* Export to JSON (Download) */}
+          <button
+            onClick={() => handleExport('json')}
+            disabled={isExporting || filteredRecords.length === 0 || orderedSelectedColumns.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition active:scale-[0.98] disabled:opacity-40"
+            title="Download JSON (.json) dataset locally"
+          >
+            {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            <span>JSON (.json)</span>
           </button>
 
           {/* Send Email of Table */}
