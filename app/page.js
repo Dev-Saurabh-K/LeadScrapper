@@ -41,7 +41,8 @@ import {
   Info,
   Star,
   LayoutDashboard,
-  MapPin
+  MapPin,
+  Webhook
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
@@ -102,6 +103,7 @@ export default function Dashboard() {
   const [enrichWebsite, setEnrichWebsite] = useState(true);
   const [delayMs, setDelayMs] = useState(1000);
   const [notificationEmail, setNotificationEmail] = useState('');
+  const [webhookUrl, setWebhookUrl] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [liveLogs, setLiveLogs] = useState([]);
   const [jobSummary, setJobSummary] = useState(null);
@@ -240,7 +242,8 @@ export default function Dashboard() {
         enrich: enrichWebsite,
         delayMs: Number(delayMs),
         stream: true,
-        notificationEmail: notificationEmail.trim()
+        notificationEmail: notificationEmail.trim(),
+        webhookUrl: webhookUrl.trim()
       };
     } else {
       const queryToUse = mapsFreeform ? scraperQuery.trim() : synthesizedMapsQuery.trim();
@@ -256,7 +259,8 @@ export default function Dashboard() {
         enrich: enrichWebsite,
         delayMs: Number(delayMs),
         stream: true,
-        notificationEmail: notificationEmail.trim()
+        notificationEmail: notificationEmail.trim(),
+        webhookUrl: webhookUrl.trim()
       };
     }
 
@@ -1391,6 +1395,27 @@ export default function Dashboard() {
                   />
                   <p className="mt-1 text-[11px] text-slate-500">
                     If left blank, no email is sent. You can always dispatch emails manually from the Dispatch Email tab.
+                  </p>
+                </div>
+
+                {/* Outbound Webhook Input (Optional) */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div className="mb-1 flex items-center justify-between">
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                      <Webhook className="h-3.5 w-3.5 text-slate-500" />
+                      <span>Dispatch Webhook to (Optional)</span>
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium">Optional</span>
+                  </div>
+                  <input
+                    type="url"
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    placeholder="https://hooks.slack.com/... or Zapier/Make URL"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    POSTs JSON completion payload to Slack, Discord, Zapier, Make, or any webhook upon completion.
                   </p>
                 </div>
 
