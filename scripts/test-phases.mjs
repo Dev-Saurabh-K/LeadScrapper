@@ -85,11 +85,13 @@ async function runPhasedTesting() {
   // 2.1 Connector Registry
   console.log('  [2.1] Connector Registry Check');
   const activeEngines = listConnectors().map(c => c.code);
-  assert(activeEngines.includes('MAPS') && activeEngines.includes('LINKEDIN'), `Registered engines: ${activeEngines.join(', ')}`);
+  assert(activeEngines.includes('MAPS') && activeEngines.includes('LINKEDIN') && activeEngines.includes('INSTAGRAM'), `Registered engines: ${activeEngines.join(', ')}`);
   const mapsConn = getConnector('MAPS');
   assert(Boolean(mapsConn && mapsConn.search), 'Google Maps connector resolved');
   const liConn = getConnector('LINKEDIN');
   assert(Boolean(liConn && liConn.search), 'LinkedIn connector resolved');
+  const igConn = getConnector('INSTAGRAM');
+  assert(Boolean(igConn && igConn.search), 'Instagram connector resolved');
 
   // 2.2 Live Google Maps Scraper
   console.log('  [2.2] Live Google Maps Places Extraction');
@@ -112,6 +114,18 @@ async function runPhasedTesting() {
     assert(Boolean(liResults[0].director), `LinkedIn Lead Name: "${liResults[0].director}"`);
     assert(liResults[0].website.includes('linkedin.com/in'), `LinkedIn URL: ${liResults[0].website}`);
     assert(liResults[0].source.includes('LinkedIn'), `Source tag verified (${liResults[0].source})`);
+  }
+
+  // 2.4 Live Instagram Authless Scraper
+  console.log('  [2.4] Live Instagram Authless Extraction (Zero Tokens / No Login)');
+  const igStart = Date.now();
+  const igResults = await igConn.search({ category: 'fitness', location: 'Miami' }, 2);
+  const igTime = ((Date.now() - igStart) / 1000).toFixed(1);
+  assert(igResults.length >= 1, `Harvested ${igResults.length} live Instagram profiles in ${igTime}s`);
+  if (igResults.length > 0) {
+    assert(Boolean(igResults[0].director), `Instagram Handle: "${igResults[0].director}"`);
+    assert(igResults[0].website.includes('instagram.com/'), `Instagram URL: ${igResults[0].website}`);
+    assert(igResults[0].source.includes('Instagram'), `Source tag verified (${igResults[0].source})`);
   }
   console.log();
 

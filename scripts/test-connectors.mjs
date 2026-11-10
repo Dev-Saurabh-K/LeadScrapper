@@ -18,16 +18,20 @@ async function runTests() {
 
   // [TEST 1] Connector Registry
   totalTests++;
-  console.log(`[TEST ${totalTests}] Testing Connector Registry (Google Maps sole engine)...`);
+  console.log(`[TEST ${totalTests}] Testing Connector Registry (Maps, LinkedIn, and Instagram engines)...`);
   try {
     const list = listConnectors();
     const codes = list.map(c => c.code);
-    if (!codes.includes('MAPS') || !codes.includes('LINKEDIN')) {
-      throw new Error(`Expected MAPS and LINKEDIN connectors, got: ${JSON.stringify(codes)}`);
+    if (!codes.includes('MAPS') || !codes.includes('LINKEDIN') || !codes.includes('INSTAGRAM')) {
+      throw new Error(`Expected MAPS, LINKEDIN, and INSTAGRAM connectors, got: ${JSON.stringify(codes)}`);
     }
     const conn = getConnector('MAPS');
     if (!conn || typeof conn.search !== 'function') {
       throw new Error('getConnector("MAPS") failed to return a valid connector instance');
+    }
+    const igConn = getConnector('INSTAGRAM');
+    if (!igConn || typeof igConn.search !== 'function') {
+      throw new Error('getConnector("INSTAGRAM") failed to return a valid connector instance');
     }
     console.log(`  -> Registry active engines: ${codes.join(', ')}`);
     console.log(`  ✅ Connector Registry passed!\n`);

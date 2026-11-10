@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
+import InstagramIcon from '@/components/InstagramIcon';
 import CountryFlag from '@/components/CountryFlag';
 import { GEO_COUNTRIES, buildMapsQuery, POPULAR_NICHES } from '@/lib/data/geo_locations.js';
 
@@ -75,6 +76,25 @@ const POPULAR_LI_INDUSTRIES = [
   { label: 'E-Commerce & Retail', query: 'E-Commerce Retail Brands' },
   { label: 'Manufacturing', query: 'Manufacturing Industrial' },
   { label: 'Digital Agencies', query: 'Digital Marketing Advertising Agency' }
+];
+
+const POPULAR_IG_CATEGORIES = [
+  { label: 'Fashion & Boutique', query: 'Fashion Boutique Clothing Brand' },
+  { label: 'Fitness & Gym', query: 'Fitness Coach Personal Trainer Gym' },
+  { label: 'Beauty & Salon', query: 'Beauty Salon Hair Stylist Makeup' },
+  { label: 'Cafes & Dining', query: 'Restaurant Cafe Bakery Food' },
+  { label: 'Real Estate', query: 'Realtor Real Estate Agency Properties' },
+  { label: 'Photography & Media', query: 'Photographer Videographer Media Studio' },
+  { label: 'Digital Marketing', query: 'Marketing Agency Digital Media Brand Strategy' },
+  { label: 'E-Commerce & Retail', query: 'Shop Online Store Handmade Jewelry' }
+];
+
+const POPULAR_IG_BIO_INTENTS = [
+  { label: 'Owner / Founder', query: 'Founder Owner CEO' },
+  { label: 'Bookings & Inquiries', query: 'Bookings Inquiries Contact' },
+  { label: 'Collabs & PR', query: 'DM for Collabs PR Inquiries' },
+  { label: 'Worldwide Shipping', query: 'Worldwide Shipping Orders' },
+  { label: 'Certified Coach', query: 'Certified Coach Trainer' }
 ];
 
 export default function Dashboard() {
@@ -154,12 +174,38 @@ export default function Dashboard() {
     liCompany ? liCompany.trim() : ''
   ].filter(Boolean).join(' ');
 
+  // Instagram Business & Creator Search States
+  const [igCountryCode, setIgCountryCode] = useState('US');
+  const [igCity, setIgCity] = useState('Miami');
+  const [igCustomCity, setIgCustomCity] = useState('');
+  const [igLocality, setIgLocality] = useState('');
+  const [igCategory, setIgCategory] = useState('Fitness Coach Gym');
+  const [igBioIntent, setIgBioIntent] = useState('DM for Collabs');
+  const [igBrand, setIgBrand] = useState('');
+  const [igFreeform, setIgFreeform] = useState(false);
+  const [igCustomQuery, setIgCustomQuery] = useState('');
+
+  const activeIgCountryObj = GEO_COUNTRIES.find((c) => c.code === igCountryCode) || GEO_COUNTRIES[0];
+  const activeIgCity = igCity === 'Custom City' ? igCustomCity : igCity;
+  const activeIgCountryName = activeIgCountryObj.code === 'CUSTOM' ? '' : activeIgCountryObj.name;
+  const activeIgLocation = [igLocality.trim(), activeIgCity.trim(), activeIgCountryName.trim()].filter(Boolean).join(', ');
+
+  const synthesizedInstagramQuery = [
+    'site:instagram.com',
+    igCategory ? igCategory.trim() : '',
+    activeIgLocation ? activeIgLocation.trim() : '',
+    igBioIntent ? igBioIntent.trim() : '',
+    igBrand ? igBrand.trim() : ''
+  ].filter(Boolean).join(' ');
+
   const filteredPreviewLeads = useMemo(() => {
     let list = leads;
     if (previewFilter === 'P1') {
       list = leads.filter((l) => l.email && l.phone);
     } else if (previewFilter === 'LINKEDIN') {
       list = leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:'));
+    } else if (previewFilter === 'INSTAGRAM') {
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('instagram') || (l.registration_number || '').startsWith('IG:'));
     } else if (previewFilter === 'MAPS') {
       list = leads.filter((l) => (l.source || '').toLowerCase().includes('maps'));
     }
@@ -246,7 +292,28 @@ export default function Dashboard() {
   // Start Scrape Job via Server-Sent Events (SSE)
   const handleStartScrape = async () => {
     let payload = {};
-    if (selectedEngine === 'LINKEDIN') {
+    if (selectedEngine === 'INSTAGRAM') {
+      const queryToUse = igFreeform ? igCustomQuery.trim() : synthesizedInstagramQuery.trim();
+      if (!queryToUse) {
+        alert('Please specify a category, location, or enter an Instagram search query.');
+        return;
+      }
+      payload = {
+        engine: 'INSTAGRAM',
+        countries: ['INSTAGRAM'],
+        query: queryToUse,
+        category: igCategory,
+        bioIntent: igBioIntent,
+        location: activeIgLocation,
+        brand: igBrand,
+        limit: Number(scraperLimit),
+        enrich: enrichWebsite,
+        delayMs: Number(delayMs),
+        stream: true,
+        notificationEmail: notificationEmail.trim(),
+        webhookUrl: webhookUrl.trim()
+      };
+    } else if (selectedEngine === 'LINKEDIN') {
       const queryToUse = liFreeform ? liCustomQuery.trim() : synthesizedLinkedInQuery.trim();
       if (!queryToUse) {
         alert('Please specify a business category, location, or enter a LinkedIn search query.');
@@ -893,6 +960,18 @@ export default function Dashboard() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setPreviewFilter('INSTAGRAM')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition inline-flex items-center gap-1.5 ${
+                        previewFilter === 'INSTAGRAM'
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xs'
+                          : 'bg-white text-pink-700 border border-pink-200 hover:bg-pink-50'
+                      }`}
+                    >
+                      <InstagramIcon className="h-3 w-3" />
+                      <span>Instagram ({leads.filter((l) => (l.source || '').toLowerCase().includes('instagram') || (l.registration_number || '').startsWith('IG:')).length})</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setPreviewFilter('MAPS')}
                       className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
                         previewFilter === 'MAPS'
@@ -1016,7 +1095,7 @@ export default function Dashboard() {
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
-                              {lead.website && !lead.website.includes('linkedin.com') && (
+                              {lead.website && !lead.website.includes('linkedin.com') && !lead.website.includes('instagram.com') && (
                                 <button
                                   onClick={() => handleEnrichLead(lead.id)}
                                   className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
@@ -1035,7 +1114,7 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-                <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : 'Google Maps'})</span>
+                <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : previewFilter === 'INSTAGRAM' ? 'Instagram' : 'Google Maps'})</span>
                 <button
                   onClick={() => setActiveTab('exporter')}
                   className="font-semibold text-blue-600 hover:underline flex items-center gap-1"
@@ -1056,20 +1135,33 @@ export default function Dashboard() {
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold text-slate-900">
-                    {selectedEngine === 'LINKEDIN' ? 'Search LinkedIn Leads' : 'Search Google Maps'}
+                    {selectedEngine === 'INSTAGRAM'
+                      ? 'Search Instagram Leads'
+                      : selectedEngine === 'LINKEDIN'
+                      ? 'Search LinkedIn Leads'
+                      : 'Search Google Maps'}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    {selectedEngine === 'LINKEDIN'
+                    {selectedEngine === 'INSTAGRAM'
+                      ? 'Find creators, brands, and local business accounts on Instagram'
+                      : selectedEngine === 'LINKEDIN'
                       ? 'Find businesses, companies, and decision makers on LinkedIn'
                       : 'Find local businesses, phone numbers, addresses, and websites'}
                   </p>
                 </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 flex items-center gap-1.5 ${
-                  selectedEngine === 'LINKEDIN'
+                  selectedEngine === 'INSTAGRAM'
+                    ? 'bg-pink-50 text-pink-700 ring-pink-200'
+                    : selectedEngine === 'LINKEDIN'
                     ? 'bg-blue-50 text-blue-700 ring-blue-200'
                     : 'bg-rose-50 text-rose-700 ring-rose-200'
                 }`}>
-                  {selectedEngine === 'LINKEDIN' ? (
+                  {selectedEngine === 'INSTAGRAM' ? (
+                    <>
+                      <InstagramIcon className="h-3 w-3" />
+                      <span>Instagram</span>
+                    </>
+                  ) : selectedEngine === 'LINKEDIN' ? (
                     <>
                       <Building2 className="h-3 w-3 text-blue-600" />
                       <span>LinkedIn</span>
@@ -1083,8 +1175,8 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              {/* Engine Switcher: Google Maps vs LinkedIn */}
-              <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+              {/* Engine Switcher: Google Maps vs LinkedIn vs Instagram */}
+              <div className="mb-4 grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 border border-slate-200 text-[11px] sm:text-xs">
                 <button
                   type="button"
                   onClick={() => setSelectedEngine('MAPS')}
@@ -1094,8 +1186,8 @@ export default function Dashboard() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <MapPin className="h-3.5 w-3.5 text-rose-600" />
-                  <span>Google Maps</span>
+                  <MapPin className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                  <span className="truncate">Google Maps</span>
                 </button>
                 <button
                   type="button"
@@ -1106,8 +1198,20 @@ export default function Dashboard() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Building2 className="h-3.5 w-3.5 text-blue-600" />
-                  <span>LinkedIn Leads</span>
+                  <Building2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                  <span className="truncate">LinkedIn Leads</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedEngine('INSTAGRAM')}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2 font-semibold transition ${
+                    selectedEngine === 'INSTAGRAM'
+                      ? 'bg-white text-pink-700 shadow-xs border border-pink-100'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <InstagramIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Instagram Leads</span>
                 </button>
               </div>
 
@@ -1499,6 +1603,225 @@ export default function Dashboard() {
                   </>
                 )}
 
+                {/* INSTAGRAM FORM CONTROLS */}
+                {selectedEngine === 'INSTAGRAM' && (
+                  <>
+                    {/* Mode Selector for Instagram: Guided Criteria vs Freeform */}
+                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setIgFreeform(false)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          !igFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <InstagramIcon className="h-3.5 w-3.5" />
+                          <span>Choose by Location & Niche</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIgFreeform(true)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          igFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <Search className="h-3.5 w-3.5 text-slate-500" />
+                          <span>Type Custom Search</span>
+                        </span>
+                      </button>
+                    </div>
+
+                    {!igFreeform ? (
+                      <div className="rounded-xl border border-pink-200 bg-pink-50/40 p-3.5 space-y-3">
+                        {/* Row 1: Target Country & City Dropdowns */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <CountryFlag code={igCountryCode} className="h-3.5 w-4.5 shrink-0 rounded-xs" />
+                              <label className="block text-[11px] font-semibold text-slate-700">
+                                Country
+                              </label>
+                            </div>
+                            <select
+                              value={igCountryCode}
+                              onChange={(e) => {
+                                const nextCode = e.target.value;
+                                setIgCountryCode(nextCode);
+                                const found = GEO_COUNTRIES.find(c => c.code === nextCode);
+                                if (found && found.cities.length > 0) {
+                                  setIgCity(found.cities[0]);
+                                }
+                              }}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-pink-500 focus:outline-none"
+                            >
+                              {GEO_COUNTRIES.map(c => (
+                                <option key={c.code} value={c.code}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              City
+                            </label>
+                            <select
+                              value={igCity}
+                              onChange={(e) => setIgCity(e.target.value)}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-pink-500 focus:outline-none"
+                            >
+                              {(activeIgCountryObj?.cities || []).map(city => (
+                                <option key={city} value={city}>{city}</option>
+                              ))}
+                              <option value="Custom City">Custom City / Other...</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Write-in input if Custom City is selected */}
+                        {igCity === 'Custom City' && (
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              Enter Custom City Name
+                            </label>
+                            <input
+                              type="text"
+                              value={igCustomCity}
+                              onChange={(e) => setIgCustomCity(e.target.value)}
+                              placeholder="e.g. Asansol, Siliguri, Austin, Manchester..."
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-pink-500 focus:outline-none"
+                            />
+                          </div>
+                        )}
+
+                        {/* Row 2: Neighborhood / Locality / Suburb */}
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                            Area / Neighborhood <span className="font-normal text-slate-500">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={igLocality}
+                            onChange={(e) => setIgLocality(e.target.value)}
+                            placeholder="e.g. South Beach, Brooklyn, Soho, Indiranagar, Beverly Hills..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-pink-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Row 3: Business Category / Niche */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-[11px] font-semibold text-slate-700">
+                              Business Type / Niche
+                            </label>
+                            <span className="text-[10px] text-pink-700 font-medium">Category</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={igCategory}
+                            onChange={(e) => setIgCategory(e.target.value)}
+                            placeholder="e.g. Fitness Coach, Fashion Boutique, Beauty Salon, Cafe..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-pink-500 focus:outline-none"
+                          />
+                          {/* Quick Category Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {POPULAR_IG_CATEGORIES.map((cat) => (
+                              <button
+                                key={cat.label}
+                                type="button"
+                                onClick={() => setIgCategory(cat.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
+                                  igCategory.toLowerCase() === cat.query.toLowerCase()
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-pink-200 text-pink-800 hover:bg-pink-100/70'
+                                }`}
+                              >
+                                {cat.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Row 4: Bio Focus / Intent / Role */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-semibold text-slate-700">
+                              Bio Focus / Role / Intent <span className="font-normal text-slate-500">(Optional)</span>
+                            </label>
+                            <span className="text-[10px] text-pink-700 font-medium">Bio Intent</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={igBioIntent}
+                            onChange={(e) => setIgBioIntent(e.target.value)}
+                            placeholder="e.g. DM for Collabs, Founder Owner, Bookings, Contact, Orders"
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-pink-500 focus:outline-none"
+                          />
+                          {/* Quick Bio Intent Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {POPULAR_IG_BIO_INTENTS.map((intent) => (
+                              <button
+                                key={intent.label}
+                                type="button"
+                                onClick={() => setIgBioIntent(intent.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
+                                  igBioIntent.toLowerCase() === intent.query.toLowerCase()
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-pink-200 text-pink-800 hover:bg-pink-100/70'
+                                }`}
+                              >
+                                {intent.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Row 5: Specific Brand or Handle (Optional) */}
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Specific Brand / Handle <span className="font-normal text-slate-500">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={igBrand}
+                            onChange={(e) => setIgBrand(e.target.value)}
+                            placeholder="e.g. Gymshark, or leave blank to search all accounts in this category"
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-pink-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Live Query Preview Badge */}
+                        <div className="mt-1 rounded-lg border border-pink-200/90 bg-white p-2">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-pink-700 mb-0.5">
+                            <Search className="h-3 w-3 text-pink-600 shrink-0" />
+                            <span>Search Phrase Preview:</span>
+                          </div>
+                          <div className="font-mono text-xs font-semibold text-slate-900 break-all">
+                            &quot;{synthesizedInstagramQuery}&quot;
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Type Your Instagram Search Phrase
+                        </label>
+                        <input
+                          type="text"
+                          value={igCustomQuery}
+                          onChange={(e) => setIgCustomQuery(e.target.value)}
+                          placeholder="e.g. fitness coaches Miami, boutique bakery Soho, fashion designer Paris..."
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-pink-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-pink-600"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
                 {/* Limit and Delay */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -1599,6 +1922,8 @@ export default function Dashboard() {
                   className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition active:scale-[0.98] ${
                     isScraping
                       ? 'cursor-not-allowed bg-slate-800 opacity-60'
+                      : selectedEngine === 'INSTAGRAM'
+                      ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 hover:from-purple-700 hover:via-pink-700 hover:to-rose-600 shadow-pink-500/25'
                       : selectedEngine === 'LINKEDIN'
                       ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
                       : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
@@ -1607,12 +1932,24 @@ export default function Dashboard() {
                   {isScraping ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>{selectedEngine === 'LINKEDIN' ? 'Searching LinkedIn Profiles...' : 'Searching Google Maps...'}</span>
+                      <span>
+                        {selectedEngine === 'INSTAGRAM'
+                          ? 'Searching Instagram Profiles...'
+                          : selectedEngine === 'LINKEDIN'
+                          ? 'Searching LinkedIn Profiles...'
+                          : 'Searching Google Maps...'}
+                      </span>
                     </>
                   ) : (
                     <>
                       <Play className="h-4 w-4 fill-current" />
-                      <span>{selectedEngine === 'LINKEDIN' ? 'Start LinkedIn Search' : 'Start Google Maps Search'}</span>
+                      <span>
+                        {selectedEngine === 'INSTAGRAM'
+                          ? 'Start Instagram Search'
+                          : selectedEngine === 'LINKEDIN'
+                          ? 'Start LinkedIn Search'
+                          : 'Start Google Maps Search'}
+                      </span>
                     </>
                   )}
                 </button>
@@ -2297,8 +2634,20 @@ export default function Dashboard() {
                     <option value="Converted">Converted</option>
                   </select>
                   <span className="text-slate-300">•</span>
-                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
-                    {selectedLead.source || 'Scraped Lead'}
+                  <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                    (selectedLead.source || '').toLowerCase().includes('instagram')
+                      ? 'bg-pink-50 text-pink-700 ring-1 ring-pink-200'
+                      : (selectedLead.source || '').toLowerCase().includes('linkedin')
+                      ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    {(selectedLead.source || '').toLowerCase().includes('instagram') && (
+                      <InstagramIcon className="h-2.5 w-2.5 shrink-0" />
+                    )}
+                    {(selectedLead.source || '').toLowerCase().includes('linkedin') && (
+                      <Building2 className="h-2.5 w-2.5 text-blue-600 shrink-0" />
+                    )}
+                    <span>{selectedLead.source || 'Scraped Lead'}</span>
                   </span>
                 </div>
               </div>
@@ -2378,7 +2727,13 @@ export default function Dashboard() {
 
               {selectedLead.website && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                  <div className="text-slate-500">Website (Priority 2)</div>
+                  <div className="text-slate-500">
+                    {selectedLead.website.includes('instagram.com')
+                      ? 'Instagram Profile'
+                      : selectedLead.website.includes('linkedin.com')
+                      ? 'LinkedIn Profile'
+                      : 'Website (Priority 2)'}
+                  </div>
                   <a
                     href={selectedLead.website.startsWith('http') ? selectedLead.website : `https://${selectedLead.website}`}
                     target="_blank"
@@ -2415,7 +2770,7 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center gap-2">
-                {selectedLead.website && !selectedLead.website.includes('linkedin.com') && (
+                {selectedLead.website && !selectedLead.website.includes('linkedin.com') && !selectedLead.website.includes('instagram.com') && (
                   <button
                     onClick={() => handleEnrichLead(selectedLead.id)}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"

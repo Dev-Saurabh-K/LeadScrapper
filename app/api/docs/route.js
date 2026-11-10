@@ -12,8 +12,8 @@ export async function GET() {
     paths: {
       '/api/scrape': {
         post: {
-          summary: 'Trigger a scraping job (Google Maps or LinkedIn Leads)',
-          description: 'Executes headless queries for local businesses on Google Maps or decision-makers and businesses on LinkedIn, extracts verified phone numbers and addresses, crawls websites for emails, and appends to Master_B2B_Leads.xlsx.',
+          summary: 'Trigger a scraping job (Google Maps, LinkedIn, or Instagram Leads)',
+          description: 'Executes headless queries for local businesses on Google Maps, decision-makers on LinkedIn, or businesses/creators on Instagram, extracts verified phone numbers and addresses, crawls websites for emails, and appends to Master_B2B_Leads.xlsx.',
           requestBody: {
             required: true,
             content: {
@@ -21,10 +21,13 @@ export async function GET() {
                 schema: {
                   type: 'object',
                   properties: {
-                    engine: { type: 'string', enum: ['MAPS', 'LINKEDIN'], default: 'MAPS', description: 'Scraping engine to execute' },
-                    query: { type: 'string', example: 'site:linkedin.com/in Founder SaaS San Francisco', description: 'Search query or compiled phrase' },
-                    role: { type: 'string', example: 'Founder CEO', description: 'LinkedIn target role/title' },
-                    industry: { type: 'string', example: 'SaaS Software', description: 'LinkedIn target industry' },
+                    engine: { type: 'string', enum: ['MAPS', 'LINKEDIN', 'INSTAGRAM'], default: 'MAPS', description: 'Scraping engine to execute' },
+                    query: { type: 'string', example: 'site:instagram.com fitness Miami', description: 'Search query or compiled phrase' },
+                    category: { type: 'string', example: 'Fitness Coach Gym', description: 'Business category or niche' },
+                    bioIntent: { type: 'string', example: 'DM for Collabs', description: 'Target bio keywords or intent' },
+                    brand: { type: 'string', example: 'Gymshark', description: 'Target brand or account handle' },
+                    role: { type: 'string', example: 'Founder CEO', description: 'LinkedIn/Instagram target role/title' },
+                    industry: { type: 'string', example: 'SaaS Software', description: 'Target industry' },
                     location: { type: 'string', example: 'San Francisco', description: 'Target geographic location' },
                     company: { type: 'string', example: 'Stripe', description: 'Optional target company' },
                     limit: { type: 'integer', default: 20, description: 'Number of places/profiles to scrape' },

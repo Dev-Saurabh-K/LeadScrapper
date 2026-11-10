@@ -10,6 +10,7 @@ This report documents the live operational status of all country registry scrape
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
 | 📍 **Google Maps** | Google Maps Hyper-Local Places | ✅ **Working** | ❌ None (100% Free) | **Headless Stealth Engine** | ~1.5s/place | **Direct Phones, Addresses, Websites & Enriched Emails** |
 | 💼 **LinkedIn** | LinkedIn Authless People Search | ✅ **Working** | ❌ None (100% Free) | **Search Engine X-Ray & Multi-Engine HTTP** | ~1.2s/profile | **Decision Makers, Titles, Companies, URLs & Public Emails** |
+| 📸 **Instagram** | Instagram Business & Creator Search | ✅ **Working** | ❌ None (100% Free) | **Search Engine X-Ray & Multi-Engine HTTP** | ~1.1s/profile | **Handles, Creator Names, Bios, External Websites & Public Contacts** |
 | 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | ✅ **Working** | ❌ None | **Live API** | ~1.3s | Email / Phone if published |
 | 🇫🇷 **France** | `api.gouv.fr` + BODACC (`data.gouv.fr`) | ✅ **Working** | ❌ None | **Multi-Source Live** | ~1.3s | Legal Officers, City, SIREN |
 | 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | ✅ **Working** | ❌ None | **Live API** | ~4.9s | Address, SSIC, UEN |
