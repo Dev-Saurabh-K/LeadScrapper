@@ -6,14 +6,14 @@ export async function GET() {
     openapi: '3.0.0',
     info: {
       title: 'B2B Lead Scraper & Sales Intelligence API',
-      version: '2.1.0',
-      description: 'REST API for Google Maps hyper-local places scraping, LinkedIn decision-maker leads extraction, multi-format exports (Excel, CSV, JSON), and CRM pipeline management.'
+      version: '2.2.0',
+      description: 'REST API for Google Maps hyper-local places scraping, LinkedIn decision-maker leads extraction, Instagram business/creator search, Facebook business pages extraction, multi-format exports (Excel, CSV, JSON), and CRM pipeline management.'
     },
     paths: {
       '/api/scrape': {
         post: {
-          summary: 'Trigger a scraping job (Google Maps, LinkedIn, or Instagram Leads)',
-          description: 'Executes headless queries for local businesses on Google Maps, decision-makers on LinkedIn, or businesses/creators on Instagram, extracts verified phone numbers and addresses, crawls websites for emails, and appends to Master_B2B_Leads.xlsx.',
+          summary: 'Trigger a scraping job (Google Maps, LinkedIn, Instagram, or Facebook Leads)',
+          description: 'Executes headless queries for local businesses on Google Maps, decision-makers on LinkedIn, businesses/creators on Instagram, or business pages on Facebook, extracts verified phone numbers and addresses, crawls websites for emails, and appends to Master_B2B_Leads.xlsx.',
           requestBody: {
             required: true,
             content: {
@@ -21,8 +21,8 @@ export async function GET() {
                 schema: {
                   type: 'object',
                   properties: {
-                    engine: { type: 'string', enum: ['MAPS', 'LINKEDIN', 'INSTAGRAM'], default: 'MAPS', description: 'Scraping engine to execute' },
-                    query: { type: 'string', example: 'site:instagram.com fitness Miami', description: 'Search query or compiled phrase' },
+                    engine: { type: 'string', enum: ['MAPS', 'LINKEDIN', 'INSTAGRAM', 'FACEBOOK'], default: 'MAPS', description: 'Scraping engine to execute' },
+                    query: { type: 'string', example: 'site:facebook.com "Miami Beach" bakery -inurl:groups', description: 'Search query or compiled phrase' },
                     category: { type: 'string', example: 'Fitness Coach Gym', description: 'Business category or niche' },
                     bioIntent: { type: 'string', example: 'DM for Collabs', description: 'Target bio keywords or intent' },
                     brand: { type: 'string', example: 'Gymshark', description: 'Target brand or account handle' },

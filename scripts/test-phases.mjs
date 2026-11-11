@@ -85,13 +85,15 @@ async function runPhasedTesting() {
   // 2.1 Connector Registry
   console.log('  [2.1] Connector Registry Check');
   const activeEngines = listConnectors().map(c => c.code);
-  assert(activeEngines.includes('MAPS') && activeEngines.includes('LINKEDIN') && activeEngines.includes('INSTAGRAM'), `Registered engines: ${activeEngines.join(', ')}`);
+  assert(activeEngines.includes('MAPS') && activeEngines.includes('LINKEDIN') && activeEngines.includes('INSTAGRAM') && activeEngines.includes('FACEBOOK'), `Registered engines: ${activeEngines.join(', ')}`);
   const mapsConn = getConnector('MAPS');
   assert(Boolean(mapsConn && mapsConn.search), 'Google Maps connector resolved');
   const liConn = getConnector('LINKEDIN');
   assert(Boolean(liConn && liConn.search), 'LinkedIn connector resolved');
   const igConn = getConnector('INSTAGRAM');
   assert(Boolean(igConn && igConn.search), 'Instagram connector resolved');
+  const fbConn = getConnector('FACEBOOK');
+  assert(Boolean(fbConn && fbConn.search), 'Facebook connector resolved');
 
   // 2.2 Live Google Maps Scraper
   console.log('  [2.2] Live Google Maps Places Extraction');
@@ -126,6 +128,18 @@ async function runPhasedTesting() {
     assert(Boolean(igResults[0].director), `Instagram Handle: "${igResults[0].director}"`);
     assert(igResults[0].website.includes('instagram.com/'), `Instagram URL: ${igResults[0].website}`);
     assert(igResults[0].source.includes('Instagram'), `Source tag verified (${igResults[0].source})`);
+  }
+
+  // 2.5 Live Facebook Authless Scraper
+  console.log('  [2.5] Live Facebook Authless Extraction (Zero Tokens / No Login)');
+  const fbStart = Date.now();
+  const fbResults = await fbConn.search({ category: 'bakery', location: 'Brooklyn' }, 2);
+  const fbTime = ((Date.now() - fbStart) / 1000).toFixed(1);
+  assert(fbResults.length >= 1, `Harvested ${fbResults.length} live Facebook pages in ${fbTime}s`);
+  if (fbResults.length > 0) {
+    assert(Boolean(fbResults[0].company_name), `Facebook Page Name: "${fbResults[0].company_name}"`);
+    assert(fbResults[0].website.includes('facebook.com/'), `Facebook URL: ${fbResults[0].website}`);
+    assert(fbResults[0].source.includes('Facebook'), `Source tag verified (${fbResults[0].source})`);
   }
   console.log();
 

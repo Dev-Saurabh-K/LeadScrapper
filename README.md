@@ -2,7 +2,7 @@
 
 An automated multi-source B2B lead scraping engine and sales dashboard built with **Next.js 16 (App Router)**, **Tailwind CSS**, and **Supabase (PostgreSQL)** with automatic local JSON fallback.
 
-Supports **Hyper-Local Google Maps Scraping**, **Authless LinkedIn Lead Generation**, and **Authless Instagram Business & Creator Lead Generation (Zero Tokens / No Login Required)**, de-duplicates leads, normalizes contacts, automatically appends to a unified `Master_B2B_Leads.xlsx` workbook, and supports optional on-demand email dispatches.
+Supports **Hyper-Local Google Maps Scraping**, **Authless LinkedIn Lead Generation**, **Authless Instagram Business & Creator Lead Generation**, and **Authless Facebook Business Pages & Places Search (Zero Tokens / No Login Required)**, de-duplicates leads, normalizes contacts, automatically appends to a unified `Master_B2B_Leads.xlsx` workbook, and supports optional on-demand email dispatches.
 
 ---
 
@@ -12,7 +12,7 @@ Supports **Hyper-Local Google Maps Scraping**, **Authless LinkedIn Lead Generati
 ```bash
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser to launch scrapes, switch between engines (Google Maps, LinkedIn, or Instagram), search leads, inspect columns, and export to Excel.
+Open **[http://localhost:3000](http://localhost:3000)** in your browser to launch scrapes, switch between engines (Google Maps, LinkedIn, Instagram, or Facebook), search leads, inspect columns, and export to Excel.
 
 ### 2. Run Automated Headless Scraper (CLI)
 ```bash
@@ -20,6 +20,7 @@ npm run scrape
 # Or specifically target Google Maps:
 npm run scrape:maps
 # Or run standalone tests:
+npm run test:facebook
 npm run test:instagram
 npm run test:linkedin
 ```
@@ -34,6 +35,7 @@ Runs in the background, updates the database, appends to [`exports/Master_B2B_Le
 | 📍 **Google Maps** | Local businesses, phone numbers, websites, physical addresses, review counts, coordinates | Stealth Puppeteer hyper-local extraction | ❌ Zero API keys | 🟢 Active |
 | 💼 **LinkedIn Leads** | Decision-makers, Job Titles (CEOs, VPs, Heads of Sales), company names, locations, profile links, contact info | Authless Search Engine X-Ray & structured snippet extraction | ❌ No tokens / No login | 🟢 Active |
 | 📸 **Instagram Leads** | Creators, business accounts, boutique brands, handles, bio links, public emails, and phone/WhatsApp | Authless Search Engine X-Ray & structured snippet extraction | ❌ No tokens / No login | 🟢 Active |
+| 📘 **Facebook Leads** | Business pages, local places, verified phone numbers, street addresses, postal codes, websites, follower metrics | Authless Search Engine X-Ray & structured snippet extraction | ❌ No tokens / No login | 🟢 Active |
 
 ---
 

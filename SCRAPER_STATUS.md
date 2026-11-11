@@ -11,6 +11,7 @@ This report documents the live operational status of all country registry scrape
 | 📍 **Google Maps** | Google Maps Hyper-Local Places | ✅ **Working** | ❌ None (100% Free) | **Headless Stealth Engine** | ~1.5s/place | **Direct Phones, Addresses, Websites & Enriched Emails** |
 | 💼 **LinkedIn** | LinkedIn Authless People Search | ✅ **Working** | ❌ None (100% Free) | **Search Engine X-Ray & Multi-Engine HTTP** | ~1.2s/profile | **Decision Makers, Titles, Companies, URLs & Public Emails** |
 | 📸 **Instagram** | Instagram Business & Creator Search | ✅ **Working** | ❌ None (100% Free) | **Search Engine X-Ray & Multi-Engine HTTP** | ~1.1s/profile | **Handles, Creator Names, Bios, External Websites & Public Contacts** |
+| 📘 **Facebook** | Facebook Business Pages & Places Search | ✅ **Working** | ❌ None (100% Free) | **Search Engine X-Ray & Multi-Engine HTTP** | ~1.1s/page | **Business Pages, Places, Verified Phones, Addresses & Websites** |
 | 🇳🇴 **Norway** | Brønnøysundregistrene (`data.brreg.no`) | ✅ **Working** | ❌ None | **Live API** | ~1.3s | Email / Phone if published |
 | 🇫🇷 **France** | `api.gouv.fr` + BODACC (`data.gouv.fr`) | ✅ **Working** | ❌ None | **Multi-Source Live** | ~1.3s | Legal Officers, City, SIREN |
 | 🇸🇬 **Singapore** | ACRA (`data.gov.sg`) | ✅ **Working** | ❌ None | **Live API** | ~4.9s | Address, SSIC, UEN |
@@ -28,7 +29,21 @@ This report documents the live operational status of all country registry scrape
 * **Primary Source**: DuckDuckGo Search Engine X-Ray Dorking (`site:linkedin.com/in ...`)
 * **Secondary Source**: Bing Search HTTP structured parser fallback
 * **Under-the-Hood Behavior**: Bypasses LinkedIn login walls completely by targeting public profile snippets. Extracts executive names, job headlines, company affiliations, geographic locations, canonical profile URLs, and de-obfuscates public emails and phone numbers.
-* **Sample Live Result**: `Herman Sanghera` (Founder & CEO, `https://www.linkedin.com/in/herman-sanghera-bb27a7116`).
+* **Sample Live Result**: `Don Jackson` (Founder & CEO, `https://www.linkedin.com/in/don-jackson-843798125`).
+
+### 📸 Instagram — Authless Business & Creator Search (Under-the-Hood)
+* **Status**: **Working Live (Multi-Engine Fallback, Zero Credentials / Zero Tokens)**
+* **Primary Source**: DuckDuckGo Search Engine X-Ray Dorking (`site:instagram.com ...`)
+* **Secondary Source**: Bing Search HTTP structured parser fallback
+* **Under-the-Hood Behavior**: Extracts creators, brands, and local business accounts without Instagram login. Captures handles, bio headlines, follower metrics, external websites, public email addresses, and phone numbers.
+* **Sample Live Result**: `Miami Fitness` (`@mfitnessmiami`, `https://www.instagram.com/mfitnessmiami`).
+
+### 📘 Facebook — Authless Business Pages & Places Search (Under-the-Hood)
+* **Status**: **Working Live (Multi-Engine Fallback, Zero Credentials / Zero Tokens)**
+* **Primary Source**: DuckDuckGo Search Engine X-Ray Dorking (`site:facebook.com ... -inurl:groups -inurl:posts`)
+* **Secondary Source**: Bing Search HTTP structured parser fallback
+* **Under-the-Hood Behavior**: Targets public Facebook business pages and places, rejecting discussion groups and private posts. Extracts business names, verified telephone numbers, physical street addresses, postal codes, follower counts, and external website domains for automated contact crawling.
+* **Sample Live Result**: `The Brooklyn Bakery` (`https://www.facebook.com/bklynbakery`, Reg ID: `FB:bklynbakery`).
 
 
 ### 🇺🇸 United States — Dual-Source Socrata & New York Open Data (Under-the-Hood)

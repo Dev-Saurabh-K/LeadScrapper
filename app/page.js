@@ -48,6 +48,7 @@ import {
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
 import InstagramIcon from '@/components/InstagramIcon';
+import FacebookIcon from '@/components/FacebookIcon';
 import CountryFlag from '@/components/CountryFlag';
 import { GEO_COUNTRIES, buildMapsQuery, POPULAR_NICHES } from '@/lib/data/geo_locations.js';
 
@@ -95,6 +96,25 @@ const POPULAR_IG_BIO_INTENTS = [
   { label: 'Collabs & PR', query: 'DM for Collabs PR Inquiries' },
   { label: 'Worldwide Shipping', query: 'Worldwide Shipping Orders' },
   { label: 'Certified Coach', query: 'Certified Coach Trainer' }
+];
+
+const POPULAR_FB_CATEGORIES = [
+  { label: 'Local Services & Contractors', query: 'Local Service Contractor Roofing Plumbing HVAC' },
+  { label: 'Restaurants & Cafes', query: 'Restaurant Cafe Diner Bakery Food' },
+  { label: 'Real Estate & Realtors', query: 'Real Estate Agent Broker Property Management' },
+  { label: 'Health & Medical Clinics', query: 'Medical Clinic Dental Healthcare Doctor' },
+  { label: 'Retail & Boutiques', query: 'Retail Boutique Shopping Store' },
+  { label: 'Auto Repair & Dealerships', query: 'Auto Repair Mechanic Car Dealership' },
+  { label: 'Salons & Barbershops', query: 'Hair Salon Barbershop Spa Beauty' },
+  { label: 'Legal & Financial Services', query: 'Law Firm Attorney Accountant Financial Services' }
+];
+
+const POPULAR_FB_BIO_INTENTS = [
+  { label: 'Call Now / Phone', query: 'Call Now Call Us Direct Phone' },
+  { label: 'Send Message / Inquiries', query: 'Send Message Inquiries Contact Us' },
+  { label: 'Book Online / Appointments', query: 'Book Online Book Appointment Now' },
+  { label: 'Verified Page', query: 'Verified Page Official' },
+  { label: 'Get Quote', query: 'Get Quote Free Consultation' }
 ];
 
 export default function Dashboard() {
@@ -198,6 +218,31 @@ export default function Dashboard() {
     igBrand ? igBrand.trim() : ''
   ].filter(Boolean).join(' ');
 
+  // Facebook Business Pages & Places Search States
+  const [fbCountryCode, setFbCountryCode] = useState('US');
+  const [fbCity, setFbCity] = useState('Miami');
+  const [fbCustomCity, setFbCustomCity] = useState('');
+  const [fbLocality, setFbLocality] = useState('');
+  const [fbCategory, setFbCategory] = useState('Restaurant Cafe Diner Bakery Food');
+  const [fbBioIntent, setFbBioIntent] = useState('Call Now Call Us Direct Phone');
+  const [fbBrand, setFbBrand] = useState('');
+  const [fbFreeform, setFbFreeform] = useState(false);
+  const [fbCustomQuery, setFbCustomQuery] = useState('');
+
+  const activeFbCountryObj = GEO_COUNTRIES.find((c) => c.code === fbCountryCode) || GEO_COUNTRIES[0];
+  const activeFbCity = fbCity === 'Custom City' ? fbCustomCity : fbCity;
+  const activeFbCountryName = activeFbCountryObj.code === 'CUSTOM' ? '' : activeFbCountryObj.name;
+  const activeFbLocation = [fbLocality.trim(), activeFbCity.trim(), activeFbCountryName.trim()].filter(Boolean).join(', ');
+
+  const synthesizedFacebookQuery = [
+    'site:facebook.com',
+    fbCategory ? fbCategory.trim() : '',
+    activeFbLocation ? activeFbLocation.trim() : '',
+    fbBioIntent ? fbBioIntent.trim() : '',
+    fbBrand ? fbBrand.trim() : '',
+    '-inurl:groups -inurl:posts'
+  ].filter(Boolean).join(' ');
+
   const filteredPreviewLeads = useMemo(() => {
     let list = leads;
     if (previewFilter === 'P1') {
@@ -206,6 +251,8 @@ export default function Dashboard() {
       list = leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:'));
     } else if (previewFilter === 'INSTAGRAM') {
       list = leads.filter((l) => (l.source || '').toLowerCase().includes('instagram') || (l.registration_number || '').startsWith('IG:'));
+    } else if (previewFilter === 'FACEBOOK') {
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('facebook') || (l.registration_number || '').startsWith('FB:'));
     } else if (previewFilter === 'MAPS') {
       list = leads.filter((l) => (l.source || '').toLowerCase().includes('maps'));
     }
@@ -292,7 +339,28 @@ export default function Dashboard() {
   // Start Scrape Job via Server-Sent Events (SSE)
   const handleStartScrape = async () => {
     let payload = {};
-    if (selectedEngine === 'INSTAGRAM') {
+    if (selectedEngine === 'FACEBOOK') {
+      const queryToUse = fbFreeform ? fbCustomQuery.trim() : synthesizedFacebookQuery.trim();
+      if (!queryToUse) {
+        alert('Please specify a category, location, or enter a Facebook search query.');
+        return;
+      }
+      payload = {
+        engine: 'FACEBOOK',
+        countries: ['FACEBOOK'],
+        query: queryToUse,
+        category: fbCategory,
+        bioIntent: fbBioIntent,
+        location: activeFbLocation,
+        brand: fbBrand,
+        limit: Number(scraperLimit),
+        enrich: enrichWebsite,
+        delayMs: Number(delayMs),
+        stream: true,
+        notificationEmail: notificationEmail.trim(),
+        webhookUrl: webhookUrl.trim()
+      };
+    } else if (selectedEngine === 'INSTAGRAM') {
       const queryToUse = igFreeform ? igCustomQuery.trim() : synthesizedInstagramQuery.trim();
       if (!queryToUse) {
         alert('Please specify a category, location, or enter an Instagram search query.');
@@ -972,6 +1040,18 @@ export default function Dashboard() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setPreviewFilter('FACEBOOK')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition inline-flex items-center gap-1.5 ${
+                        previewFilter === 'FACEBOOK'
+                          ? 'bg-[#1877F2] text-white shadow-xs'
+                          : 'bg-white text-[#1877F2] border border-blue-200 hover:bg-blue-50'
+                      }`}
+                    >
+                      <FacebookIcon className="h-3 w-3" />
+                      <span>Facebook ({leads.filter((l) => (l.source || '').toLowerCase().includes('facebook') || (l.registration_number || '').startsWith('FB:')).length})</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setPreviewFilter('MAPS')}
                       className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
                         previewFilter === 'MAPS'
@@ -1095,7 +1175,7 @@ export default function Dashboard() {
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
-                              {lead.website && !lead.website.includes('linkedin.com') && !lead.website.includes('instagram.com') && (
+                              {lead.website && !lead.website.includes('linkedin.com') && !lead.website.includes('instagram.com') && !lead.website.includes('facebook.com') && (
                                 <button
                                   onClick={() => handleEnrichLead(lead.id)}
                                   className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
@@ -1114,7 +1194,7 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-                <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : previewFilter === 'INSTAGRAM' ? 'Instagram' : 'Google Maps'})</span>
+                <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : previewFilter === 'INSTAGRAM' ? 'Instagram' : previewFilter === 'FACEBOOK' ? 'Facebook' : 'Google Maps'})</span>
                 <button
                   onClick={() => setActiveTab('exporter')}
                   className="font-semibold text-blue-600 hover:underline flex items-center gap-1"
@@ -1135,14 +1215,18 @@ export default function Dashboard() {
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold text-slate-900">
-                    {selectedEngine === 'INSTAGRAM'
+                    {selectedEngine === 'FACEBOOK'
+                      ? 'Search Facebook Pages'
+                      : selectedEngine === 'INSTAGRAM'
                       ? 'Search Instagram Leads'
                       : selectedEngine === 'LINKEDIN'
                       ? 'Search LinkedIn Leads'
                       : 'Search Google Maps'}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    {selectedEngine === 'INSTAGRAM'
+                    {selectedEngine === 'FACEBOOK'
+                      ? 'Find business pages, places, phone numbers, and addresses on Facebook'
+                      : selectedEngine === 'INSTAGRAM'
                       ? 'Find creators, brands, and local business accounts on Instagram'
                       : selectedEngine === 'LINKEDIN'
                       ? 'Find businesses, companies, and decision makers on LinkedIn'
@@ -1150,13 +1234,20 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 flex items-center gap-1.5 ${
-                  selectedEngine === 'INSTAGRAM'
+                  selectedEngine === 'FACEBOOK'
+                    ? 'bg-blue-50 text-[#1877F2] ring-blue-200'
+                    : selectedEngine === 'INSTAGRAM'
                     ? 'bg-pink-50 text-pink-700 ring-pink-200'
                     : selectedEngine === 'LINKEDIN'
                     ? 'bg-blue-50 text-blue-700 ring-blue-200'
                     : 'bg-rose-50 text-rose-700 ring-rose-200'
                 }`}>
-                  {selectedEngine === 'INSTAGRAM' ? (
+                  {selectedEngine === 'FACEBOOK' ? (
+                    <>
+                      <FacebookIcon className="h-3 w-3" />
+                      <span>Facebook</span>
+                    </>
+                  ) : selectedEngine === 'INSTAGRAM' ? (
                     <>
                       <InstagramIcon className="h-3 w-3" />
                       <span>Instagram</span>
@@ -1175,8 +1266,8 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              {/* Engine Switcher: Google Maps vs LinkedIn vs Instagram */}
-              <div className="mb-4 grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1 border border-slate-200 text-[11px] sm:text-xs">
+              {/* Engine Switcher: Google Maps vs LinkedIn vs Instagram vs Facebook */}
+              <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-1.5 rounded-xl bg-slate-100 p-1 border border-slate-200 text-[11px] sm:text-xs">
                 <button
                   type="button"
                   onClick={() => setSelectedEngine('MAPS')}
@@ -1212,6 +1303,18 @@ export default function Dashboard() {
                 >
                   <InstagramIcon className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate">Instagram Leads</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedEngine('FACEBOOK')}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2 font-semibold transition ${
+                    selectedEngine === 'FACEBOOK'
+                      ? 'bg-white text-[#1877F2] shadow-xs border border-blue-100'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <FacebookIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Facebook Leads</span>
                 </button>
               </div>
 
@@ -1822,6 +1925,225 @@ export default function Dashboard() {
                   </>
                 )}
 
+                {/* FACEBOOK FORM CONTROLS */}
+                {selectedEngine === 'FACEBOOK' && (
+                  <>
+                    {/* Mode Selector for Facebook: Guided Criteria vs Freeform */}
+                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setFbFreeform(false)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          !fbFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <FacebookIcon className="h-3.5 w-3.5" />
+                          <span>Choose by Location & Niche</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFbFreeform(true)}
+                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+                          fbFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <Search className="h-3.5 w-3.5 text-slate-500" />
+                          <span>Type Custom Search</span>
+                        </span>
+                      </button>
+                    </div>
+
+                    {!fbFreeform ? (
+                      <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 space-y-3">
+                        {/* Row 1: Target Country & City Dropdowns */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <CountryFlag code={fbCountryCode} className="h-3.5 w-4.5 shrink-0 rounded-xs" />
+                              <label className="block text-[11px] font-semibold text-slate-700">
+                                Country
+                              </label>
+                            </div>
+                            <select
+                              value={fbCountryCode}
+                              onChange={(e) => {
+                                const nextCode = e.target.value;
+                                setFbCountryCode(nextCode);
+                                const found = GEO_COUNTRIES.find(c => c.code === nextCode);
+                                if (found && found.cities.length > 0) {
+                                  setFbCity(found.cities[0]);
+                                }
+                              }}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-[#1877F2] focus:outline-none"
+                            >
+                              {GEO_COUNTRIES.map(c => (
+                                <option key={c.code} value={c.code}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              City
+                            </label>
+                            <select
+                              value={fbCity}
+                              onChange={(e) => setFbCity(e.target.value)}
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-[#1877F2] focus:outline-none"
+                            >
+                              {(activeFbCountryObj?.cities || []).map(city => (
+                                <option key={city} value={city}>{city}</option>
+                              ))}
+                              <option value="Custom City">Custom City / Other...</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Write-in input if Custom City is selected */}
+                        {fbCity === 'Custom City' && (
+                          <div>
+                            <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                              Enter Custom City Name
+                            </label>
+                            <input
+                              type="text"
+                              value={fbCustomCity}
+                              onChange={(e) => setFbCustomCity(e.target.value)}
+                              placeholder="e.g. Asansol, Siliguri, Austin, Manchester..."
+                              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-[#1877F2] focus:outline-none"
+                            />
+                          </div>
+                        )}
+
+                        {/* Row 2: Neighborhood / Locality / Suburb */}
+                        <div>
+                          <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                            Area / Neighborhood <span className="font-normal text-slate-500">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={fbLocality}
+                            onChange={(e) => setFbLocality(e.target.value)}
+                            placeholder="e.g. South Beach, Brooklyn, Soho, Indiranagar, Beverly Hills..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-[#1877F2] focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Row 3: Business Category / Niche */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-[11px] font-semibold text-slate-700">
+                              Business Type / Niche
+                            </label>
+                            <span className="text-[10px] text-[#1877F2] font-medium">Category</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={fbCategory}
+                            onChange={(e) => setFbCategory(e.target.value)}
+                            placeholder="e.g. Restaurant, Dental Clinic, Contractor, Boutique..."
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-[#1877F2] focus:outline-none"
+                          />
+                          {/* Quick Category Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {POPULAR_FB_CATEGORIES.map((cat) => (
+                              <button
+                                key={cat.label}
+                                type="button"
+                                onClick={() => setFbCategory(cat.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
+                                  fbCategory.toLowerCase() === cat.query.toLowerCase()
+                                    ? 'bg-[#1877F2] text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-blue-200 text-blue-800 hover:bg-blue-100/70'
+                                }`}
+                              >
+                                {cat.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Row 4: Page Focus / Intent / Call to Action */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-semibold text-slate-700">
+                              Page Focus / Intent / CTA <span className="font-normal text-slate-500">(Optional)</span>
+                            </label>
+                            <span className="text-[10px] text-[#1877F2] font-medium">Page Intent</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={fbBioIntent}
+                            onChange={(e) => setFbBioIntent(e.target.value)}
+                            placeholder="e.g. Call Now, Send Message, Book Online, Verified Page"
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-[#1877F2] focus:outline-none"
+                          />
+                          {/* Quick Page Intent Pills */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {POPULAR_FB_BIO_INTENTS.map((intent) => (
+                              <button
+                                key={intent.label}
+                                type="button"
+                                onClick={() => setFbBioIntent(intent.query)}
+                                className={`rounded-md px-2 py-0.5 text-[10px] transition ${
+                                  fbBioIntent.toLowerCase() === intent.query.toLowerCase()
+                                    ? 'bg-[#1877F2] text-white font-semibold shadow-xs'
+                                    : 'bg-white border border-blue-200 text-blue-800 hover:bg-blue-100/70'
+                                }`}
+                              >
+                                {intent.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Row 5: Specific Brand or Handle (Optional) */}
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Specific Brand / Handle <span className="font-normal text-slate-500">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={fbBrand}
+                            onChange={(e) => setFbBrand(e.target.value)}
+                            placeholder="e.g. Starbucks, or leave blank to search all business pages in this category"
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-[#1877F2] focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Live Query Preview Badge */}
+                        <div className="mt-1 rounded-lg border border-blue-200/90 bg-white p-2">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1877F2] mb-0.5">
+                            <Search className="h-3 w-3 text-[#1877F2] shrink-0" />
+                            <span>Search Phrase Preview:</span>
+                          </div>
+                          <div className="font-mono text-xs font-semibold text-slate-900 break-all">
+                            &quot;{synthesizedFacebookQuery}&quot;
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Type Your Facebook Search Phrase
+                        </label>
+                        <input
+                          type="text"
+                          value={fbCustomQuery}
+                          onChange={(e) => setFbCustomQuery(e.target.value)}
+                          placeholder="e.g. bakery Miami Beach, dental clinic Dallas, auto repair Chicago..."
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-[#1877F2] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#1877F2]"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
                 {/* Limit and Delay */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -1922,6 +2244,8 @@ export default function Dashboard() {
                   className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition active:scale-[0.98] ${
                     isScraping
                       ? 'cursor-not-allowed bg-slate-800 opacity-60'
+                      : selectedEngine === 'FACEBOOK'
+                      ? 'bg-[#1877F2] hover:bg-[#166fe5] shadow-blue-500/25'
                       : selectedEngine === 'INSTAGRAM'
                       ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 hover:from-purple-700 hover:via-pink-700 hover:to-rose-600 shadow-pink-500/25'
                       : selectedEngine === 'LINKEDIN'
@@ -1933,7 +2257,9 @@ export default function Dashboard() {
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
                       <span>
-                        {selectedEngine === 'INSTAGRAM'
+                        {selectedEngine === 'FACEBOOK'
+                          ? 'Searching Facebook Pages...'
+                          : selectedEngine === 'INSTAGRAM'
                           ? 'Searching Instagram Profiles...'
                           : selectedEngine === 'LINKEDIN'
                           ? 'Searching LinkedIn Profiles...'
@@ -1944,7 +2270,9 @@ export default function Dashboard() {
                     <>
                       <Play className="h-4 w-4 fill-current" />
                       <span>
-                        {selectedEngine === 'INSTAGRAM'
+                        {selectedEngine === 'FACEBOOK'
+                          ? 'Start Facebook Search'
+                          : selectedEngine === 'INSTAGRAM'
                           ? 'Start Instagram Search'
                           : selectedEngine === 'LINKEDIN'
                           ? 'Start LinkedIn Search'
@@ -2635,12 +2963,17 @@ export default function Dashboard() {
                   </select>
                   <span className="text-slate-300">•</span>
                   <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
-                    (selectedLead.source || '').toLowerCase().includes('instagram')
+                    (selectedLead.source || '').toLowerCase().includes('facebook')
+                      ? 'bg-blue-50 text-[#1877F2] ring-1 ring-blue-200'
+                      : (selectedLead.source || '').toLowerCase().includes('instagram')
                       ? 'bg-pink-50 text-pink-700 ring-1 ring-pink-200'
                       : (selectedLead.source || '').toLowerCase().includes('linkedin')
                       ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
                       : 'bg-slate-100 text-slate-700'
                   }`}>
+                    {(selectedLead.source || '').toLowerCase().includes('facebook') && (
+                      <FacebookIcon className="h-2.5 w-2.5 shrink-0" />
+                    )}
                     {(selectedLead.source || '').toLowerCase().includes('instagram') && (
                       <InstagramIcon className="h-2.5 w-2.5 shrink-0" />
                     )}
@@ -2728,7 +3061,9 @@ export default function Dashboard() {
               {selectedLead.website && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <div className="text-slate-500">
-                    {selectedLead.website.includes('instagram.com')
+                    {selectedLead.website.includes('facebook.com')
+                      ? 'Facebook Page'
+                      : selectedLead.website.includes('instagram.com')
                       ? 'Instagram Profile'
                       : selectedLead.website.includes('linkedin.com')
                       ? 'LinkedIn Profile'
@@ -2770,7 +3105,7 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center gap-2">
-                {selectedLead.website && !selectedLead.website.includes('linkedin.com') && !selectedLead.website.includes('instagram.com') && (
+                {selectedLead.website && !selectedLead.website.includes('linkedin.com') && !selectedLead.website.includes('instagram.com') && !selectedLead.website.includes('facebook.com') && (
                   <button
                     onClick={() => handleEnrichLead(selectedLead.id)}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
