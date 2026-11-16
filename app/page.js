@@ -43,12 +43,17 @@ import {
   LayoutDashboard,
   MapPin,
   Webhook,
-  Trash2
+  Trash2,
+  Landmark,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
 import InstagramIcon from '@/components/InstagramIcon';
 import FacebookIcon from '@/components/FacebookIcon';
+import LeadSourceBadge from '@/components/LeadSourceBadge';
 import CountryFlag from '@/components/CountryFlag';
 import { GEO_COUNTRIES, buildMapsQuery, POPULAR_NICHES } from '@/lib/data/geo_locations.js';
 
@@ -132,12 +137,14 @@ export default function Dashboard() {
   const [copiedId, setCopiedId] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
 
-  // Filters
+  // Filters & Sorting
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountryFilter, setSelectedCountryFilter] = useState('');
   const [hasEmailFilter, setHasEmailFilter] = useState(false);
   const [hasPhoneFilter, setHasPhoneFilter] = useState(false);
   const [previewFilter, setPreviewFilter] = useState('ALL');
+  const [previewSortField, setPreviewSortField] = useState(null);
+  const [previewSortDir, setPreviewSortDir] = useState('asc'); // 'asc' | 'desc'
 
   // Scraper form state
   const [scraperQuery, setScraperQuery] = useState('');
@@ -151,6 +158,7 @@ export default function Dashboard() {
   const [jobSummary, setJobSummary] = useState(null);
   const logContainerRef = useRef(null);
   const [autoScrollLogs, setAutoScrollLogs] = useState(false);
+  const [scraperRightTab, setScraperRightTab] = useState('leads'); // 'leads' | 'logs'
 
   // Google Maps Hyper-Local Location Builder states
   const [mapsCountryCode, setMapsCountryCode] = useState('US');
@@ -248,16 +256,51 @@ export default function Dashboard() {
     if (previewFilter === 'P1') {
       list = leads.filter((l) => l.email && l.phone);
     } else if (previewFilter === 'LINKEDIN') {
-      list = leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:'));
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:') || (l.website || '').toLowerCase().includes('linkedin.com'));
     } else if (previewFilter === 'INSTAGRAM') {
-      list = leads.filter((l) => (l.source || '').toLowerCase().includes('instagram') || (l.registration_number || '').startsWith('IG:'));
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('instagram') || (l.registration_number || '').startsWith('IG:') || (l.website || '').toLowerCase().includes('instagram.com'));
     } else if (previewFilter === 'FACEBOOK') {
-      list = leads.filter((l) => (l.source || '').toLowerCase().includes('facebook') || (l.registration_number || '').startsWith('FB:'));
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('facebook') || (l.registration_number || '').startsWith('FB:') || (l.website || '').toLowerCase().includes('facebook.com'));
     } else if (previewFilter === 'MAPS') {
-      list = leads.filter((l) => (l.source || '').toLowerCase().includes('maps'));
+      list = leads.filter((l) => (l.source || '').toLowerCase().includes('maps') || (l.registration_number || '').startsWith('MAPS-'));
+    } else if (previewFilter === 'REGISTRY') {
+      list = leads.filter((l) => {
+        const src = (l.source || '').toLowerCase();
+        const reg = (l.registration_number || '').toLowerCase();
+        return !src.includes('maps') && !src.includes('linkedin') && !src.includes('instagram') && !src.includes('facebook') &&
+               !reg.startsWith('li:') && !reg.startsWith('ig:') && !reg.startsWith('fb:') && !reg.startsWith('maps-');
+      });
     }
-    return list.slice(0, 8);
-  }, [leads, previewFilter]);
+    if (previewSortField) {
+      list = [...list].sort((a, b) => {
+        const valA = a[previewSortField] ?? '';
+        const valB = b[previewSortField] ?? '';
+        const strA = String(valA).trim();
+        const strB = String(valB).trim();
+
+        if (!strA && strB) return 1;
+        if (strA && !strB) return -1;
+        if (!strA && !strB) return 0;
+
+        const cmp = strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
+        return previewSortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    return list.slice(0, 12);
+  }, [leads, previewFilter, previewSortField, previewSortDir]);
+
+  const handlePreviewSort = (field) => {
+    if (previewSortField !== field) {
+      setPreviewSortField(field);
+      setPreviewSortDir('asc');
+    } else if (previewSortDir === 'asc') {
+      setPreviewSortDir('desc');
+    } else {
+      setPreviewSortField(null);
+      setPreviewSortDir('asc');
+    }
+  };
 
   // Dedicated Email Dispatch UI states
   const [emailRecipient, setEmailRecipient] = useState('');
@@ -1017,14 +1060,27 @@ export default function Dashboard() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setPreviewFilter('MAPS')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition inline-flex items-center gap-1.5 ${
+                        previewFilter === 'MAPS'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
+                      }`}
+                    >
+                      <MapPin className="h-3 w-3 text-rose-600" />
+                      <span>Google Maps ({leads.filter((l) => (l.source || '').toLowerCase().includes('maps') || (l.registration_number || '').startsWith('MAPS-')).length})</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setPreviewFilter('LINKEDIN')}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition inline-flex items-center gap-1.5 ${
                         previewFilter === 'LINKEDIN'
                           ? 'bg-blue-600 text-white shadow-xs'
                           : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'
                       }`}
                     >
-                      LinkedIn ({leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:')).length})
+                      <Building2 className="h-3 w-3 text-blue-600" />
+                      <span>LinkedIn ({leads.filter((l) => (l.source || '').toLowerCase().includes('linkedin') || (l.registration_number || '').startsWith('LI:') || (l.website || '').toLowerCase().includes('linkedin.com')).length})</span>
                     </button>
                     <button
                       type="button"
@@ -1036,7 +1092,7 @@ export default function Dashboard() {
                       }`}
                     >
                       <InstagramIcon className="h-3 w-3" />
-                      <span>Instagram ({leads.filter((l) => (l.source || '').toLowerCase().includes('instagram') || (l.registration_number || '').startsWith('IG:')).length})</span>
+                      <span>Instagram ({leads.filter((l) => (l.source || '').toLowerCase().includes('instagram') || (l.registration_number || '').startsWith('IG:') || (l.website || '').toLowerCase().includes('instagram.com')).length})</span>
                     </button>
                     <button
                       type="button"
@@ -1048,19 +1104,32 @@ export default function Dashboard() {
                       }`}
                     >
                       <FacebookIcon className="h-3 w-3" />
-                      <span>Facebook ({leads.filter((l) => (l.source || '').toLowerCase().includes('facebook') || (l.registration_number || '').startsWith('FB:')).length})</span>
+                      <span>Facebook ({leads.filter((l) => (l.source || '').toLowerCase().includes('facebook') || (l.registration_number || '').startsWith('FB:') || (l.website || '').toLowerCase().includes('facebook.com')).length})</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewFilter('MAPS')}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
-                        previewFilter === 'MAPS'
-                          ? 'bg-rose-600 text-white shadow-xs'
-                          : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
-                      }`}
-                    >
-                      Google Maps ({leads.filter((l) => (l.source || '').toLowerCase().includes('maps')).length})
-                    </button>
+                    {leads.some((l) => {
+                      const src = (l.source || '').toLowerCase();
+                      const reg = (l.registration_number || '').toLowerCase();
+                      return !src.includes('maps') && !src.includes('linkedin') && !src.includes('instagram') && !src.includes('facebook') &&
+                             !reg.startsWith('li:') && !reg.startsWith('ig:') && !reg.startsWith('fb:') && !reg.startsWith('maps-');
+                    }) && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewFilter('REGISTRY')}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition inline-flex items-center gap-1.5 ${
+                          previewFilter === 'REGISTRY'
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50'
+                        }`}
+                      >
+                        <Landmark className="h-3 w-3 text-indigo-600" />
+                        <span>Registries ({leads.filter((l) => {
+                          const src = (l.source || '').toLowerCase();
+                          const reg = (l.registration_number || '').toLowerCase();
+                          return !src.includes('maps') && !src.includes('linkedin') && !src.includes('instagram') && !src.includes('facebook') &&
+                                 !reg.startsWith('li:') && !reg.startsWith('ig:') && !reg.startsWith('fb:') && !reg.startsWith('maps-');
+                        }).length})</span>
+                      </button>
+                    )}
                   </div>
                 </div>
                 <button
@@ -1075,21 +1144,74 @@ export default function Dashboard() {
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs text-slate-800 table-auto">
-                  <thead className="border-b border-slate-200 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-700 font-semibold">
+                  <thead className="border-b border-slate-200 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-700 font-semibold select-none">
                     <tr>
-                      <th className="py-2.5 pl-3.5 pr-2 text-black font-bold">Company Name</th>
+                      <th
+                        onClick={() => handlePreviewSort('company_name')}
+                        className="py-2.5 pl-3.5 pr-2 text-black font-bold cursor-pointer hover:bg-slate-200/80 transition"
+                        title="Click to sort by Company Name"
+                      >
+                        <div className="inline-flex items-center gap-1">
+                          <span>Company Name</span>
+                          {previewSortField === 'company_name' ? (
+                            previewSortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-600" /> : <ArrowDown className="h-3 w-3 text-emerald-600" />
+                          ) : (
+                            <ArrowUpDown className="h-3 w-3 text-slate-400 opacity-40 hover:opacity-100" />
+                          )}
+                        </div>
+                      </th>
+                      <th className="px-2.5 py-2.5 font-bold text-slate-700">Origin / Source</th>
                       <th className="px-2.5 py-2.5 font-bold text-emerald-700">Phone & Email</th>
                       <th className="px-2.5 py-2.5 font-bold text-blue-700">Website</th>
-                      <th className="px-2.5 py-2.5">Country</th>
-                      <th className="px-2.5 py-2.5">Reg. Number</th>
-                      <th className="px-2.5 py-2.5">Director / Officers</th>
+                      <th
+                        onClick={() => handlePreviewSort('country')}
+                        className="px-2.5 py-2.5 cursor-pointer hover:bg-slate-200/80 transition"
+                        title="Click to sort by Country"
+                      >
+                        <div className="inline-flex items-center gap-1">
+                          <span>Country</span>
+                          {previewSortField === 'country' ? (
+                            previewSortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-600" /> : <ArrowDown className="h-3 w-3 text-emerald-600" />
+                          ) : (
+                            <ArrowUpDown className="h-3 w-3 text-slate-400 opacity-40 hover:opacity-100" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handlePreviewSort('registration_number')}
+                        className="px-2.5 py-2.5 cursor-pointer hover:bg-slate-200/80 transition"
+                        title="Click to sort by Registration Number"
+                      >
+                        <div className="inline-flex items-center gap-1">
+                          <span>Reg. Number</span>
+                          {previewSortField === 'registration_number' ? (
+                            previewSortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-600" /> : <ArrowDown className="h-3 w-3 text-emerald-600" />
+                          ) : (
+                            <ArrowUpDown className="h-3 w-3 text-slate-400 opacity-40 hover:opacity-100" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handlePreviewSort('director')}
+                        className="px-2.5 py-2.5 cursor-pointer hover:bg-slate-200/80 transition"
+                        title="Click to sort by Director"
+                      >
+                        <div className="inline-flex items-center gap-1">
+                          <span>Director / Officers</span>
+                          {previewSortField === 'director' ? (
+                            previewSortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-600" /> : <ArrowDown className="h-3 w-3 text-emerald-600" />
+                          ) : (
+                            <ArrowUpDown className="h-3 w-3 text-slate-400 opacity-40 hover:opacity-100" />
+                          )}
+                        </div>
+                      </th>
                       <th className="py-2.5 pl-1 pr-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-normal">
                     {leads.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="py-8 text-center text-slate-500">
+                        <td colSpan="8" className="py-8 text-center text-slate-500">
                           {loadingLeads ? (
                             <div className="flex flex-col items-center justify-center gap-2">
                               <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
@@ -1115,6 +1237,9 @@ export default function Dashboard() {
                         <tr key={lead.id} className="transition-colors hover:bg-slate-50">
                           <td className="py-2.5 pl-3.5 pr-2 font-bold text-black truncate max-w-[170px]" title={lead.company_name}>
                             {lead.company_name}
+                          </td>
+                          <td className="px-2.5 py-2.5 whitespace-nowrap">
+                            <LeadSourceBadge lead={lead} size="sm" />
                           </td>
                           <td className="px-2.5 py-2.5">
                             <div className="flex flex-col gap-0.5 max-w-[190px]">
@@ -1194,7 +1319,7 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-                <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : previewFilter === 'INSTAGRAM' ? 'Instagram' : previewFilter === 'FACEBOOK' ? 'Facebook' : 'Google Maps'})</span>
+                <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : previewFilter === 'INSTAGRAM' ? 'Instagram' : previewFilter === 'FACEBOOK' ? 'Facebook' : previewFilter === 'REGISTRY' ? 'Registries' : 'Google Maps'})</span>
                 <button
                   onClick={() => setActiveTab('exporter')}
                   className="font-semibold text-blue-600 hover:underline flex items-center gap-1"
@@ -2284,104 +2409,210 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Right: Live Activity Stream Terminal */}
+            {/* Right: Live Activity & Generated Leads Feed */}
             <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-xs lg:col-span-7">
-              {/* Terminal Window Header */}
-              <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
-                <div className="flex items-center gap-2">
-                  <Terminal className="h-3.5 w-3.5 text-blue-600" />
-                  <span className="font-mono text-xs font-semibold text-slate-900">
-                    Search Activity & Progress
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {isScraping && (
-                    <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-200">
-                      <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
-                      Active
-                    </span>
-                  )}
-                  <label className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={autoScrollLogs}
-                      onChange={(e) => setAutoScrollLogs(e.target.checked)}
-                      className="h-3 w-3 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span>Auto-scroll</span>
-                  </label>
+              {/* Header with View Switcher */}
+              <div className="mb-3 flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 gap-2">
+                <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
                   <button
-                    onClick={() => setLiveLogs([])}
-                    className="text-[11px] text-slate-500 hover:text-slate-800 transition"
+                    type="button"
+                    onClick={() => setScraperRightTab('leads')}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-semibold transition ${
+                      scraperRightTab === 'leads'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   >
-                    Clear Updates
+                    <Building2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                    <span>Live Generated Leads ({leads.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScraperRightTab('logs')}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-semibold transition ${
+                      scraperRightTab === 'logs'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Terminal className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                    <span>Console Logs</span>
+                    {isScraping && <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />}
                   </button>
                 </div>
-              </div>
 
-              {/* Terminal Logs Window (High-contrast Developer Dark Screen) */}
-              <div
-                ref={logContainerRef}
-                className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed max-h-[460px] min-h-[360px] rounded-xl bg-slate-950 p-3 space-y-1 border border-slate-900 shadow-inner"
-              >
-                {liveLogs.length === 0 ? (
-                  <div className="flex h-full flex-col items-center justify-center py-16 text-slate-500">
-                    <Terminal className="h-8 w-8 mb-2 opacity-40 text-slate-500" />
-                    <span className="font-medium text-slate-400">No active search right now.</span>
-                    <span className="text-[10px] text-slate-500 mt-1">Select a location and business type above, then click Find Leads Now.</span>
-                  </div>
-                ) : (
-                  liveLogs.map((log, idx) => {
-                    const time = log.timestamp ? log.timestamp.split('T')[1].slice(0, 8) : '';
-                    let levelColor = 'text-slate-300';
-                    if (log.level === 'success') levelColor = 'text-emerald-400 font-semibold';
-                    if (log.level === 'warn') levelColor = 'text-amber-400';
-                    if (log.level === 'error') levelColor = 'text-rose-400 font-semibold';
-                    if (log.level === 'info') levelColor = 'text-slate-300';
-
-                    return (
-                      <div key={idx} className="flex items-start gap-2">
-                        <span className="text-slate-600 select-none">[{time}]</span>
-                        <span className={levelColor}>{log.message}</span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Job Completed Summary Banner */}
-              {jobSummary && (
-                <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-semibold">
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>Search Complete (All Leads Saved to Database)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  {isScraping && (
+                    <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-200">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
+                      Crawling Active
+                    </span>
+                  )}
+                  {scraperRightTab === 'logs' ? (
+                    <>
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={autoScrollLogs}
+                          onChange={(e) => setAutoScrollLogs(e.target.checked)}
+                          className="h-3 w-3 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span>Auto-scroll</span>
+                      </label>
                       <button
-                        onClick={() => setActiveTab('exporter')}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition active:scale-[0.98]"
+                        onClick={() => setLiveLogs([])}
+                        className="text-[11px] text-slate-500 hover:text-slate-800 transition"
                       >
-                        <Sliders className="h-3.5 w-3.5" />
-                        <span>Select Columns & Export / Email Table</span>
-                        <ChevronRight className="h-3.5 w-3.5" />
+                        Clear
                       </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setActiveTab('exporter')}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
+                    >
+                      <span>Open Full Explorer</span>
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* View 1: Live Generated Leads Feed */}
+              {scraperRightTab === 'leads' ? (
+                <div className="flex-1 flex flex-col min-h-[380px] max-h-[500px]">
+                  {/* Job Completed Summary Banner */}
+                  {jobSummary && (
+                    <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-900">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-semibold">
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span>Search Complete (All Leads Saved to Database)</span>
+                        </div>
+                        <a
+                          href="/exports/Master_B2B_Leads.xlsx"
+                          download="Master_B2B_Leads.xlsx"
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-xs hover:bg-emerald-700 transition"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>Download Excel</span>
+                        </a>
+                      </div>
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">
+                        <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
+                          <div className="font-bold text-emerald-700 text-sm">{jobSummary.leadsCollected}</div>
+                          <div className="text-slate-500 text-[10px]">New Leads</div>
+                        </div>
+                        <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
+                          <div className="font-bold text-amber-600 text-sm">{jobSummary.duplicatesSkipped}</div>
+                          <div className="text-slate-500 text-[10px]">Duplicates Skipped</div>
+                        </div>
+                        <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
+                          <div className="font-bold text-rose-600 text-sm">{jobSummary.errorsCount}</div>
+                          <div className="text-slate-500 text-[10px]">Errors</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">
-                    <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
-                      <div className="font-bold text-slate-900">{jobSummary.leadsCollected}</div>
-                      <div className="text-slate-500">New Leads</div>
+                  )}
+
+                  {/* List of recent leads cards with clear origin badges */}
+                  {leads.length === 0 ? (
+                    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                      <Building2 className="h-8 w-8 mb-2 opacity-30 text-slate-500" />
+                      <div className="font-bold text-slate-700 text-xs">No Leads Collected Yet</div>
+                      <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
+                        Configure your target niche and location on the left, then click Start Search to extract verified leads with origin badges.
+                      </p>
                     </div>
-                    <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
-                      <div className="font-bold text-amber-600">{jobSummary.duplicatesSkipped}</div>
-                      <div className="text-slate-500">Duplicates Skipped</div>
+                  ) : (
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                      {leads.slice(0, 8).map((lead) => (
+                        <div
+                          key={lead.id}
+                          className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-slate-300 transition"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-bold text-xs text-slate-900 line-clamp-1">{lead.company_name}</div>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <CountryFlag code={lead.country} className="h-3 w-4 shrink-0" />
+                                <span className="text-[11px] text-slate-500">{lead.country}</span>
+                                <span className="text-slate-300">•</span>
+                                <span className="text-[11px] text-slate-600 line-clamp-1">{lead.director || lead.industry || 'Business'}</span>
+                              </div>
+                            </div>
+                            <LeadSourceBadge lead={lead} size="sm" />
+                          </div>
+
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px]">
+                            <div className="flex items-center gap-3">
+                              {lead.phone ? (
+                                <a
+                                  href={`tel:${lead.phone}`}
+                                  className="inline-flex items-center gap-1 font-mono font-semibold text-emerald-700 hover:underline"
+                                >
+                                  <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
+                                  <span>{lead.phone}</span>
+                                </a>
+                              ) : (
+                                <span className="text-slate-300 font-mono">No phone</span>
+                              )}
+                              {lead.email ? (
+                                <a
+                                  href={`mailto:${lead.email}`}
+                                  className="inline-flex items-center gap-1 font-mono font-semibold text-emerald-700 hover:underline"
+                                >
+                                  <Mail className="h-3 w-3 text-emerald-600 shrink-0" />
+                                  <span className="truncate max-w-[150px]">{lead.email}</span>
+                                </a>
+                              ) : (
+                                <span className="text-slate-300 font-mono">No email</span>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setSelectedLead(lead)}
+                              className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:underline text-[11px]"
+                            >
+                              <Eye className="h-3 w-3" />
+                              <span>View Details</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
-                      <div className="font-bold text-rose-600">{jobSummary.errorsCount}</div>
-                      <div className="text-slate-500">Errors</div>
+                  )}
+                </div>
+              ) : (
+                /* View 2: Terminal Logs Window (High-contrast Developer Dark Screen) */
+                <div
+                  ref={logContainerRef}
+                  className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed max-h-[460px] min-h-[360px] rounded-xl bg-slate-950 p-3 space-y-1 border border-slate-900 shadow-inner"
+                >
+                  {liveLogs.length === 0 ? (
+                    <div className="flex h-full flex-col items-center justify-center py-16 text-slate-500">
+                      <Terminal className="h-8 w-8 mb-2 opacity-40 text-slate-500" />
+                      <span className="font-medium text-slate-400">No active search right now.</span>
+                      <span className="text-[10px] text-slate-500 mt-1">Select a location and business type above, then click Find Leads Now.</span>
                     </div>
-                  </div>
+                  ) : (
+                    liveLogs.map((log, idx) => {
+                      const time = log.timestamp ? log.timestamp.split('T')[1].slice(0, 8) : '';
+                      let levelColor = 'text-slate-300';
+                      if (log.level === 'success') levelColor = 'text-emerald-400 font-semibold';
+                      if (log.level === 'warn') levelColor = 'text-amber-400';
+                      if (log.level === 'error') levelColor = 'text-rose-400 font-semibold';
+                      if (log.level === 'info') levelColor = 'text-slate-300';
+
+                      return (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="text-slate-600 select-none">[{time}]</span>
+                          <span className={levelColor}>{log.message}</span>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               )}
             </div>
@@ -2962,26 +3193,7 @@ export default function Dashboard() {
                     <option value="Converted">Converted</option>
                   </select>
                   <span className="text-slate-300">•</span>
-                  <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
-                    (selectedLead.source || '').toLowerCase().includes('facebook')
-                      ? 'bg-blue-50 text-[#1877F2] ring-1 ring-blue-200'
-                      : (selectedLead.source || '').toLowerCase().includes('instagram')
-                      ? 'bg-pink-50 text-pink-700 ring-1 ring-pink-200'
-                      : (selectedLead.source || '').toLowerCase().includes('linkedin')
-                      ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-                      : 'bg-slate-100 text-slate-700'
-                  }`}>
-                    {(selectedLead.source || '').toLowerCase().includes('facebook') && (
-                      <FacebookIcon className="h-2.5 w-2.5 shrink-0" />
-                    )}
-                    {(selectedLead.source || '').toLowerCase().includes('instagram') && (
-                      <InstagramIcon className="h-2.5 w-2.5 shrink-0" />
-                    )}
-                    {(selectedLead.source || '').toLowerCase().includes('linkedin') && (
-                      <Building2 className="h-2.5 w-2.5 text-blue-600 shrink-0" />
-                    )}
-                    <span>{selectedLead.source || 'Scraped Lead'}</span>
-                  </span>
+                  <LeadSourceBadge lead={selectedLead} size="md" />
                 </div>
               </div>
               <button

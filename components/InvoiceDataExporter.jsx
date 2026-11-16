@@ -22,10 +22,18 @@ import {
   Eye,
   Sparkles,
   Building2,
-  Filter
+  MapPin,
+  Landmark,
+  Filter,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import MicrosoftExcelIcon from './MicrosoftExcelIcon';
 import CountryFlag from './CountryFlag';
+import InstagramIcon from './InstagramIcon';
+import FacebookIcon from './FacebookIcon';
+import LeadSourceBadge from './LeadSourceBadge';
 
 const getColumnPriorityMeta = (colName) => {
   const lower = colName.trim().toLowerCase();
@@ -113,10 +121,15 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
   // Filters state
   const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'inactive' | 'all'
   const [contactPriorityFilter, setContactPriorityFilter] = useState('all'); // 'all' | 'p1_both' | 'p1_either' | 'p2_website'
+  const [selectedSourceFilter, setSelectedSourceFilter] = useState('ALL'); // 'ALL' | 'MAPS' | 'LINKEDIN' | 'INSTAGRAM' | 'FACEBOOK' | 'REGISTRY'
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Table Column Interactive Sorting
+  const [tableSortCol, setTableSortCol] = useState(null);
+  const [tableSortDir, setTableSortDir] = useState('asc'); // 'asc' | 'desc'
 
   // Selected Columns to Export
   const [selectedColumns, setSelectedColumns] = useState([]);
@@ -189,13 +202,29 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
   const handleClearFilters = () => {
     setStatusFilter('active');
     setContactPriorityFilter('all');
+    setSelectedSourceFilter('ALL');
     setSelectedCountry('');
     setSelectedIndustry('');
     setSelectedCity('');
     setSearchQuery('');
+    setTableSortCol(null);
+    setTableSortDir('asc');
     setCurrentPage(1);
     const validCols = (dataset.columns || []).filter(c => !c.startsWith('__'));
     setSelectedColumns(sortColumnsByPriority(validCols));
+  };
+
+  const handleColumnSort = (col) => {
+    if (tableSortCol !== col) {
+      setTableSortCol(col);
+      setTableSortDir('asc');
+    } else if (tableSortDir === 'asc') {
+      setTableSortDir('desc');
+    } else {
+      setTableSortCol(null);
+      setTableSortDir('asc');
+    }
+    setCurrentPage(1);
   };
 
   const availableCountries = useMemo(() => {
@@ -206,6 +235,29 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
       if (c) set.add(c);
     });
     return Array.from(set).sort();
+  }, [dataset.records]);
+
+  const sourceCounts = useMemo(() => {
+    const counts = { ALL: 0, MAPS: 0, LINKEDIN: 0, INSTAGRAM: 0, FACEBOOK: 0, REGISTRY: 0 };
+    if (!dataset.records) return counts;
+    counts.ALL = dataset.records.length;
+    dataset.records.forEach((r) => {
+      const src = (r.source || r.Source || '').toLowerCase();
+      const reg = (r.registration_number || r.Registration_Number || '').toLowerCase();
+      const web = (r.website || r.Website || '').toLowerCase();
+      if (src.includes('maps') || reg.startsWith('maps-')) {
+        counts.MAPS++;
+      } else if (src.includes('linkedin') || reg.startsWith('li:') || web.includes('linkedin.com')) {
+        counts.LINKEDIN++;
+      } else if (src.includes('instagram') || reg.startsWith('ig:') || web.includes('instagram.com')) {
+        counts.INSTAGRAM++;
+      } else if (src.includes('facebook') || reg.startsWith('fb:') || web.includes('facebook.com')) {
+        counts.FACEBOOK++;
+      } else {
+        counts.REGISTRY++;
+      }
+    });
+    return counts;
   }, [dataset.records]);
 
   // Reactive filtering & Priority Sorting
@@ -229,6 +281,27 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         if (!emailVal && !phoneVal) return false;
       } else if (contactPriorityFilter === 'p2_website') {
         if (!websiteVal) return false;
+      }
+
+      if (selectedSourceFilter !== 'ALL') {
+        const src = (record.source || record.Source || '').toLowerCase();
+        const reg = (record.registration_number || record.Registration_Number || '').toLowerCase();
+        const web = (record.website || record.Website || '').toLowerCase();
+
+        if (selectedSourceFilter === 'MAPS') {
+          if (!src.includes('maps') && !reg.startsWith('maps-')) return false;
+        } else if (selectedSourceFilter === 'LINKEDIN') {
+          if (!src.includes('linkedin') && !reg.startsWith('li:') && !web.includes('linkedin.com')) return false;
+        } else if (selectedSourceFilter === 'INSTAGRAM') {
+          if (!src.includes('instagram') && !reg.startsWith('ig:') && !web.includes('instagram.com')) return false;
+        } else if (selectedSourceFilter === 'FACEBOOK') {
+          if (!src.includes('facebook') && !reg.startsWith('fb:') && !web.includes('facebook.com')) return false;
+        } else if (selectedSourceFilter === 'REGISTRY') {
+          if (src.includes('maps') || src.includes('linkedin') || src.includes('instagram') || src.includes('facebook') ||
+              reg.startsWith('maps-') || reg.startsWith('li:') || reg.startsWith('ig:') || reg.startsWith('fb:')) {
+            return false;
+          }
+        }
       }
 
       if (selectedCountry) {
@@ -255,7 +328,34 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
       return true;
     });
 
-    // Priority sort: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
+    // Custom Interactive Column Sort (Ascending / Descending)
+    if (tableSortCol) {
+      return matched.sort((a, b) => {
+        const valA = a[tableSortCol] ?? '';
+        const valB = b[tableSortCol] ?? '';
+        const strA = String(valA).trim();
+        const strB = String(valB).trim();
+
+        // Push empty values to bottom in both ascending and descending order
+        if (!strA && strB) return 1;
+        if (strA && !strB) return -1;
+        if (!strA && !strB) return 0;
+
+        // Numeric comparison only when BOTH values are purely numeric
+        const isNumA = /^-?\d+(\.\d+)?$/.test(strA);
+        const isNumB = /^-?\d+(\.\d+)?$/.test(strB);
+        if (isNumA && isNumB) {
+          const numA = Number(strA);
+          const numB = Number(strB);
+          return tableSortDir === 'asc' ? numA - numB : numB - numA;
+        }
+
+        const cmp = strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
+        return tableSortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    // Default Priority sort: Phone & Email (1st) -> Website (2nd) -> Rest (3rd)
     return matched.sort((a, b) => {
       const getScore = (rec) => {
         const hasEmail = Boolean(getRecordField(rec, 'email'));
@@ -269,7 +369,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
       };
       return getScore(a) - getScore(b);
     });
-  }, [dataset.records, statusFilter, contactPriorityFilter, selectedCountry, selectedIndustry, selectedCity, searchQuery]);
+  }, [dataset.records, statusFilter, contactPriorityFilter, selectedSourceFilter, selectedCountry, selectedIndustry, selectedCity, searchQuery, tableSortCol, tableSortDir]);
 
   const totalPages = Math.ceil(filteredRecords.length / pageSize) || 1;
   const paginatedRecords = useMemo(() => {
@@ -445,7 +545,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     return sortColumnsByPriority(raw);
   }, [dataset.columns]);
 
-  const isFiltered = statusFilter !== 'active' || contactPriorityFilter !== 'all' || selectedCountry || selectedIndustry || selectedCity || searchQuery;
+  const isFiltered = statusFilter !== 'active' || contactPriorityFilter !== 'all' || selectedSourceFilter !== 'ALL' || selectedCountry || selectedIndustry || selectedCity || searchQuery || tableSortCol !== null;
 
   return (
     <div className="space-y-4 text-slate-900">
@@ -678,6 +778,84 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         </div>
       )}
 
+      {/* Source Engine Filter Pills (Strictly SVG icons, Zero Emojis) */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-2 text-xs shadow-xs">
+        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Origin Source:</span>
+        <button
+          type="button"
+          onClick={() => { setSelectedSourceFilter('ALL'); setCurrentPage(1); }}
+          className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+            selectedSourceFilter === 'ALL'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-black'
+          }`}
+        >
+          All ({sourceCounts.ALL})
+        </button>
+        <button
+          type="button"
+          onClick={() => { setSelectedSourceFilter('MAPS'); setCurrentPage(1); }}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+            selectedSourceFilter === 'MAPS'
+              ? 'bg-rose-600 text-white shadow-xs'
+              : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
+          }`}
+        >
+          <MapPin className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+          <span>Google Maps ({sourceCounts.MAPS})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setSelectedSourceFilter('LINKEDIN'); setCurrentPage(1); }}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+            selectedSourceFilter === 'LINKEDIN'
+              ? 'bg-[#0A66C2] text-white shadow-xs'
+              : 'bg-white text-[#0A66C2] border border-sky-200 hover:bg-sky-50'
+          }`}
+        >
+          <Building2 className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+          <span>LinkedIn ({sourceCounts.LINKEDIN})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setSelectedSourceFilter('INSTAGRAM'); setCurrentPage(1); }}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+            selectedSourceFilter === 'INSTAGRAM'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xs'
+              : 'bg-white text-pink-700 border border-pink-200 hover:bg-pink-50'
+          }`}
+        >
+          <InstagramIcon className="h-3.5 w-3.5 shrink-0" />
+          <span>Instagram ({sourceCounts.INSTAGRAM})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setSelectedSourceFilter('FACEBOOK'); setCurrentPage(1); }}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+            selectedSourceFilter === 'FACEBOOK'
+              ? 'bg-[#1877F2] text-white shadow-xs'
+              : 'bg-white text-[#1877F2] border border-blue-200 hover:bg-blue-50'
+          }`}
+        >
+          <FacebookIcon className="h-3.5 w-3.5 shrink-0" />
+          <span>Facebook ({sourceCounts.FACEBOOK})</span>
+        </button>
+        {sourceCounts.REGISTRY > 0 && (
+          <button
+            type="button"
+            onClick={() => { setSelectedSourceFilter('REGISTRY'); setCurrentPage(1); }}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+              selectedSourceFilter === 'REGISTRY'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50'
+            }`}
+          >
+            <Landmark className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+            <span>Registries ({sourceCounts.REGISTRY})</span>
+          </button>
+        )}
+      </div>
+
       {/* Clean Filters Row (Unified Single Bar) */}
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 text-xs shadow-xs">
         {/* Search */}
@@ -771,6 +949,26 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
               <option key={city} value={city}>{city}</option>
             ))}
           </select>
+        )}
+
+        {/* Active Column Sort Pill */}
+        {tableSortCol && (
+          <div className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800">
+            <span>Sorted by: {tableSortCol}</span>
+            {tableSortDir === 'asc' ? (
+              <ArrowUp className="h-3 w-3 text-blue-600 shrink-0" />
+            ) : (
+              <ArrowDown className="h-3 w-3 text-blue-600 shrink-0" />
+            )}
+            <button
+              type="button"
+              onClick={() => { setTableSortCol(null); setTableSortDir('asc'); }}
+              className="ml-1 text-blue-600 hover:text-blue-900 p-0.5 rounded-sm hover:bg-blue-100"
+              title="Reset column sort to priority order"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         )}
 
         {/* Reset Filter Button */}
@@ -884,18 +1082,32 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
                   <th className="px-3 py-2.5 w-10 text-center text-slate-400 font-normal">#</th>
                   {orderedSelectedColumns.map((col) => {
                     const meta = getColumnPriorityMeta(col);
+                    const isSorted = tableSortCol === col;
                     return (
                       <th
                         key={col}
-                        className={`px-3.5 py-2.5 whitespace-nowrap ${
+                        onClick={() => handleColumnSort(col)}
+                        className={`px-3.5 py-2.5 whitespace-nowrap cursor-pointer select-none transition hover:bg-slate-200/80 group ${
                           meta.priority === 1
                             ? 'text-emerald-700 font-bold'
                             : meta.priority === 2
                             ? 'text-blue-700 font-bold'
                             : 'text-black font-semibold'
-                        }`}
+                        } ${isSorted ? 'bg-slate-200/90' : ''}`}
+                        title={`Click to sort by ${col} (${isSorted ? (tableSortDir === 'asc' ? 'sorted ascending - click for descending' : 'sorted descending - click to reset') : 'click to sort'})`}
                       >
-                        {col}
+                        <div className="inline-flex items-center gap-1.5">
+                          <span>{col}</span>
+                          {isSorted ? (
+                            tableSortDir === 'asc' ? (
+                              <ArrowUp className="h-3 w-3 text-emerald-600 shrink-0" />
+                            ) : (
+                              <ArrowDown className="h-3 w-3 text-emerald-600 shrink-0" />
+                            )
+                          ) : (
+                            <ArrowUpDown className="h-3 w-3 text-slate-400 opacity-40 group-hover:opacity-100 transition shrink-0" />
+                          )}
+                        </div>
                       </th>
                     );
                   })}
@@ -1009,6 +1221,15 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
                           );
                         }
 
+                        // Source / Origin
+                        if (lowerCol === 'source' || lowerCol === 'origin') {
+                          return (
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap">
+                              <LeadSourceBadge lead={row} size="sm" />
+                            </td>
+                          );
+                        }
+
                         // Default
                         return (
                           <td key={col} className="px-3.5 py-2 whitespace-nowrap text-slate-800">
@@ -1110,10 +1331,12 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
                 <h3 className="text-base font-bold text-slate-900">
                   {getRecordField(selectedLead, 'company') || selectedLead.company_name || 'Company Details'}
                 </h3>
-                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-500">
+                  <LeadSourceBadge lead={selectedLead} size="md" />
+                  <span className="text-slate-300">•</span>
                   <CountryFlag code={getRecordField(selectedLead, 'country') || selectedLead.country} className="h-3 w-4.5" />
                   <span>{getRecordField(selectedLead, 'country') || selectedLead.country || 'International'}</span>
-                  <span>•</span>
+                  <span className="text-slate-300">•</span>
                   <span className="text-emerald-600 font-semibold">
                     {selectedLead.__status || getRecordField(selectedLead, 'status') || selectedLead.status || 'Active'}
                   </span>
