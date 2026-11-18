@@ -47,7 +47,8 @@ import {
   Landmark,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Hash
 } from 'lucide-react';
 import InvoiceDataExporter from '@/components/InvoiceDataExporter';
 import MicrosoftExcelIcon from '@/components/MicrosoftExcelIcon';
@@ -124,13 +125,15 @@ const POPULAR_FB_BIO_INTENTS = [
 
 export default function Dashboard() {
   // Navigation
-  const [activeTab, setActiveTab] = useState('explorer'); // 'explorer', 'scraper', 'history', 'api'
+  const [activeTab, setActiveTab] = useState('explorer'); // 'explorer', 'exporter', 'scraper', 'email', 'history', 'api'
+  const [selectedRunJobId, setSelectedRunJobId] = useState(null);
 
   // Scraper Mode: 'MAPS' (Google Maps) or 'LINKEDIN' (LinkedIn Leads)
   const [selectedEngine, setSelectedEngine] = useState('MAPS');
 
   // Data states
   const [leads, setLeads] = useState([]);
+  const [lastRunLeads, setLastRunLeads] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [health, setHealth] = useState(null);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -147,7 +150,6 @@ export default function Dashboard() {
   const [previewSortDir, setPreviewSortDir] = useState('asc'); // 'asc' | 'desc'
 
   // Scraper form state
-  const [scraperQuery, setScraperQuery] = useState('');
   const [scraperLimit, setScraperLimit] = useState(10);
   const [enrichWebsite, setEnrichWebsite] = useState(true);
   const [delayMs, setDelayMs] = useState(1000);
@@ -166,7 +168,6 @@ export default function Dashboard() {
   const [mapsCustomCity, setMapsCustomCity] = useState('');
   const [mapsLocality, setMapsLocality] = useState('');
   const [mapsCategory, setMapsCategory] = useState('school');
-  const [mapsFreeform, setMapsFreeform] = useState(false);
 
   const activeCountryObj = GEO_COUNTRIES.find((c) => c.code === mapsCountryCode) || GEO_COUNTRIES[0];
   const activeCity = mapsCity === 'Custom City' ? mapsCustomCity : mapsCity;
@@ -186,8 +187,6 @@ export default function Dashboard() {
   const [liIndustry, setLiIndustry] = useState('SaaS Software');
   const [liRole, setLiRole] = useState('Founder CEO');
   const [liCompany, setLiCompany] = useState('');
-  const [liFreeform, setLiFreeform] = useState(false);
-  const [liCustomQuery, setLiCustomQuery] = useState('');
 
   const activeLiCountryObj = GEO_COUNTRIES.find((c) => c.code === liCountryCode) || GEO_COUNTRIES[0];
   const activeLiCity = liCity === 'Custom City' ? liCustomCity : liCity;
@@ -210,8 +209,6 @@ export default function Dashboard() {
   const [igCategory, setIgCategory] = useState('Fitness Coach Gym');
   const [igBioIntent, setIgBioIntent] = useState('DM for Collabs');
   const [igBrand, setIgBrand] = useState('');
-  const [igFreeform, setIgFreeform] = useState(false);
-  const [igCustomQuery, setIgCustomQuery] = useState('');
 
   const activeIgCountryObj = GEO_COUNTRIES.find((c) => c.code === igCountryCode) || GEO_COUNTRIES[0];
   const activeIgCity = igCity === 'Custom City' ? igCustomCity : igCity;
@@ -234,8 +231,6 @@ export default function Dashboard() {
   const [fbCategory, setFbCategory] = useState('Restaurant Cafe Diner Bakery Food');
   const [fbBioIntent, setFbBioIntent] = useState('Call Now Call Us Direct Phone');
   const [fbBrand, setFbBrand] = useState('');
-  const [fbFreeform, setFbFreeform] = useState(false);
-  const [fbCustomQuery, setFbCustomQuery] = useState('');
 
   const activeFbCountryObj = GEO_COUNTRIES.find((c) => c.code === fbCountryCode) || GEO_COUNTRIES[0];
   const activeFbCity = fbCity === 'Custom City' ? fbCustomCity : fbCity;
@@ -358,6 +353,27 @@ export default function Dashboard() {
     }
   }, []);
 
+  const handleOpenRunLeads = useCallback((jobId) => {
+    setSelectedRunJobId(jobId || null);
+    setActiveTab('exporter');
+  }, []);
+
+  const fetchRunLeads = useCallback(async (jobId) => {
+    if (!jobId) {
+      setLastRunLeads([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/leads?jobId=${encodeURIComponent(jobId)}&limit=100`);
+      const data = await res.json();
+      if (data.success) {
+        setLastRunLeads(data.leads || []);
+      }
+    } catch (err) {
+      console.error('Error fetching run leads:', err);
+    }
+  }, []);
+
   // Fetch initial data that does not depend on the lead filters.
   useEffect(() => {
     void fetchHealth();
@@ -383,11 +399,12 @@ export default function Dashboard() {
   const handleStartScrape = async () => {
     let payload = {};
     if (selectedEngine === 'FACEBOOK') {
-      const queryToUse = fbFreeform ? fbCustomQuery.trim() : synthesizedFacebookQuery.trim();
-      if (!queryToUse) {
-        alert('Please specify a category, location, or enter a Facebook search query.');
+      const hasFbCriteria = Boolean(fbCategory.trim() || activeFbLocation.trim() || fbBioIntent.trim() || fbBrand.trim());
+      if (!hasFbCriteria) {
+        alert('Please specify a category, location, or brand for Facebook search.');
         return;
       }
+      const queryToUse = synthesizedFacebookQuery.trim();
       payload = {
         engine: 'FACEBOOK',
         countries: ['FACEBOOK'],
@@ -404,11 +421,12 @@ export default function Dashboard() {
         webhookUrl: webhookUrl.trim()
       };
     } else if (selectedEngine === 'INSTAGRAM') {
-      const queryToUse = igFreeform ? igCustomQuery.trim() : synthesizedInstagramQuery.trim();
-      if (!queryToUse) {
-        alert('Please specify a category, location, or enter an Instagram search query.');
+      const hasIgCriteria = Boolean(igCategory.trim() || activeIgLocation.trim() || igBioIntent.trim() || igBrand.trim());
+      if (!hasIgCriteria) {
+        alert('Please specify a category, location, or brand for Instagram search.');
         return;
       }
+      const queryToUse = synthesizedInstagramQuery.trim();
       payload = {
         engine: 'INSTAGRAM',
         countries: ['INSTAGRAM'],
@@ -425,11 +443,12 @@ export default function Dashboard() {
         webhookUrl: webhookUrl.trim()
       };
     } else if (selectedEngine === 'LINKEDIN') {
-      const queryToUse = liFreeform ? liCustomQuery.trim() : synthesizedLinkedInQuery.trim();
-      if (!queryToUse) {
-        alert('Please specify a business category, location, or enter a LinkedIn search query.');
+      const hasLiCriteria = Boolean(liIndustry.trim() || activeLiLocation.trim() || liRole.trim() || liCompany.trim());
+      if (!hasLiCriteria) {
+        alert('Please specify a business category, location, role, or company for LinkedIn search.');
         return;
       }
+      const queryToUse = synthesizedLinkedInQuery.trim();
       payload = {
         engine: 'LINKEDIN',
         countries: ['LINKEDIN'],
@@ -446,9 +465,9 @@ export default function Dashboard() {
         webhookUrl: webhookUrl.trim()
       };
     } else {
-      const queryToUse = mapsFreeform ? scraperQuery.trim() : synthesizedMapsQuery.trim();
+      const queryToUse = synthesizedMapsQuery.trim();
       if (!queryToUse) {
-        alert('Please specify a business category/niche or enter a search query.');
+        alert('Please specify a business category/niche or location.');
         return;
       }
       payload = {
@@ -467,6 +486,7 @@ export default function Dashboard() {
     setIsScraping(true);
     setLiveLogs([]);
     setJobSummary(null);
+    setLastRunLeads([]);
     setActiveTab('scraper');
 
     try {
@@ -508,6 +528,9 @@ export default function Dashboard() {
             setLiveLogs((prev) => [...prev, eventData]);
           } else if (eventName === 'complete' && eventData) {
             setJobSummary(eventData);
+            if (eventData.jobId) {
+              fetchRunLeads(eventData.jobId);
+            }
             fetchLeads();
             fetchJobs();
             fetchHealth();
@@ -748,7 +771,10 @@ export default function Dashboard() {
               </span>
             </button>
             <button
-              onClick={() => setActiveTab('exporter')}
+              onClick={() => {
+                setSelectedRunJobId(null);
+                setActiveTab('exporter');
+              }}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition sm:text-sm ${
                 activeTab === 'exporter'
                   ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-xs font-semibold'
@@ -814,7 +840,10 @@ export default function Dashboard() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {/* TAB 0: B2B LEADS DATA EXPORTER */}
         {activeTab === 'exporter' && (
-          <InvoiceDataExporter />
+          <InvoiceDataExporter
+            activeJobId={selectedRunJobId}
+            onChangeJobId={setSelectedRunJobId}
+          />
         )}
 
         {/* TAB 1: LEADS EXPLORER */}
@@ -885,7 +914,7 @@ export default function Dashboard() {
                     <p className="text-xs text-slate-500">Breakdown of available phone numbers, emails, and websites</p>
                   </div>
                   <button
-                    onClick={() => setActiveTab('exporter')}
+                    onClick={() => handleOpenRunLeads(null)}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition"
                   >
                     <span>View All In Explorer</span>
@@ -963,7 +992,7 @@ export default function Dashboard() {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab('exporter')}
+                    onClick={() => handleOpenRunLeads(null)}
                     className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-left transition hover:border-emerald-300 hover:bg-emerald-50/50 group"
                   >
                     <div className="flex items-center gap-2.5">
@@ -1133,7 +1162,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setActiveTab('exporter')}
+                  onClick={() => handleOpenRunLeads(null)}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs transition shrink-0 self-start sm:self-auto"
                 >
                   <Eye className="h-3.5 w-3.5" />
@@ -1321,7 +1350,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
                 <span>Showing <strong>{filteredPreviewLeads.length}</strong> of <strong>{leads.length}</strong> total leads ({previewFilter === 'ALL' ? 'All' : previewFilter === 'P1' ? 'Both Phone & Email' : previewFilter === 'LINKEDIN' ? 'LinkedIn' : previewFilter === 'INSTAGRAM' ? 'Instagram' : previewFilter === 'FACEBOOK' ? 'Facebook' : previewFilter === 'REGISTRY' ? 'Registries' : 'Google Maps'})</span>
                 <button
-                  onClick={() => setActiveTab('exporter')}
+                  onClick={() => handleOpenRunLeads(null)}
                   className="font-semibold text-blue-600 hover:underline flex items-center gap-1"
                 >
                   <span>Go to Leads Explorer for pagination, custom columns & filters</span>
@@ -1446,37 +1475,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {/* GOOGLE MAPS FORM CONTROLS */}
                 {selectedEngine === 'MAPS' && (
-                  <>
-                    {/* Mode Selector: Location Builder vs Freeform */}
-                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setMapsFreeform(false)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          !mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-rose-600" />
-                          <span>Choose by Location & Niche</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMapsFreeform(true)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          mapsFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <Search className="h-3.5 w-3.5 text-slate-500" />
-                          <span>Type Custom Search</span>
-                        </span>
-                      </button>
-                    </div>
-
-                    {!mapsFreeform ? (
-                      <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5 space-y-3">
+                  <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5 space-y-3">
                         {/* Row 1: Target Country & City Dropdowns */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div>
@@ -1594,57 +1593,12 @@ export default function Dashboard() {
                             &quot;{synthesizedMapsQuery}&quot;
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Type Your Search Phrase
-                        </label>
-                        <input
-                          type="text"
-                          value={scraperQuery}
-                          onChange={(e) => setScraperQuery(e.target.value)}
-                          placeholder="e.g. bakeries in Brooklyn NY, dentists in Camden London, cafes in Shibuya Tokyo..."
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-600"
-                        />
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
 
                 {/* LINKEDIN FORM CONTROLS */}
                 {selectedEngine === 'LINKEDIN' && (
-                  <>
-                    {/* Mode Selector for LinkedIn: Guided Criteria vs Freeform */}
-                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setLiFreeform(false)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          !liFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <Building2 className="h-3.5 w-3.5 text-blue-600" />
-                          <span>Choose by Location & Business Niche</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setLiFreeform(true)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          liFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <Search className="h-3.5 w-3.5 text-slate-500" />
-                          <span>Type Custom Search</span>
-                        </span>
-                      </button>
-                    </div>
-
-                    {!liFreeform ? (
-                      <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 space-y-3">
+                  <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 space-y-3">
                         {/* Row 1: Target Country & City Dropdowns (Aligned with Google Maps) */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div>
@@ -1813,57 +1767,12 @@ export default function Dashboard() {
                             &quot;{synthesizedLinkedInQuery}&quot;
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Type Your LinkedIn Search Phrase
-                        </label>
-                        <input
-                          type="text"
-                          value={liCustomQuery}
-                          onChange={(e) => setLiCustomQuery(e.target.value)}
-                          placeholder="e.g. SaaS Founders San Francisco, Real Estate Brokers London, School Directors New York..."
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
-                        />
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
 
                 {/* INSTAGRAM FORM CONTROLS */}
                 {selectedEngine === 'INSTAGRAM' && (
-                  <>
-                    {/* Mode Selector for Instagram: Guided Criteria vs Freeform */}
-                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setIgFreeform(false)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          !igFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <InstagramIcon className="h-3.5 w-3.5" />
-                          <span>Choose by Location & Niche</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIgFreeform(true)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          igFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <Search className="h-3.5 w-3.5 text-slate-500" />
-                          <span>Type Custom Search</span>
-                        </span>
-                      </button>
-                    </div>
-
-                    {!igFreeform ? (
-                      <div className="rounded-xl border border-pink-200 bg-pink-50/40 p-3.5 space-y-3">
+                  <div className="rounded-xl border border-pink-200 bg-pink-50/40 p-3.5 space-y-3">
                         {/* Row 1: Target Country & City Dropdowns */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div>
@@ -2032,57 +1941,12 @@ export default function Dashboard() {
                             &quot;{synthesizedInstagramQuery}&quot;
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Type Your Instagram Search Phrase
-                        </label>
-                        <input
-                          type="text"
-                          value={igCustomQuery}
-                          onChange={(e) => setIgCustomQuery(e.target.value)}
-                          placeholder="e.g. fitness coaches Miami, boutique bakery Soho, fashion designer Paris..."
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-pink-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-pink-600"
-                        />
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
 
                 {/* FACEBOOK FORM CONTROLS */}
                 {selectedEngine === 'FACEBOOK' && (
-                  <>
-                    {/* Mode Selector for Facebook: Guided Criteria vs Freeform */}
-                    <div className="flex items-center justify-between rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setFbFreeform(false)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          !fbFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <FacebookIcon className="h-3.5 w-3.5" />
-                          <span>Choose by Location & Niche</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFbFreeform(true)}
-                        className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
-                          fbFreeform ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1.5">
-                          <Search className="h-3.5 w-3.5 text-slate-500" />
-                          <span>Type Custom Search</span>
-                        </span>
-                      </button>
-                    </div>
-
-                    {!fbFreeform ? (
-                      <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 space-y-3">
+                  <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 space-y-3">
                         {/* Row 1: Target Country & City Dropdowns */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div>
@@ -2251,22 +2115,7 @@ export default function Dashboard() {
                             &quot;{synthesizedFacebookQuery}&quot;
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Type Your Facebook Search Phrase
-                        </label>
-                        <input
-                          type="text"
-                          value={fbCustomQuery}
-                          onChange={(e) => setFbCustomQuery(e.target.value)}
-                          placeholder="e.g. bakery Miami Beach, dental clinic Dallas, auto repair Chicago..."
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-[#1877F2] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#1877F2]"
-                        />
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
 
                 {/* Limit and Delay */}
@@ -2468,7 +2317,7 @@ export default function Dashboard() {
                     </>
                   ) : (
                     <button
-                      onClick={() => setActiveTab('exporter')}
+                      onClick={() => handleOpenRunLeads(null)}
                       className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
                     >
                       <span>Open Full Explorer</span>
@@ -2483,22 +2332,68 @@ export default function Dashboard() {
                 <div className="flex-1 flex flex-col min-h-[380px] max-h-[500px]">
                   {/* Job Completed Summary Banner */}
                   {jobSummary && (
-                    <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-900">
+                    <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-900 space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-semibold">
                         <div className="flex items-center gap-1.5">
                           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                          <span>Search Complete (All Leads Saved to Database)</span>
+                          <span>Search Complete — Leads Saved</span>
                         </div>
-                        <a
-                          href="/exports/Master_B2B_Leads.xlsx"
-                          download="Master_B2B_Leads.xlsx"
-                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-xs hover:bg-emerald-700 transition"
-                        >
-                          <Download className="h-3 w-3" />
-                          <span>Download Excel</span>
-                        </a>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {jobSummary.jobId && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRunLeads(jobSummary.jobId)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+                            >
+                              <span>
+                                View Found Leads ({(jobSummary.leadIds?.length ?? jobSummary.leadsCollected) || 0})
+                              </span>
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          <a
+                            href="/api/export"
+                            download="Master_B2B_Leads.xlsx"
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-xs hover:bg-emerald-700 transition"
+                          >
+                            <Download className="h-3 w-3" />
+                            <span>Excel</span>
+                          </a>
+                        </div>
                       </div>
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">
+
+                      {/* Run Metadata: Run ID, Platform, Timestamp, Query */}
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                        {jobSummary.jobId && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-bold text-white">
+                            <Hash className="h-2.5 w-2.5 text-slate-300" />
+                            <span>Run #{jobSummary.jobId.slice(0, 8)}</span>
+                          </span>
+                        )}
+                        {jobSummary.platform && (
+                          <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-800">
+                            {jobSummary.engine === 'INSTAGRAM' && <InstagramIcon className="h-3 w-3 shrink-0" />}
+                            {jobSummary.engine === 'FACEBOOK' && <FacebookIcon className="h-3 w-3 shrink-0" />}
+                            {jobSummary.engine === 'LINKEDIN' && <Building2 className="h-3 w-3 text-[#0A66C2] shrink-0" />}
+                            {jobSummary.engine === 'MAPS' && <MapPin className="h-3 w-3 text-rose-600 shrink-0" />}
+                            <span>{jobSummary.platform}</span>
+                          </span>
+                        )}
+                        {(jobSummary.finishedAt || jobSummary.startedAt) && (
+                          <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                            <Clock className="h-2.5 w-2.5 text-slate-500" />
+                            <span>{new Date(jobSummary.finishedAt || jobSummary.startedAt).toLocaleString()}</span>
+                          </span>
+                        )}
+                      </div>
+                      {jobSummary.query && (
+                        <div className="text-[11px] text-emerald-900/90 truncate">
+                          <span className="font-semibold">Query:</span>{' '}
+                          <span className="font-mono">&quot;{jobSummary.query}&quot;</span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
                         <div className="rounded-lg bg-white p-1.5 border border-emerald-200">
                           <div className="font-bold text-emerald-700 text-sm">{jobSummary.leadsCollected}</div>
                           <div className="text-slate-500 text-[10px]">New Leads</div>
@@ -2515,74 +2410,117 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {/* List of recent leads cards with clear origin badges */}
-                  {leads.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50">
-                      <Building2 className="h-8 w-8 mb-2 opacity-30 text-slate-500" />
-                      <div className="font-bold text-slate-700 text-xs">No Leads Collected Yet</div>
-                      <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
-                        Configure your target niche and location on the left, then click Start Search to extract verified leads with origin badges.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                      {leads.slice(0, 8).map((lead) => (
-                        <div
-                          key={lead.id}
-                          className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-slate-300 transition"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="font-bold text-xs text-slate-900 line-clamp-1">{lead.company_name}</div>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <CountryFlag code={lead.country} className="h-3 w-4 shrink-0" />
-                                <span className="text-[11px] text-slate-500">{lead.country}</span>
-                                <span className="text-slate-300">•</span>
-                                <span className="text-[11px] text-slate-600 line-clamp-1">{lead.director || lead.industry || 'Business'}</span>
-                              </div>
-                            </div>
-                            <LeadSourceBadge lead={lead} size="sm" />
-                          </div>
+                  {/* List of recent leads cards (prioritizes leads found in the latest run) */}
+                  {(() => {
+                    const feedLeads = jobSummary && lastRunLeads.length > 0 ? lastRunLeads : leads.slice(0, 8);
+                    const showingRunOnly = Boolean(jobSummary && lastRunLeads.length > 0);
 
-                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px]">
-                            <div className="flex items-center gap-3">
-                              {lead.phone ? (
-                                <a
-                                  href={`tel:${lead.phone}`}
-                                  className="inline-flex items-center gap-1 font-mono font-semibold text-emerald-700 hover:underline"
-                                >
-                                  <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
-                                  <span>{lead.phone}</span>
-                                </a>
-                              ) : (
-                                <span className="text-slate-300 font-mono">No phone</span>
-                              )}
-                              {lead.email ? (
-                                <a
-                                  href={`mailto:${lead.email}`}
-                                  className="inline-flex items-center gap-1 font-mono font-semibold text-emerald-700 hover:underline"
-                                >
-                                  <Mail className="h-3 w-3 text-emerald-600 shrink-0" />
-                                  <span className="truncate max-w-[150px]">{lead.email}</span>
-                                </a>
-                              ) : (
-                                <span className="text-slate-300 font-mono">No email</span>
-                              )}
-                            </div>
+                    if (feedLeads.length === 0) {
+                      return (
+                        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                          <Building2 className="h-8 w-8 mb-2 opacity-30 text-slate-500" />
+                          <div className="font-bold text-slate-700 text-xs">No Leads Collected Yet</div>
+                          <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
+                            Configure your target niche and location on the left, then click Start Search to extract verified leads with origin badges.
+                          </p>
+                        </div>
+                      );
+                    }
 
+                    return (
+                      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                        {showingRunOnly && (
+                          <div className="flex items-center justify-between px-1 text-[11px] text-slate-500">
+                            <span className="font-semibold text-slate-700">
+                              Showing {feedLeads.length} lead{feedLeads.length === 1 ? '' : 's'} from Run #{jobSummary.jobId.slice(0, 8)}
+                            </span>
                             <button
                               type="button"
-                              onClick={() => setSelectedLead(lead)}
-                              className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:underline text-[11px]"
+                              onClick={() => handleOpenRunLeads(jobSummary.jobId)}
+                              className="inline-flex items-center gap-0.5 font-semibold text-blue-600 hover:underline"
                             >
-                              <Eye className="h-3 w-3" />
-                              <span>View Details</span>
+                              <span>Open Full Run Table</span>
+                              <ChevronRight className="h-3 w-3" />
                             </button>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        )}
+                        {feedLeads.map((lead) => (
+                          <div
+                            key={lead.id}
+                            className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-slate-300 transition"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="font-bold text-xs text-slate-900 line-clamp-1">{lead.company_name}</div>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                  <CountryFlag code={lead.country} className="h-3 w-4 shrink-0" />
+                                  <span className="text-[11px] text-slate-500">{lead.country}</span>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="text-[11px] text-slate-600 line-clamp-1">{lead.director || lead.industry || 'Business'}</span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-slate-400 font-mono">
+                                  {lead.created_at && (
+                                    <span className="inline-flex items-center gap-1">
+                                      <Clock className="h-2.5 w-2.5" />
+                                      <span>{new Date(lead.created_at).toLocaleString()}</span>
+                                    </span>
+                                  )}
+                                  {lead.job_id && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenRunLeads(lead.job_id)}
+                                      className="inline-flex items-center gap-0.5 rounded bg-slate-100 px-1.5 py-0.5 text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition"
+                                      title="Open all leads from this run"
+                                    >
+                                      <Hash className="h-2.5 w-2.5" />
+                                      <span>{lead.job_id.slice(0, 8)}</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              <LeadSourceBadge lead={lead} size="sm" />
+                            </div>
+
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px]">
+                              <div className="flex items-center gap-3">
+                                {lead.phone ? (
+                                  <a
+                                    href={`tel:${lead.phone}`}
+                                    className="inline-flex items-center gap-1 font-mono font-semibold text-emerald-700 hover:underline"
+                                  >
+                                    <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
+                                    <span>{lead.phone}</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-300 font-mono">No phone</span>
+                                )}
+                                {lead.email ? (
+                                  <a
+                                    href={`mailto:${lead.email}`}
+                                    className="inline-flex items-center gap-1 font-mono font-semibold text-emerald-700 hover:underline"
+                                  >
+                                    <Mail className="h-3 w-3 text-emerald-600 shrink-0" />
+                                    <span className="truncate max-w-[150px]">{lead.email}</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-300 font-mono">No email</span>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedLead(lead)}
+                                className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:underline text-[11px]"
+                              >
+                                <Eye className="h-3 w-3" />
+                                <span>View Details</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 /* View 2: Terminal Logs Window (High-contrast Developer Dark Screen) */
@@ -3040,44 +2978,84 @@ export default function Dashboard() {
               <p className="py-8 text-center text-xs text-slate-500">No jobs run yet.</p>
             ) : (
               <div className="divide-y divide-slate-200">
-                {jobs.map((job) => (
-                  <div key={job.id} className="flex flex-col justify-between gap-3 py-3.5 sm:flex-row sm:items-center">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-slate-900">
-                          Job #{job.id.slice(0, 8)}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
-                            job.status === 'completed'
-                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                              : 'bg-blue-50 text-blue-700 ring-blue-200'
-                          }`}
-                        >
-                          {job.status}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          Started: {new Date(job.started_at).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        Countries: {Array.isArray(job.countries) ? job.countries.join(', ') : 'All'}
-                      </div>
-                    </div>
+                {jobs.map((job) => {
+                  const rawEngine = String(job.engine || (Array.isArray(job.countries) && job.countries[0]) || 'MAPS').toUpperCase();
+                  const platformLabel = rawEngine.includes('FACEBOOK')
+                    ? 'Facebook'
+                    : rawEngine.includes('INSTAGRAM')
+                    ? 'Instagram'
+                    : rawEngine.includes('LINKEDIN')
+                    ? 'LinkedIn'
+                    : rawEngine.includes('MAPS')
+                    ? 'Google Maps'
+                    : rawEngine;
+                  const runLeadCount = Array.isArray(job.lead_ids) && job.lead_ids.length > 0
+                    ? job.lead_ids.length
+                    : (job.leads_collected || 0);
 
-                    <div className="flex items-center gap-4 text-xs font-mono">
-                      <div className="text-emerald-600 font-semibold">
-                        +{job.leads_collected} leads
+                  return (
+                    <div key={job.id} className="flex flex-col justify-between gap-3 py-3.5 sm:flex-row sm:items-center">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-2 py-0.5 font-mono text-[11px] font-semibold text-white">
+                            <Hash className="h-2.5 w-2.5 text-slate-300" />
+                            <span>Run #{job.id.slice(0, 8)}</span>
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-800">
+                            {rawEngine.includes('INSTAGRAM') && <InstagramIcon className="h-3 w-3 shrink-0" />}
+                            {rawEngine.includes('FACEBOOK') && <FacebookIcon className="h-3 w-3 shrink-0" />}
+                            {rawEngine.includes('LINKEDIN') && <Building2 className="h-3 w-3 text-[#0A66C2] shrink-0" />}
+                            {rawEngine.includes('MAPS') && <MapPin className="h-3 w-3 text-rose-600 shrink-0" />}
+                            <span>{platformLabel}</span>
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+                              job.status === 'completed'
+                                ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                                : 'bg-blue-50 text-blue-700 ring-blue-200'
+                            }`}
+                          >
+                            {job.status}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                            <Clock className="h-3 w-3 text-slate-400" />
+                            <span>{new Date(job.started_at).toLocaleString()}</span>
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-600">
+                          {job.query ? (
+                            <span>
+                              <span className="font-semibold text-slate-500">Query:</span>{' '}
+                              <span className="font-mono text-slate-900">&quot;{job.query}&quot;</span>
+                            </span>
+                          ) : (
+                            <span>Platform: {Array.isArray(job.countries) ? job.countries.join(', ') : platformLabel}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-amber-600">
-                        {job.duplicates_skipped} duplicates
-                      </div>
-                      <div className="text-slate-500">
-                        {job.errors_count} errors
+
+                      <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+                        <div className="text-emerald-600 font-semibold">
+                          +{job.leads_collected} new
+                        </div>
+                        <div className="text-amber-600">
+                          {job.duplicates_skipped} duplicates
+                        </div>
+                        <div className="text-slate-500">
+                          {job.errors_count} errors
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenRunLeads(job.id)}
+                          className="inline-flex items-center gap-1 rounded-xl bg-blue-600 px-3 py-1.5 font-sans text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+                        >
+                          <span>View Found Leads ({runLeadCount})</span>
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -3205,6 +3183,42 @@ export default function Dashboard() {
             </div>
 
             <div className="mt-4 space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500 flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-slate-400" />
+                    <span>Found At</span>
+                  </div>
+                  <div className="font-mono font-medium text-slate-900 mt-0.5">
+                    {selectedLead.created_at ? new Date(selectedLead.created_at).toLocaleString() : 'N/A'}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500 flex items-center gap-1">
+                    <Hash className="h-3 w-3 text-slate-400" />
+                    <span>Search Run</span>
+                  </div>
+                  <div className="mt-0.5">
+                    {selectedLead.job_id ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const targetJob = selectedLead.job_id;
+                          setSelectedLead(null);
+                          handleOpenRunLeads(targetJob);
+                        }}
+                        className="inline-flex items-center gap-1 font-mono font-semibold text-blue-600 hover:underline"
+                      >
+                        <span>Run #{selectedLead.job_id.slice(0, 8)}</span>
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
+                    ) : (
+                      <span className="font-mono font-medium text-slate-900">Legacy / Direct</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <div className="text-slate-500">Registration Number</div>

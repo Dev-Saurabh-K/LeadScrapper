@@ -6,6 +6,7 @@ import { db } from '@/lib/database.js';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
+    const jobId = searchParams.get('jobId') || '';
     const country = searchParams.get('country') || '';
     const search = searchParams.get('search') || '';
     const hasEmail = searchParams.get('hasEmail') || '';
@@ -13,6 +14,7 @@ export async function GET(request) {
     const limit = searchParams.get('limit') || '100';
 
     const leads = await db.getAllLeads({
+      jobId,
       country,
       search,
       hasEmail,

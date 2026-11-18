@@ -3,9 +3,27 @@
 -- Run this in your Supabase SQL Editor: Dashboard -> SQL Editor -> New Query
 -- ==============================================================================
 
--- 1. Create LEADS table
+-- 1. Create SCRAPE_JOBS table (history & monitoring)
+CREATE TABLE IF NOT EXISTS public.scrape_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    engine TEXT,
+    query TEXT,
+    countries JSONB NOT NULL DEFAULT '[]'::jsonb,
+    status TEXT NOT NULL DEFAULT 'running', -- 'running', 'completed', 'failed'
+    leads_collected INTEGER DEFAULT 0,
+    duplicates_skipped INTEGER DEFAULT 0,
+    errors_count INTEGER DEFAULT 0,
+    lead_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    finished_at TIMESTAMPTZ,
+    logs JSONB DEFAULT '[]'::jsonb,
+    summary TEXT
+);
+
+-- 2. Create LEADS table
 CREATE TABLE IF NOT EXISTS public.leads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    job_id UUID REFERENCES public.scrape_jobs(id) ON DELETE SET NULL,
     company_name TEXT NOT NULL,
     registration_number TEXT,
     country TEXT NOT NULL,
@@ -26,21 +44,15 @@ CREATE TABLE IF NOT EXISTS public.leads (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Create SCRAPE_JOBS table (history & monitoring)
-CREATE TABLE IF NOT EXISTS public.scrape_jobs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    countries JSONB NOT NULL DEFAULT '[]'::jsonb,
-    status TEXT NOT NULL DEFAULT 'running', -- 'running', 'completed', 'failed'
-    leads_collected INTEGER DEFAULT 0,
-    duplicates_skipped INTEGER DEFAULT 0,
-    errors_count INTEGER DEFAULT 0,
-    started_at TIMESTAMPTZ DEFAULT NOW(),
-    finished_at TIMESTAMPTZ,
-    logs JSONB DEFAULT '[]'::jsonb,
-    summary TEXT
-);
+-- Idempotent column upgrades for existing databases
+ALTER TABLE public.scrape_jobs ADD COLUMN IF NOT EXISTS engine TEXT;
+ALTER TABLE public.scrape_jobs ADD COLUMN IF NOT EXISTS query TEXT;
+ALTER TABLE public.scrape_jobs ADD COLUMN IF NOT EXISTS lead_ids JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS job_id UUID REFERENCES public.scrape_jobs(id) ON DELETE SET NULL;
 
 -- 3. Create Indexes for fast querying & de-duplication
+CREATE INDEX IF NOT EXISTS idx_leads_job_id
+    ON public.leads(job_id);
 CREATE INDEX IF NOT EXISTS idx_leads_country_reg 
     ON public.leads(country, registration_number);
 

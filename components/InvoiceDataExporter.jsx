@@ -27,7 +27,10 @@ import {
   Filter,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Clock,
+  Hash,
+  ArrowLeft
 } from 'lucide-react';
 import MicrosoftExcelIcon from './MicrosoftExcelIcon';
 import CountryFlag from './CountryFlag';
@@ -49,31 +52,97 @@ const getColumnPriorityMeta = (colName) => {
   if (lower.includes('website') || lower.includes('url') || lower.includes('web')) {
     return { priority: 2, rank: 3 };
   }
-  if (lower.includes('country') || lower.includes('jurisdiction')) {
+  if (lower.includes('source') || lower.includes('registry') || lower.includes('platform')) {
     return { priority: 3, rank: 4 };
   }
-  if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
+  if (lower.includes('found') || lower.includes('scraped')) {
     return { priority: 3, rank: 5 };
   }
-  if (lower.includes('registration') || lower.includes('gst')) {
+  if (lower.includes('run id') || lower === 'job_id') {
     return { priority: 3, rank: 6 };
   }
-  if (lower.includes('status')) {
+  if (lower.includes('country') || lower.includes('jurisdiction')) {
     return { priority: 3, rank: 7 };
   }
-  if (lower.includes('industry') || lower.includes('type')) {
+  if (lower.includes('director') || lower.includes('officer') || lower.includes('contact')) {
     return { priority: 3, rank: 8 };
   }
-  if (lower.includes('address') || lower.includes('city') || lower.includes('postal')) {
+  if (lower.includes('registration') || lower.includes('gst')) {
     return { priority: 3, rank: 9 };
   }
-  if (lower.includes('date') || lower.includes('incorporation')) {
+  if (lower.includes('status')) {
     return { priority: 3, rank: 10 };
   }
-  if (lower.includes('source') || lower.includes('registry')) {
+  if (lower.includes('industry') || lower.includes('type')) {
     return { priority: 3, rank: 11 };
   }
-  return { priority: 3, rank: 12 };
+  if (lower.includes('address') || lower.includes('city') || lower.includes('postal')) {
+    return { priority: 3, rank: 12 };
+  }
+  if (lower.includes('date') || lower.includes('incorporation')) {
+    return { priority: 3, rank: 13 };
+  }
+  return { priority: 3, rank: 14 };
+};
+
+const formatFoundTimestamp = (raw) => {
+  if (!raw) return '';
+  const str = String(raw).trim();
+  if (!str) return '';
+  const dt = new Date(str);
+  if (!Number.isNaN(dt.getTime())) {
+    return dt.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  }
+  return str;
+};
+
+const getRunPlatformInfo = (job) => {
+  const raw = String(
+    job?.engine ||
+    (Array.isArray(job?.countries) && job.countries[0]) ||
+    ''
+  ).toUpperCase();
+
+  if (raw.includes('FACEBOOK') || raw === 'FB') {
+    return {
+      engine: 'FACEBOOK',
+      label: 'Facebook',
+      badgeClass: 'bg-blue-50 text-[#1877F2] border-blue-200'
+    };
+  }
+  if (raw.includes('INSTAGRAM') || raw === 'IG') {
+    return {
+      engine: 'INSTAGRAM',
+      label: 'Instagram',
+      badgeClass: 'bg-pink-50 text-pink-700 border-pink-200'
+    };
+  }
+  if (raw.includes('LINKEDIN') || raw === 'LI') {
+    return {
+      engine: 'LINKEDIN',
+      label: 'LinkedIn',
+      badgeClass: 'bg-sky-50 text-[#0A66C2] border-sky-200'
+    };
+  }
+  if (raw.includes('MAPS')) {
+    return {
+      engine: 'MAPS',
+      label: 'Google Maps',
+      badgeClass: 'bg-rose-50 text-rose-700 border-rose-200'
+    };
+  }
+  return {
+    engine: 'REGISTRY',
+    label: raw || 'Lead Search',
+    badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+  };
 };
 
 const sortColumnsByPriority = (columns) => {
@@ -90,12 +159,17 @@ const getRecordField = (record, keyword) => {
   return key && record[key] ? String(record[key]).trim() : '';
 };
 
-export default function LeadDataExporter({ onEnrichLeadExternal }) {
+export default function LeadDataExporter({
+  onEnrichLeadExternal,
+  activeJobId = null,
+  onChangeJobId = null
+}) {
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
   const [exportSuccess, setExportSuccess] = useState(null);
   const [enrichSuccessMsg, setEnrichSuccessMsg] = useState(null);
+  const [activeJob, setActiveJob] = useState(null);
 
   // Email Dispatch States for this particular table & selected columns
   const [showEmailPanel, setShowEmailPanel] = useState(false);
@@ -159,10 +233,20 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/custom-export/master');
+      const endpoint = activeJobId
+        ? `/api/custom-export/master?jobId=${encodeURIComponent(activeJobId)}`
+        : '/api/custom-export/master';
+      const res = await fetch(endpoint);
       const result = await res.json();
       if (!result.success) {
         throw new Error(result.error || 'Failed to load scraped leads dataset');
+      }
+      setActiveJob(result.job || result.data?.job || null);
+      if (activeJobId) {
+        setStatusFilter('all');
+        setExportFileName(`Run_${activeJobId.slice(0, 8)}_Leads.xlsx`);
+      } else {
+        setExportFileName('B2B_Exported_Leads.xlsx');
       }
       applyDataset(result.data);
     } catch (err) {
@@ -171,7 +255,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     } finally {
       setIsLoading(false);
     }
-  }, [applyDataset]);
+  }, [activeJobId, applyDataset]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -242,9 +326,9 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
     if (!dataset.records) return counts;
     counts.ALL = dataset.records.length;
     dataset.records.forEach((r) => {
-      const src = (r.source || r.Source || '').toLowerCase();
-      const reg = (r.registration_number || r.Registration_Number || '').toLowerCase();
-      const web = (r.website || r.Website || '').toLowerCase();
+      const src = (getRecordField(r, 'source') || r.source || r.Source || '').toLowerCase();
+      const reg = (getRecordField(r, 'registration') || r.registration_number || r.Registration_Number || '').toLowerCase();
+      const web = (getRecordField(r, 'website') || r.website || r.Website || '').toLowerCase();
       if (src.includes('maps') || reg.startsWith('maps-')) {
         counts.MAPS++;
       } else if (src.includes('linkedin') || reg.startsWith('li:') || web.includes('linkedin.com')) {
@@ -284,9 +368,9 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
       }
 
       if (selectedSourceFilter !== 'ALL') {
-        const src = (record.source || record.Source || '').toLowerCase();
-        const reg = (record.registration_number || record.Registration_Number || '').toLowerCase();
-        const web = (record.website || record.Website || '').toLowerCase();
+        const src = (getRecordField(record, 'source') || record.source || record.Source || '').toLowerCase();
+        const reg = (getRecordField(record, 'registration') || record.registration_number || record.Registration_Number || '').toLowerCase();
+        const web = (getRecordField(record, 'website') || record.website || record.Website || '').toLowerCase();
 
         if (selectedSourceFilter === 'MAPS') {
           if (!src.includes('maps') && !reg.startsWith('maps-')) return false;
@@ -502,7 +586,7 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
   };
 
   const handleEnrichLead = async (row) => {
-    const leadId = row.id || row.__rowId;
+    const leadId = row.__id || row.id || row.__rowId;
     const website = getRecordField(row, 'website');
     if (!website) {
       alert('No website is available for this business.');
@@ -554,9 +638,11 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
         <div>
           <div className="flex items-center gap-2">
             <MicrosoftExcelIcon className="h-4 w-4 shrink-0" />
-            <h2 className="text-base font-bold text-black">Leads Explorer & Exporter</h2>
+            <h2 className="text-base font-bold text-black">
+              {activeJobId ? `Found Leads — Run #${activeJobId.slice(0, 8)}` : 'Leads Explorer & Exporter'}
+            </h2>
             <span className="text-xs text-slate-500 font-mono">
-              ({dataset.totalRecords} verified leads in database)
+              ({dataset.totalRecords} {activeJobId ? 'leads in this run' : 'verified leads in database'})
             </span>
             {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
           </div>
@@ -629,6 +715,69 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
           </button>
         </div>
       </div>
+
+      {/* Active Run Context Banner (when viewing leads from a specific scrape run) */}
+      {activeJobId && (() => {
+        const platformInfo = getRunPlatformInfo(activeJob);
+        const runTimestamp = formatFoundTimestamp(activeJob?.finished_at || activeJob?.started_at);
+        return (
+          <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/90 via-white to-emerald-50/70 p-4 shadow-xs">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-2.5 py-0.5 font-mono text-[11px] font-bold text-white">
+                    <Hash className="h-3 w-3 text-slate-300" />
+                    <span>Run #{activeJobId.slice(0, 8)}</span>
+                  </span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 text-[11px] font-semibold ${platformInfo.badgeClass}`}>
+                    {platformInfo.engine === 'INSTAGRAM' && <InstagramIcon className="h-3 w-3 shrink-0" />}
+                    {platformInfo.engine === 'FACEBOOK' && <FacebookIcon className="h-3 w-3 shrink-0" />}
+                    {platformInfo.engine === 'LINKEDIN' && <Building2 className="h-3 w-3 shrink-0" />}
+                    {platformInfo.engine === 'MAPS' && <MapPin className="h-3 w-3 shrink-0" />}
+                    {platformInfo.engine === 'REGISTRY' && <Landmark className="h-3 w-3 shrink-0" />}
+                    <span>{platformInfo.label}</span>
+                  </span>
+                  {runTimestamp && (
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                      <Clock className="h-3 w-3 text-slate-500" />
+                      <span>{runTimestamp}</span>
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-700">
+                  {activeJob?.query && (
+                    <span>
+                      <span className="font-semibold text-slate-500">Query:</span>{' '}
+                      <span className="font-mono font-semibold text-slate-900">&quot;{activeJob.query}&quot;</span>
+                    </span>
+                  )}
+                  <span className="text-slate-300">•</span>
+                  <span className="font-semibold text-emerald-700">
+                    {dataset.totalRecords} lead{dataset.totalRecords === 1 ? '' : 's'} shown
+                  </span>
+                  {typeof activeJob?.leads_collected === 'number' && (
+                    <span className="text-[11px] text-slate-500">
+                      (+{activeJob.leads_collected} new{activeJob.duplicates_skipped ? `, ${activeJob.duplicates_skipped} already in database` : ''})
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {onChangeJobId && (
+                <button
+                  type="button"
+                  onClick={() => onChangeJobId(null)}
+                  className="inline-flex items-center gap-1.5 self-start sm:self-center rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-xs hover:bg-slate-100 transition shrink-0"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Show All Leads</span>
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Dispatch Custom Table via Email Panel */}
       {showEmailPanel && (
@@ -1221,11 +1370,65 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
                           );
                         }
 
-                        // Source / Origin
-                        if (lowerCol === 'source' || lowerCol === 'origin') {
+                        // Source / Platform / Origin
+                        if (
+                          lowerCol === 'source' ||
+                          lowerCol === 'origin' ||
+                          lowerCol === 'source registry' ||
+                          lowerCol === 'platform'
+                        ) {
                           return (
                             <td key={col} className="px-3.5 py-2 whitespace-nowrap">
                               <LeadSourceBadge lead={row} size="sm" />
+                            </td>
+                          );
+                        }
+
+                        // Found At / Scraped Timestamp
+                        if (
+                          lowerCol === 'found at' ||
+                          lowerCol === 'scraped date' ||
+                          lowerCol === 'scraped at'
+                        ) {
+                          const formatted = formatFoundTimestamp(row.__createdAt || val);
+                          return (
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap text-[11px] text-slate-700 font-mono">
+                              {formatted ? (
+                                <span className="inline-flex items-center gap-1">
+                                  <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+                                  <span>{formatted}</span>
+                                </span>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                          );
+                        }
+
+                        // Run ID (clickable to scope Explorer to that run)
+                        if (lowerCol === 'run id' || lowerCol === 'job_id') {
+                          const targetJobId = row.__jobId || '';
+                          return (
+                            <td key={col} className="px-3.5 py-2 whitespace-nowrap">
+                              {val ? (
+                                targetJobId && onChangeJobId ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => onChangeJobId(targetJobId)}
+                                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition"
+                                    title={`Filter to Run ${val}`}
+                                  >
+                                    <Hash className="h-2.5 w-2.5" />
+                                    <span>{String(val).replace(/^#/, '')}</span>
+                                  </button>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-600">
+                                    {val}
+                                  </span>
+                                )
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
                             </td>
                           );
                         }
@@ -1351,6 +1554,44 @@ export default function LeadDataExporter({ onEnrichLeadExternal }) {
             </div>
 
             <div className="mt-4 space-y-3 text-xs">
+              {/* Discovery Provenance: Timestamp & Run ID */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500 flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-slate-400" />
+                    <span>Found At</span>
+                  </div>
+                  <div className="font-mono font-medium text-slate-900 mt-0.5">
+                    {formatFoundTimestamp(selectedLead.__createdAt || getRecordField(selectedLead, 'found') || getRecordField(selectedLead, 'scraped')) || 'N/A'}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <div className="text-slate-500 flex items-center gap-1">
+                    <Hash className="h-3 w-3 text-slate-400" />
+                    <span>Search Run</span>
+                  </div>
+                  <div className="mt-0.5">
+                    {selectedLead.__jobId && onChangeJobId ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onChangeJobId(selectedLead.__jobId);
+                          setSelectedLead(null);
+                        }}
+                        className="inline-flex items-center gap-1 font-mono font-semibold text-blue-600 hover:underline"
+                      >
+                        <span>Run #{selectedLead.__jobId.slice(0, 8)}</span>
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
+                    ) : (
+                      <span className="font-mono font-medium text-slate-900">
+                        {getRecordField(selectedLead, 'run id') || 'Legacy / Direct'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <div className="text-slate-500">Registration Number</div>
